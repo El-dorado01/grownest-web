@@ -3,16 +3,28 @@ import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { AuthProvider } from "@/context/auth-context"
+import { Toaster } from "@/components/ui/sonner"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils";
+import { ConnectivityListener } from "@/components/connectivity-listener"
 
 const spaceGroteskHeading = Space_Grotesk({ subsets: ['latin'], variable: '--font-heading' });
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
 const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 
 export const metadata: Metadata = {
-  title: "GrowNest | Secure & Sustainable Wealth Growth",
-  description: "Join GrowNest, Africa's premier platform for financial prosperity. We offer secure, sustainable, and high-yield wealth growth opportunities for everyone.",
-  keywords: ["wealth growth", "savings", "investment", "Africa", "financial prosperity", "GrowNest"],
+  title: "GrowNest | Save Smart. Shop Easy. Smile Always.",
+  description:
+    "Save Smart. Shop Easy. Smile Always. Join GrowNest, Africa's premier platform for financial prosperity and sustainable wealth growth.",
+  keywords: [
+    "wealth growth",
+    "savings",
+    "investment",
+    "Africa",
+    "financial prosperity",
+    "GrowNest",
+  ],
   authors: [{ name: "GrowNest Team" }],
   metadataBase: new URL("https://grownest.africa"),
   icons: {
@@ -24,8 +36,9 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://grownest.africa",
-    title: "GrowNest | Africa's Leading Wealth Growth Platform",
-    description: "Start your journey to financial freedom today. Secure and sustainable wealth growth at your fingertips.",
+    title: "GrowNest | Save Smart. Shop Easy. Smile Always.",
+    description:
+      "Start your journey to financial freedom today. Save Smart. Shop Easy. Smile Always with GrowNest.",
     siteName: "GrowNest",
     images: [
       {
@@ -38,8 +51,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "GrowNest | Secure Wealth Growth",
-    description: "Africa's premier platform for financial prosperity. Grow your wealth sustainably with GrowNest.",
+    title: "GrowNest | Save Smart. Shop Easy. Smile Always.",
+    description:
+      "Africa's premier platform for financial prosperity. Save Smart. Shop Easy. Smile Always.",
     images: ["/social-preview.png"],
   },
   robots: {
@@ -67,7 +81,15 @@ export default function RootLayout({
       className={cn("antialiased", fontMono.variable, "font-sans", geist.variable, spaceGroteskHeading.variable)}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              {children}
+              <ConnectivityListener />
+              <Toaster position="bottom-center" richColors />
+            </TooltipProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
