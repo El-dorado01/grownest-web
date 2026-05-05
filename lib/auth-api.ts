@@ -18,4 +18,23 @@ export const authApi = {
     balance?: number; 
     recentActivity?: any[] 
   }>("/api/auth/profile"),
+
+  updateProfile: (data: any) => {
+    const formData = new FormData();
+    Object.keys(data).forEach((key) => {
+      if (data[key] !== undefined && data[key] !== null) {
+        formData.append(key, data[key]);
+      }
+    });
+    return api.patch<{ message: string; profilePhoto?: string }>(
+      "/api/auth/profile/setup",
+      formData
+    );
+  },
+
+  forgotPassword: (data: { email: string; frontendUrl?: string }) =>
+    api.post<{ message: string }>("/api/auth/forgot-password", data),
+
+  resetPassword: (data: { token: string; password: string }) =>
+    api.post<{ message: string }>("/api/auth/reset-password", data),
 };

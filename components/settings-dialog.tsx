@@ -48,6 +48,7 @@ import {
   MenuIcon
 } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { ProfileSettings } from "./settings/profile-settings"
 
 const data = {
   nav: [
@@ -157,13 +158,19 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
           </Button>
         )}
       </header>
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-        {Array.from({ length: 10 }).map((_, i) => (
-          <div
-            key={i}
-            className="aspect-video max-w-3xl rounded-xl bg-muted/50"
-          />
-        ))}
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 md:p-6">
+        {activeItem?.name === "Profile Settings" ? (
+          <ProfileSettings />
+        ) : (
+          <div className="flex flex-col gap-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="aspect-video max-w-3xl rounded-xl bg-muted/50 animate-pulse"
+              />
+            ))}
+          </div>
+        )}
       </div>
     </main>
   )

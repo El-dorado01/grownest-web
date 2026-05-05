@@ -78,9 +78,13 @@ export async function apiFetch<T>(
   const tempToken = getTempToken();
 
   const requestHeaders: Record<string, string> = {
-    "Content-Type": "application/json",
     ...headers,
   };
+
+  // Only set Content-Type if not FormData (browser sets it for FormData)
+  if (!(body instanceof FormData)) {
+    requestHeaders["Content-Type"] = "application/json";
+  }
 
   // Add auth token if available
   if (token) {
@@ -104,7 +108,7 @@ export async function apiFetch<T>(
     const response = await fetch(url, {
       method,
       headers: requestHeaders,
-      body: body ? JSON.stringify(body) : undefined,
+      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
       cache,
       next: tags ? { tags } : undefined,
     } as RequestInit);
