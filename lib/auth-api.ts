@@ -12,5 +12,10 @@ export const authApi = {
     api.post<LoginResponse>("/api/auth/verify-2fa", data),
 
   logout: () => api.post("/api/auth/logout", {}),
-  getProfile: () => api.get<{ profile: any; userId: string }>("/api/auth/profile"),
+  getProfile: () => api.get<{ 
+    profile: any; 
+    userId: string; 
+    balance?: number; 
+    recentActivity?: any[] 
+  }>("/api/auth/profile"),
 };

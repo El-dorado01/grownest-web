@@ -11,6 +11,13 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { 
+  Drawer, 
+  DrawerContent, 
+  DrawerHeader, 
+  DrawerTitle,
+  DrawerDescription
+} from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -64,19 +71,22 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
   const pathname = usePathname()
   const isMobile = useIsMobile()
   
-  const [activeItem, setActiveItem] = React.useState(data.nav[1]) // Profile Settings
-  const [showMobileMenu, setShowMobileMenu] = React.useState(true)
+  const [activeItem, setActiveItem] = React.useState<typeof data.nav[0] | null>(null)
+  const [showMobilePanel, setShowMobilePanel] = React.useState(false)
 
-  // Reset showMobileMenu when switching to desktop
+  // Default to Profile Settings on desktop if nothing is selected
   React.useEffect(() => {
-    if (!isMobile) setShowMobileMenu(false)
-  }, [isMobile])
-  
+    if (!isMobile && !activeItem && isMobile !== undefined) {
+      setActiveItem(data.nav[1])
+    }
+  }, [isMobile, activeItem])
+
   // Controlled by query param if not a standalone page
   const open = isPage || searchParams.get("settings") === "true"
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
+      setShowMobilePanel(false)
       if (isPage) {
         router.back()
       } else {
@@ -87,64 +97,56 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
     }
   }
 
-  const content = (
-    <SidebarProvider className="items-start">
-      {(isMobile ? showMobileMenu : true) && (
-        <Sidebar collapsible="none" className="w-full md:w-64 border-r">
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu className="gap-1">
-                  {data.nav.map((item) => (
-                    <SidebarMenuItem key={item.name}>
-                      <SidebarMenuButton
-                        onClick={() => {
-                          setActiveItem(item)
-                          if (isMobile) setShowMobileMenu(false)
-                        }}
-                        isActive={item.name === activeItem.name}
-                      >
-                        {item.icon}
-                        <span>{item.name}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
-      )}
-      {(isMobile ? !showMobileMenu : true) && (
-      <main className={`flex flex-1 flex-col overflow-hidden ${isPage ? "h-svh" : "h-[500px]"}`}>
-        <header className="flex h-16 shrink-0 items-center justify-between gap-2 px-4 border-b">
-          <div className="flex items-center gap-2">
-            {isMobile && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setShowMobileMenu(true)}
-                className="-ml-2"
-              >
-                <ChevronLeftIcon className="h-5 w-5" />
-              </Button>
-            )}
-            <Breadcrumb>
-              <BreadcrumbList>
-                {!isMobile && (
-                  <>
-                    <BreadcrumbItem>
-                      <BreadcrumbLink href="#">Settings</BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                  </>
-                )}
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{activeItem.name}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
+  const sidebarContent = (
+    <SidebarMenu className="gap-1">
+      {data.nav.map((item) => (
+        <SidebarMenuItem key={item.name}>
+          <SidebarMenuButton
+            onClick={() => {
+              setActiveItem(item)
+              if (isMobile) setShowMobilePanel(true)
+            }}
+            isActive={activeItem?.name === item.name}
+          >
+            {item.icon}
+            <span>{item.name}</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  )
+
+  const mainContent = (
+    <main className={`flex flex-1 flex-col overflow-hidden ${isPage ? "h-svh" : "h-[500px]"}`}>
+      <header className="flex h-16 shrink-0 items-center justify-between gap-2 px-4 border-b">
+        <div className="flex items-center gap-2">
+          {isMobile && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setShowMobilePanel(false)}
+              className="-ml-2"
+            >
+              <ChevronLeftIcon className="h-5 w-5" />
+            </Button>
+          )}
+          <Breadcrumb>
+            <BreadcrumbList>
+              {!isMobile && (
+                <>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="#">Settings</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                </>
+              )}
+              <BreadcrumbItem>
+                <BreadcrumbPage>{activeItem?.name || "Settings"}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+        {!isMobile && (
           <Button 
             variant="ghost" 
             size="icon" 
@@ -153,37 +155,87 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
           >
             <XIcon className="h-5 w-5" />
           </Button>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 pt-0">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <div
-              key={i}
-              className="aspect-video max-w-3xl rounded-xl bg-muted/50"
-            />
-          ))}
-        </div>
-      </main>
-      )}
-    </SidebarProvider>
+        )}
+      </header>
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <div
+            key={i}
+            className="aspect-video max-w-3xl rounded-xl bg-muted/50"
+          />
+        ))}
+      </div>
+    </main>
   )
 
-  if (isPage) {
-    return <div className="bg-background">{content}</div>
+  // Mobile Flow
+  if (isMobile && !isPage) {
+    if (showMobilePanel) {
+      return (
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+          <DialogContent 
+            showCloseButton={false}
+            className="fixed inset-0 z-50 flex h-dvh w-full! max-w-none! flex-col border-none p-0 bg-background translate-x-0! translate-y-0! left-0! top-0! rounded-none!"
+          >
+            <DialogTitle className="sr-only">{activeItem?.name || "Settings"}</DialogTitle>
+            <DialogDescription className="sr-only">
+              Configure your {(activeItem?.name || "settings").toLowerCase()} settings.
+            </DialogDescription>
+            {mainContent}
+          </DialogContent>
+        </Dialog>
+      )
+    }
+
+    return (
+      <Drawer open={open} onOpenChange={handleOpenChange}>
+        <DrawerContent className="outline-none h-[80dvh]">
+          <DrawerHeader className="p-4 border-b">
+            <DrawerTitle>Settings</DrawerTitle>
+            <DrawerDescription>Select a setting to configure.</DrawerDescription>
+          </DrawerHeader>
+          <div className="p-2 overflow-y-auto">
+            <SidebarProvider className="min-h-0">
+              <Sidebar collapsible="none" className="w-full">
+                <SidebarContent>
+                  <SidebarGroup>
+                    <SidebarGroupContent>
+                      {sidebarContent}
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                </SidebarContent>
+              </Sidebar>
+            </SidebarProvider>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    )
   }
 
+  // Desktop Flow
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent 
         showCloseButton={false}
-        className="overflow-hidden p-0 md:max-h-[500px] md:max-w-[700px] lg:max-w-[800px] sm:max-w-[100vw] sm:h-dvh md:h-auto"
+        className="overflow-hidden p-0 md:max-h-[500px] md:max-w-[700px] lg:max-w-[800px]"
       >
         <DialogTitle className="sr-only">Settings</DialogTitle>
         <DialogDescription className="sr-only">
           Customize your settings here.
         </DialogDescription>
-        {content}
+        <SidebarProvider className="items-start">
+          <Sidebar collapsible="none" className="w-64 border-r">
+            <SidebarContent>
+              <SidebarGroup>
+                <SidebarGroupContent>
+                  {sidebarContent}
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </SidebarContent>
+          </Sidebar>
+          {mainContent}
+        </SidebarProvider>
       </DialogContent>
     </Dialog>
   )
 }
-
