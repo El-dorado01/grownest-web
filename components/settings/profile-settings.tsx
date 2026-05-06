@@ -7,10 +7,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui/field"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, CameraIcon, CheckCircle2, XCircle } from "lucide-react"
 import { toast } from "sonner"
 
-export function ProfileSettings() {
+interface ProfileSettingsProps {
+  onNavigate?: (viewName: string) => void
+}
+
+export function ProfileSettings({ onNavigate }: ProfileSettingsProps = {}) {
   const { user } = useAuth()
   const [profile, setProfile] = React.useState<any>(null)
   const [isLoading, setIsLoading] = React.useState(true)
@@ -111,7 +116,7 @@ export function ProfileSettings() {
     .substring(0, 2)
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-8 pb-10">
+    <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-6 md:gap-8 pb-6 md:pb-10">
       <div className="flex flex-col items-center gap-6 sm:flex-row">
         <div className="relative group">
           <Avatar className="h-28 w-28 border-4 border-background shadow-xl">
@@ -164,16 +169,16 @@ export function ProfileSettings() {
           </Field>
           <Field>
             <FieldLabel>Gender</FieldLabel>
-            <select 
-               value={gender}
-               onChange={(e) => setGender(e.target.value)}
-               className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-size-[1.25rem_1.25rem] bg-position-[right_0.5rem_center] bg-no-repeat"
-            >
-              <option value="">Select Gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
+            <Select value={gender} onValueChange={setGender}>
+              <SelectTrigger className="h-11! w-full bg-background">
+                <SelectValue placeholder="Select Gender" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Male">Male</SelectItem>
+                <SelectItem value="Female">Female</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
           </Field>
         </div>
 
@@ -195,10 +200,22 @@ export function ProfileSettings() {
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-1.5 mt-2">
-              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${profile?.isPhoneVerified ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                {profile?.isPhoneVerified ? 'Verified' : 'Unverified'}
-              </span>
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center gap-1.5">
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${profile?.isPhoneVerified ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                  {profile?.isPhoneVerified ? 'Verified' : 'Unverified'}
+                </span>
+              </div>
+              <button 
+                type="button" 
+                onClick={(e) => {
+                  e.preventDefault()
+                  onNavigate?.("Update Phone Number")
+                }}
+                className="text-xs font-medium text-primary hover:underline underline-offset-4"
+              >
+                New number? Update now
+              </button>
             </div>
           </Field>
         </div>
@@ -232,8 +249,14 @@ export function ProfileSettings() {
           disabled={isSubmitting} 
           className="h-11 px-10 font-semibold shadow-lg shadow-primary/20 transition-all hover:shadow-primary/40 active:scale-[0.98]"
         >
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Update Profile
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Updating...
+            </>
+          ) : (
+            "Update Profile"
+          )}
         </Button>
       </div>
     </form>

@@ -37,4 +37,22 @@ export const authApi = {
 
   resetPassword: (data: { token: string; password: string }) =>
     api.post<{ message: string }>("/api/auth/reset-password", data),
+
+  sendPhoneOtp: (data: { userId: string; phone: string }) =>
+    api.post<{ message: string }>("/api/auth/phone/send-code", data),
+
+  verifyPhoneOtp: (data: { userId: string; code: string }) =>
+    api.post<{ message: string }>("/api/auth/phone/verify-code", data),
+
+  setup2FA: (data: { userId: string; phone?: string }) =>
+    api.post<{ message: string }>("/api/auth/2fa/setup", data),
+
+  verify2FASetup: (data: { userId: string; code: string }) =>
+    api.post<{ message: string }>("/api/auth/2fa/verify", data),
+
+  disable2FA: (data: { userId: string; pin?: string }) =>
+    api.post<{ message: string }>("/api/auth/2fa/disable", data),
+
+  deleteAccount: (data: { userId: string }) =>
+    api.delete<{ message: string; deletionScheduledAt: string }>("/api/auth/deleteUser", data),
 };

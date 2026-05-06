@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sidebar"
 
 import { SettingsDialog } from "@/components/settings-dialog"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useSearchParams } from "next/navigation"
 import { useAuth } from "@/context/auth-context"
 import { authApi } from "@/lib/auth-api"
@@ -30,6 +31,7 @@ import {
   TrendingUpIcon,
   TrendingDownIcon,
   Loader2Icon,
+  RotateCcw
 } from "lucide-react"
 import {
   Card,
@@ -44,7 +46,7 @@ import { format } from "date-fns"
 
 function Dashboard() {
   const searchParams = useSearchParams()
-  const { user: authUser, isAuthenticated } = useAuth()
+  const { user: authUser, isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const [isInitialLoad, setIsInitialLoad] = React.useState(true)
   const [showBalance, setShowBalance] = React.useState(true)
   const [dashboardData, setDashboardData] = React.useState<{
@@ -53,31 +55,48 @@ function Dashboard() {
     profile: any
   } | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
+  const [isRefreshing, setIsRefreshing] = React.useState(false)
+
+  const fetchDashboardData = React.useCallback(async (isManualRefresh = false, isBackground = false) => {
+    if (isManualRefresh) {
+      setIsRefreshing(true)
+    } else if (!isBackground) {
+      setIsLoading(true)
+    }
+
+    try {
+      const { data } = await authApi.getProfile()
+      if (data) {
+        setDashboardData({
+          balance: data.balance || 0,
+          recentActivity: data.recentActivity || [],
+          profile: data.profile || {},
+        })
+      }
+    } catch (error) {
+      console.error("Failed to fetch dashboard data")
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }, [])
 
   React.useEffect(() => {
     setIsInitialLoad(false)
 
     if (isAuthenticated) {
-      authApi
-        .getProfile()
-        .then(({ data }) => {
-          if (data) {
-            setDashboardData({
-              balance: data.balance || 0,
-              recentActivity: data.recentActivity || [],
-              profile: data.profile || {},
-            })
-          }
-          setIsLoading(false)
-        })
-        .catch(() => {
-          setIsLoading(false)
-        })
-    } else {
-      // If we're not authenticated after initial load, stop loading
+      fetchDashboardData(false, false)
+
+      // Set up auto-refresh every 10 minutes (600,000 ms)
+      const intervalId = setInterval(() => {
+        fetchDashboardData(false, true)
+      }, 600000)
+
+      return () => clearInterval(intervalId)
+    } else if (!isAuthLoading) {
       setIsLoading(false)
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, isAuthLoading, fetchDashboardData])
 
   const showSettingsAsPage =
     isInitialLoad && searchParams.get("settings") === "true"
@@ -133,14 +152,20 @@ function Dashboard() {
         <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
           {/* Greeting Section */}
           <section>
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
               Hello,{" "}
-              {dashboardData?.profile?.firstName ||
-                authUser?.firstName ||
-                "GrowNester"}
-              ! 👋
+              {isLoading ? (
+                <Skeleton className="inline-block h-8 w-32" />
+              ) : (
+                <>
+                  {dashboardData?.profile?.firstName ||
+                    authUser?.firstName ||
+                    "GrowNester"}
+                  ! 👋
+                </>
+              )}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="mt-1 text-muted-foreground">
               Welcome back. Here's what's happening with your account today.
             </p>
           </section>
@@ -156,29 +181,44 @@ function Dashboard() {
                 <CardTitle className="text-sm font-medium">
                   Total Balance
                 </CardTitle>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowBalance(!showBalance)}
-                  className="h-8 w-8"
-                >
-                  {showBalance ? (
-                    <EyeOffIcon size={16} />
-                  ) : (
-                    <EyeIcon size={16} />
-                  )}
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => fetchDashboardData(true)}
+                    disabled={isRefreshing}
+                    className="h-8 w-8 text-muted-foreground"
+                  >
+                    <RotateCcw
+                      className={isRefreshing ? "animate-spin" : ""}
+                      size={16}
+                    />
+                    <span className="sr-only">Refresh Balance</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowBalance(!showBalance)}
+                    className="h-8 w-8 text-muted-foreground"
+                  >
+                    {showBalance ? (
+                      <EyeOffIcon size={16} />
+                    ) : (
+                      <EyeIcon size={16} />
+                    )}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
-                  <div className="flex h-10 items-center gap-2">
-                    <Loader2Icon className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <div className="flex h-10 items-center">
+                    <Skeleton className="h-10 w-48" />
                   </div>
                 ) : (
                   <div className="text-4xl font-bold">
                     <span
                       key={showBalance ? "show" : "hide"}
-                      className="inline-block animate-in fade-in slide-in-from-bottom-1 duration-300"
+                      className="inline-block animate-in duration-300 fade-in slide-in-from-bottom-1"
                     >
                       {showBalance
                         ? formatCurrency(dashboardData?.balance || 0)
@@ -255,17 +295,17 @@ function Dashboard() {
                     key={activity.id}
                     className="flex items-center justify-between rounded-xl border bg-card p-4 transition-colors hover:bg-muted/50"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50">
+                    <div className="flex flex-1 items-center gap-4 min-w-0">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted/50">
                         {getTransactionIcon(activity)}
                       </div>
-                      <div>
-                        <p className="font-medium capitalize">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium capitalize truncate">
                           {activity.narration ||
                             activity.method?.replace("_", " ") ||
                             "Transaction"}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground truncate">
                           {activity.date
                             ? format(
                                 new Date(activity.date),
@@ -275,7 +315,7 @@ function Dashboard() {
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0 ml-4">
                       <p
                         className={`font-semibold ${activity.type === "credit" ? "text-green-500" : "text-foreground"}`}
                       >

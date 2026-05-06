@@ -45,15 +45,19 @@ import {
   ShieldCheckIcon,
   XIcon,
   ChevronLeftIcon,
-  MenuIcon
+  MenuIcon,
+  SmartphoneIcon
 } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { ProfileSettings } from "./settings/profile-settings"
+import { UpdatePhoneNumber } from "./settings/update-phone-number"
+import { PrivacySecurity } from "./settings/privacy-security"
 
 const data = {
   nav: [
     { name: "Notifications", icon: <BellIcon /> },
     { name: "Profile Settings", icon: <UserIcon /> },
+    { name: "Update Phone Number", icon: <SmartphoneIcon /> },
     { name: "Appearance", icon: <PaintbrushIcon /> },
     { name: "Delivery Addresses", icon: <MapPinIcon /> },
     { name: "Bank & Cards", icon: <CreditCardIcon /> },
@@ -160,7 +164,14 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
       </header>
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 md:p-6">
         {activeItem?.name === "Profile Settings" ? (
-          <ProfileSettings />
+          <ProfileSettings onNavigate={(view) => {
+            const target = data.nav.find(i => i.name === view)
+            if (target) setActiveItem(target)
+          }} />
+        ) : activeItem?.name === "Update Phone Number" ? (
+          <UpdatePhoneNumber />
+        ) : activeItem?.name === "Privacy & Security" ? (
+          <PrivacySecurity />
         ) : (
           <div className="flex flex-col gap-4">
             {Array.from({ length: 5 }).map((_, i) => (

@@ -165,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           pendingUserId: null,
         });
 
-        router.push("/");
+        // Redirect is handled by the calling component
         return { success: true };
       }
 
@@ -228,7 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       toast.success("2FA verification successful");
-      router.push("/");
+      window.location.href = "/";
       return { success: true };
     },
     [state.pendingUserId, router]

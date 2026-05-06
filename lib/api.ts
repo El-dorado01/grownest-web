@@ -194,8 +194,9 @@ export const api = {
 
   delete: <T>(
     endpoint: string,
+    body?: unknown,
     options?: Omit<FetchOptions, "method" | "body">
-  ) => apiFetch<T>(endpoint, { ...options, method: "DELETE" }),
+  ) => apiFetch<T>(endpoint, { ...options, method: "DELETE", body }),
 };
 
 export default api;

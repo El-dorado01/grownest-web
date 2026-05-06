@@ -45,10 +45,14 @@ export function LoginForm({
 
       if (!result.success) {
         toast.error(result.error || "Login failed")
+        setIsSubmitting(false)
+      } else {
+        toast.success("Login successful!")
+        // Use window.location to force a hard reload and bypass any router cache issues
+        window.location.href = "/"
       }
     } catch (err) {
       toast.error("An unexpected error occurred. Please try again.")
-    } finally {
       setIsSubmitting(false)
     }
   }
