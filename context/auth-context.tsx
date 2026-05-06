@@ -23,7 +23,7 @@ import { toast } from "sonner";
 interface AuthContextValue extends AuthState {
   login: (
     credentials: LoginRequest
-  ) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<{ success: boolean; error?: string; requires2FA?: boolean }>;
   register: (
     data: any
   ) => Promise<{ success: boolean; error?: string }>;
@@ -145,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           pendingUserId: data.userId,
         });
         router.push("/login/verify");
-        return { success: true };
+        return { success: true, requires2FA: true };
       }
 
       if (data.token) {

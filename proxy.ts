@@ -11,6 +11,7 @@ export function proxy(request: NextRequest) {
   }
 
   // If user is already authenticated and tries to visit login/signup, redirect to home
+  // Exception: /login/verify is allowed during the 2FA flow (temp token, not full auth)
   if (token && (pathname.startsWith('/login') || pathname.startsWith('/signup'))) {
     return NextResponse.redirect(new URL('/', request.url))
   }
@@ -19,5 +20,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/login', '/signup'],
+  matcher: ['/', '/login', '/login/verify', '/signup'],
 }

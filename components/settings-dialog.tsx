@@ -51,7 +51,9 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile"
 import { ProfileSettings } from "./settings/profile-settings"
 import { UpdatePhoneNumber } from "./settings/update-phone-number"
+import { AppearanceSettings } from "./settings/appearance-settings"
 import { PrivacySecurity } from "./settings/privacy-security"
+import { SetupNestPursePin } from "./settings/setup-nestpurse-pin"
 
 const data = {
   nav: [
@@ -172,6 +174,10 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
           <UpdatePhoneNumber />
         ) : activeItem?.name === "Privacy & Security" ? (
           <PrivacySecurity />
+        ) : activeItem?.name === "Appearance" ? (
+          <AppearanceSettings />
+        ) : activeItem?.name === "Setup NestPurse pin" ? (
+          <SetupNestPursePin />
         ) : (
           <div className="flex flex-col gap-4">
             {Array.from({ length: 5 }).map((_, i) => (

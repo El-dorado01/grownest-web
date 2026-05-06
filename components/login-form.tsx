@@ -46,6 +46,9 @@ export function LoginForm({
       if (!result.success) {
         toast.error(result.error || "Login failed")
         setIsSubmitting(false)
+      } else if (result.requires2FA) {
+        // 2FA redirect is handled by auth context — show info toast, not success
+        toast.info("Verification code sent. Please check your messages.")
       } else {
         toast.success("Login successful!")
         // Use window.location to force a hard reload and bypass any router cache issues

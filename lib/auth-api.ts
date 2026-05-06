@@ -9,7 +9,10 @@ export const authApi = {
     api.post<{ message: string; userId: string }>("/api/auth/register", data),
 
   verify2FA: (data: { userId: string; code: string }) =>
-    api.post<LoginResponse>("/api/auth/verify-2fa", data),
+    api.post<LoginResponse>("/api/auth/login/2fa", data),
+
+  resend2FALogin: (data: { userId: string }) =>
+    api.post<{ message: string }>("/api/auth/login/2fa/resend", data),
 
   logout: () => api.post("/api/auth/logout", {}),
   getProfile: () => api.get<{ 
@@ -44,7 +47,7 @@ export const authApi = {
   verifyPhoneOtp: (data: { userId: string; code: string }) =>
     api.post<{ message: string }>("/api/auth/phone/verify-code", data),
 
-  setup2FA: (data: { userId: string; phone?: string }) =>
+  setup2FA: (data: { userId: string; phone?: string; medium?: "email" | "phone" }) =>
     api.post<{ message: string }>("/api/auth/2fa/setup", data),
 
   verify2FASetup: (data: { userId: string; code: string }) =>
@@ -55,4 +58,18 @@ export const authApi = {
 
   deleteAccount: (data: { userId: string }) =>
     api.delete<{ message: string; deletionScheduledAt: string }>("/api/auth/deleteUser", data),
+
+  // NestPurse PIN Management
+  setNestPursePin: (data: { newPin: string }) =>
+    api.post<{ message: string }>("/api/nestpurse/set-pin", data),
+
+  requestPinUpdateOtp: (data: { currentPin: string; otpMedium: "email" | "sms" }) =>
+    api.post<{ message: string; sessionId: string; expiresIn: number }>(
+      "/api/nestpurse/set-pin",
+      data
+    ),
+
+  verifyPinUpdateOtp: (data: { sessionId: string; otp: string }) =>
+    api.post<{ message: string }>("/api/nestpurse/set-pin", data),
 };
+

@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog"
-import { Loader2, AlertTriangle, CheckCircle2, KeyRound, Mail, SmartphoneIcon } from "lucide-react"
+import { Loader2, AlertTriangle, CheckCircle2, Mail, SmartphoneIcon } from "lucide-react"
 import { toast } from "sonner"
 
 type TwoFAStep = "idle" | "choose_medium" | "pending_otp" | "success"
@@ -66,7 +66,7 @@ export function PrivacySecurity() {
     if (!user?.userId) return
     setTwoFASubmitting(true)
     try {
-      const result = await authApi.setup2FA({ userId: user.userId })
+      const result = await authApi.setup2FA({ userId: user.userId, medium: twoFAMedium })
       if (result.data) {
         setTwoFAStep("pending_otp")
         setTwoFACountdown(60)
@@ -143,8 +143,11 @@ export function PrivacySecurity() {
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center py-12 gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground font-medium animate-pulse">
+          Loading security settings...
+        </p>
       </div>
     )
   }
@@ -204,7 +207,7 @@ export function PrivacySecurity() {
         {!is2FAEnabled && twoFAStep === "choose_medium" && (
           <div className="border-t px-4 py-4 md:px-5 space-y-4 bg-muted/30">
             <p className="text-sm text-muted-foreground">
-              Choose how you'd like to receive your verification code.
+              Choose how you&apos;d like to receive your verification code.
             </p>
             <div className="flex gap-3">
               <button
@@ -362,47 +365,68 @@ export function PrivacySecurity() {
         </Button>
 
         <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { setShowDeleteDialog(open); if (!open) setDeleteConfirmText("") }}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-                <AlertTriangle className="h-5 w-5" />
-                Schedule Account Deletion
-              </AlertDialogTitle>
-              <AlertDialogDescription className="space-y-3">
-                <span className="block">
-                  This will schedule your account for <strong>permanent deletion after 30 days</strong>. All your data, savings, and activity history will be permanently erased.
-                </span>
-                <span className="block font-medium text-foreground">This action cannot be undone.</span>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
+          <AlertDialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            {/* Centered warning icon */}
+            <div className="flex flex-col items-center text-center pt-2 pb-1">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 ring-4 ring-destructive/5 mb-4">
+                <AlertTriangle className="h-7 w-7 text-destructive" />
+              </div>
+              <AlertDialogHeader className="space-y-1.5 sm:text-center">
+                <AlertDialogTitle className="text-lg">Delete your account?</AlertDialogTitle>
+                <AlertDialogDescription className="text-sm leading-relaxed text-muted-foreground">
+                  Your account will be scheduled for permanent deletion after a <strong className="text-foreground">30-day grace period</strong>. During this time you can contact support to cancel.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+            </div>
 
-            <div className="px-1 py-2">
-              <Field>
-                <FieldLabel htmlFor="delete-confirm">
-                  Type <strong className="text-destructive font-mono">DELETE</strong> to confirm
-                </FieldLabel>
+            {/* Consequences list */}
+            <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 space-y-1.5 text-sm">
+              <p className="font-medium text-destructive text-xs uppercase tracking-wider">What will be deleted</p>
+              <ul className="space-y-1 text-muted-foreground">
+                <li className="flex items-start gap-2"><span className="text-destructive mt-0.5">•</span>Your profile, savings goals &amp; transaction history</li>
+                <li className="flex items-start gap-2"><span className="text-destructive mt-0.5">•</span>All wallet balances &amp; connected payment methods</li>
+                <li className="flex items-start gap-2"><span className="text-destructive mt-0.5">•</span>Store listings, products &amp; customer data</li>
+              </ul>
+            </div>
+
+            {/* Confirmation input */}
+            <div className="space-y-2">
+              <FieldLabel htmlFor="delete-confirm" className="text-sm">
+                Type <strong className="text-destructive font-mono">DELETE</strong> below to confirm
+              </FieldLabel>
+              <div className="relative">
                 <Input
                   id="delete-confirm"
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
                   placeholder="DELETE"
-                  className="h-11 font-mono border-destructive/40 focus-visible:ring-destructive/30"
+                  className={`h-11 font-mono tracking-wider pr-10 transition-colors ${
+                    deleteConfirmText === "DELETE"
+                      ? "border-green-500 focus-visible:ring-green-500/30"
+                      : "border-destructive/40 focus-visible:ring-destructive/30"
+                  }`}
                   autoComplete="off"
+                  spellCheck={false}
                 />
-              </Field>
+                {deleteConfirmText === "DELETE" && (
+                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500 animate-in fade-in zoom-in duration-200" />
+                )}
+              </div>
             </div>
 
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={deleteSubmitting}>Cancel</AlertDialogCancel>
+            <AlertDialogFooter className="mt-2 gap-2 sm:gap-2">
+              <AlertDialogCancel disabled={deleteSubmitting} className="flex-1 sm:flex-none">
+                Keep my account
+              </AlertDialogCancel>
               <Button
                 variant="destructive"
                 disabled={deleteSubmitting || deleteConfirmText !== "DELETE"}
                 onClick={handleDeleteAccount}
-                className="h-10"
+                className="flex-1 sm:flex-none h-10 transition-all"
               >
                 {deleteSubmitting
                   ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Scheduling...</>
-                  : <><KeyRound className="mr-2 h-4 w-4" />Confirm Deletion</>
+                  : "Delete my account"
                 }
               </Button>
             </AlertDialogFooter>
