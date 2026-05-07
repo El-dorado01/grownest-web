@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import React from "react"
 import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google"
 
 import "./globals.css"
@@ -89,7 +90,9 @@ export default function RootLayout({
               <ConnectivityListener />
               <Toaster position="bottom-center" richColors />
             </TooltipProvider>
-                  <SettingsDialog />
+                  <React.Suspense fallback={null}>
+                    <SettingsDialog />
+                  </React.Suspense>
           </AuthProvider>
         </ThemeProvider>
       </body>

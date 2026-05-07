@@ -12,7 +12,7 @@ import { useAuth } from "@/context/auth-context"
 
 type State = "loading" | "not_logged_in" | "accepting" | "success" | "error"
 
-export default function InviteAcceptPage() {
+function InviteAcceptPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
@@ -123,5 +123,13 @@ export default function InviteAcceptPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function Page() {
+  return (
+    <React.Suspense fallback={null}>
+      <InviteAcceptPage />
+    </React.Suspense>
   )
 }
