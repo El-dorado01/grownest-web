@@ -338,7 +338,6 @@ function Dashboard() {
           </section>
         </div>
       </SidebarInset>
-      <SettingsDialog />
     </SidebarProvider>
   )
 }

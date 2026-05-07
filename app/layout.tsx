@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils";
 import { ConnectivityListener } from "@/components/connectivity-listener"
+import { SettingsDialog } from "@/components/settings-dialog"
 
 const spaceGroteskHeading = Space_Grotesk({ subsets: ['latin'], variable: '--font-heading' });
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
@@ -88,6 +89,7 @@ export default function RootLayout({
               <ConnectivityListener />
               <Toaster position="bottom-center" richColors />
             </TooltipProvider>
+                  <SettingsDialog />
           </AuthProvider>
         </ThemeProvider>
       </body>
