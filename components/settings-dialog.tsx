@@ -54,17 +54,18 @@ import { UpdatePhoneNumber } from "./settings/update-phone-number"
 import { AppearanceSettings } from "./settings/appearance-settings"
 import { PrivacySecurity } from "./settings/privacy-security"
 import { SetupNestPursePin } from "./settings/setup-nestpurse-pin"
+import { BankCardsSettings } from "./settings/bank-cards"
 
 const data = {
   nav: [
-    { name: "Notifications", icon: <BellIcon /> },
-    { name: "Profile Settings", icon: <UserIcon /> },
-    { name: "Update Phone Number", icon: <SmartphoneIcon /> },
-    { name: "Appearance", icon: <PaintbrushIcon /> },
-    { name: "Delivery Addresses", icon: <MapPinIcon /> },
-    { name: "Bank & Cards", icon: <CreditCardIcon /> },
-    { name: "Setup NestPurse pin", icon: <KeyIcon /> },
-    { name: "Privacy & Security", icon: <ShieldCheckIcon /> },
+    { name: "Notifications", slug: "notifications", icon: <BellIcon /> },
+    { name: "Profile Settings", slug: "profile", icon: <UserIcon /> },
+    { name: "Update Phone Number", slug: "phone", icon: <SmartphoneIcon /> },
+    { name: "Appearance", slug: "appearance", icon: <PaintbrushIcon /> },
+    { name: "Delivery Addresses", slug: "addresses", icon: <MapPinIcon /> },
+    { name: "Bank & Cards", slug: "billing", icon: <CreditCardIcon /> },
+    { name: "Setup NestPurse pin", slug: "nestpurse", icon: <KeyIcon /> },
+    { name: "Privacy & Security", slug: "security", icon: <ShieldCheckIcon /> },
   ],
 }
 
@@ -81,12 +82,28 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
   const [activeItem, setActiveItem] = React.useState<typeof data.nav[0] | null>(null)
   const [showMobilePanel, setShowMobilePanel] = React.useState(false)
 
-  // Default to Profile Settings on desktop if nothing is selected
+  // Sync active item with query param
   React.useEffect(() => {
-    if (!isMobile && !activeItem && isMobile !== undefined) {
+    const tab = searchParams.get("tab")
+    if (tab) {
+      const item = data.nav.find(i => i.slug === tab)
+      if (item) {
+        setActiveItem(item)
+        if (isMobile) setShowMobilePanel(true)
+      }
+    } else if (!isMobile && !activeItem && isMobile !== undefined) {
+      // Default to Profile Settings on desktop if nothing is selected
       setActiveItem(data.nav[1])
     }
-  }, [isMobile, activeItem])
+  }, [searchParams, isMobile, activeItem])
+
+  const updateTabParam = (slug: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("tab", slug)
+    // Only set settings=true if we're not on a standalone settings page
+    if (!isPage) params.set("settings", "true")
+    router.push(pathname + "?" + params.toString(), { scroll: false })
+  }
 
   // Controlled by query param if not a standalone page
   const open = isPage || searchParams.get("settings") === "true"
@@ -99,6 +116,7 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
       } else {
         const params = new URLSearchParams(searchParams.toString())
         params.delete("settings")
+        params.delete("tab")
         router.push(pathname + (params.toString() ? `?${params.toString()}` : ""))
       }
     }
@@ -111,6 +129,7 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
           <SidebarMenuButton
             onClick={() => {
               setActiveItem(item)
+              updateTabParam(item.slug)
               if (isMobile) setShowMobilePanel(true)
             }}
             isActive={activeItem?.name === item.name}
@@ -168,7 +187,10 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
         {activeItem?.name === "Profile Settings" ? (
           <ProfileSettings onNavigate={(view) => {
             const target = data.nav.find(i => i.name === view)
-            if (target) setActiveItem(target)
+            if (target) {
+              setActiveItem(target)
+              updateTabParam(target.slug)
+            }
           }} />
         ) : activeItem?.name === "Update Phone Number" ? (
           <UpdatePhoneNumber />
@@ -178,6 +200,8 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
           <AppearanceSettings />
         ) : activeItem?.name === "Setup NestPurse pin" ? (
           <SetupNestPursePin />
+        ) : activeItem?.name === "Bank & Cards" ? (
+          <BankCardsSettings />
         ) : (
           <div className="flex flex-col gap-4">
             {Array.from({ length: 5 }).map((_, i) => (

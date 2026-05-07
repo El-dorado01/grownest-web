@@ -69,16 +69,16 @@ export function ConnectivityListener() {
   if (!visible) return null
 
   return (
-    <div className="fixed top-6 right-6 z-9999 pointer-events-none sm:pointer-events-auto">
+    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-9999 pointer-events-none sm:pointer-events-auto">
       <div 
         className={cn(
-          "group flex items-center gap-3 pl-3 pr-4 py-2 rounded-2xl border shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-xl transition-all duration-500 ease-in-out animate-in fade-in slide-in-from-right-8",
+          "group flex items-center gap-3 pl-3 pr-4 py-2.5 rounded-2xl border shadow-[0_20px_50px_rgba(0,0,0,0.2)] backdrop-blur-xl transition-all duration-500 ease-in-out animate-in fade-in slide-in-from-bottom-8 min-w-[320px]",
           state === "offline" && "bg-destructive/10 border-destructive/20 text-destructive",
-          state === "weak" && "bg-warning/10 border-warning/20 text-warning-foreground dark:text-warning",
+          state === "weak" && "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400",
           showBackOnline && "bg-primary/10 border-primary/20 text-primary"
         )}
       >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-background/50 shadow-sm border border-white/10">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background/50 shadow-sm border border-white/10">
           {state === "offline" && <WifiOffIcon className="size-5 animate-pulse" />}
           {state === "weak" && <SignalLowIcon className="size-5 animate-pulse" />}
           {showBackOnline && <WifiIcon className="size-5" />}
@@ -86,19 +86,19 @@ export function ConnectivityListener() {
         
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2">
-            <span className="text-[13px] font-bold tracking-tight">
+            <span className="text-[14px] font-bold tracking-tight">
               {state === "offline" && "Connection Lost"}
-              {state === "weak" && "Weak Signal"}
-              {showBackOnline && "System Restored"}
+              {state === "weak" && "Weak Signal Detected"}
+              {showBackOnline && "Connection Restored"}
             </span>
             {state !== "online" && (
               <span className="flex h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
             )}
           </div>
-          <span className="text-[10px] font-medium opacity-70 leading-none">
-            {state === "offline" && "Check your router or data"}
-            {state === "weak" && "Experiencing slower response"}
-            {showBackOnline && "Back online and syncing"}
+          <span className="text-[11px] font-medium opacity-80 leading-none">
+            {state === "offline" && "Please check your internet settings"}
+            {state === "weak" && "Your connection is currently unstable"}
+            {showBackOnline && "You're back online and ready to go"}
           </span>
         </div>
       </div>

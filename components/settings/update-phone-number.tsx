@@ -7,8 +7,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui/field"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, SmartphoneIcon, CheckCircle2 } from "lucide-react"
+import { Loader2, SmartphoneIcon, CheckCircle2, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const AFRICAN_COUNTRIES = [
   { code: "234", name: "Nigeria", flagId: "ng" },
@@ -37,6 +47,7 @@ export function UpdatePhoneNumber() {
   const [step, setStep] = React.useState<"input" | "verify" | "success">("input")
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [countdown, setCountdown] = React.useState(0)
+  const [showExitConfirm, setShowExitConfirm] = React.useState(false)
 
   React.useEffect(() => {
     if (countdown > 0) {
@@ -44,6 +55,17 @@ export function UpdatePhoneNumber() {
       return () => clearTimeout(timer)
     }
   }, [countdown])
+
+  React.useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (step === "verify") {
+        e.preventDefault()
+        e.returnValue = ""
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [step])
 
   React.useEffect(() => {
     authApi.getProfile().then(({ data }) => {
@@ -158,7 +180,7 @@ export function UpdatePhoneNumber() {
             <Button
               type="submit"
               disabled={isSubmitting || otp.length < 6}
-              className="w-full h-11 text-base shadow-lg shadow-primary/20 transition-all hover:shadow-primary/40 active:scale-[0.98]"
+              className="w-full h-11 text-base shadow-lg shadow-primary/20"
             >
               {isSubmitting ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying...</>
@@ -171,15 +193,51 @@ export function UpdatePhoneNumber() {
 
         <div className="mt-8 text-center border-t pt-6">
           <p className="text-sm text-muted-foreground mb-3">Didn't receive the code?</p>
-          <Button
-            variant="outline"
-            onClick={() => handleSendOtp()}
-            disabled={countdown > 0 || isSubmitting}
-            className="w-full h-11"
-          >
-            {countdown > 0 ? `Resend Code (${countdown}s)` : "Resend Code"}
-          </Button>
+          <div className="flex flex-col gap-3">
+            <Button
+              variant="outline"
+              onClick={() => handleSendOtp()}
+              disabled={countdown > 0 || isSubmitting}
+              className="w-full h-11"
+            >
+              {countdown > 0 ? `Resend Code (${countdown}s)` : "Resend Code"}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowExitConfirm(true)
+              }}
+              className="w-full h-11 text-muted-foreground"
+            >
+              Cancel and Go Back
+            </Button>
+          </div>
         </div>
+
+        <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+          <AlertDialogContent className="max-w-[400px] rounded-2xl p-6">
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertTriangle className="h-7 w-7 text-destructive" />
+              </div>
+              <AlertDialogHeader className="space-y-2">
+                <AlertDialogTitle className="text-xl font-bold">Cancel Verification?</AlertDialogTitle>
+                <AlertDialogDescription className="text-sm text-muted-foreground leading-relaxed">
+                  If you go back now, your current verification attempt will be canceled and you'll need to request a new code.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+            </div>
+            <AlertDialogFooter className="flex-col sm:flex-row gap-3 mt-4">
+              <AlertDialogCancel className="h-12 rounded-xl flex-1 mt-0">Continue Verifying</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => setStep("input")}
+                className="h-12 rounded-xl flex-1 bg-destructive hover:bg-destructive/90"
+              >
+                Yes, Go Back
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     )
   }
@@ -245,7 +303,7 @@ export function UpdatePhoneNumber() {
           <Button
             type="submit"
             disabled={isSubmitting || !phone}
-            className="w-full h-12 text-base shadow-lg shadow-primary/20 transition-all hover:shadow-primary/40 active:scale-[0.98] mt-2"
+            className="w-full h-12 text-base shadow-lg shadow-primary/20 mt-2"
           >
             {isSubmitting ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending Code...</>

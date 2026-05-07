@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Field, FieldLabel, FieldDescription } from "@/components/ui/field"
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -42,6 +43,8 @@ export function PrivacySecurity() {
   const [deleteConfirmText, setDeleteConfirmText] = React.useState("")
   const [deleteSubmitting, setDeleteSubmitting] = React.useState(false)
 
+  const [showExitConfirm, setShowExitConfirm] = React.useState(false)
+
   // Countdown timer
   React.useEffect(() => {
     if (twoFACountdown > 0) {
@@ -49,6 +52,17 @@ export function PrivacySecurity() {
       return () => clearTimeout(timer)
     }
   }, [twoFACountdown])
+
+  React.useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (twoFAStep === "pending_otp") {
+        e.preventDefault()
+        e.returnValue = ""
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [twoFAStep])
 
   React.useEffect(() => {
     authApi.getProfile().then(({ data }) => {
@@ -287,9 +301,48 @@ export function PrivacySecurity() {
               >
                 {twoFACountdown > 0 ? `Resend (${twoFACountdown}s)` : "Resend Code"}
               </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setShowExitConfirm(true)
+                }}
+                disabled={twoFASubmitting}
+                className="h-10 text-muted-foreground"
+              >
+                Cancel
+              </Button>
             </div>
           </form>
         )}
+
+        <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+          <AlertDialogContent className="max-w-[400px] rounded-2xl p-6">
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertTriangle className="h-7 w-7 text-destructive" />
+              </div>
+              <AlertDialogHeader className="space-y-2">
+                <AlertDialogTitle className="text-xl font-bold">Discard 2FA Setup?</AlertDialogTitle>
+                <AlertDialogDescription className="text-sm text-muted-foreground leading-relaxed">
+                  If you cancel now, you&apos;ll need to start the two-factor authentication setup from the beginning.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+            </div>
+            <AlertDialogFooter className="flex-col sm:flex-row gap-3 mt-4">
+              <AlertDialogCancel className="h-11 rounded-xl flex-1 mt-0">Continue Setup</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => {
+                  setTwoFAStep("idle")
+                  setTwoFACode("")
+                }}
+                className="h-11 rounded-xl flex-1 bg-destructive hover:bg-destructive/90"
+              >
+                Yes, Discard
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Success confirmation */}
         {twoFAStep === "success" && (
@@ -357,7 +410,7 @@ export function PrivacySecurity() {
 
         <Button
           variant="outline"
-          className="h-11 border-destructive/50 text-destructive hover:bg-destructive hover:text-white transition-all"
+          className="h-11 border-destructive/50 text-destructive hover:bg-destructive hover:text-white"
           onClick={() => { setDeleteConfirmText(""); setShowDeleteDialog(true) }}
         >
           <AlertTriangle className="mr-2 h-4 w-4" />
@@ -414,15 +467,15 @@ export function PrivacySecurity() {
               </div>
             </div>
 
-            <AlertDialogFooter className="mt-2 gap-2 sm:gap-2">
-              <AlertDialogCancel disabled={deleteSubmitting} className="flex-1 sm:flex-none">
+            <AlertDialogFooter className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-3 h-30 md:h-auto">
+              <AlertDialogCancel disabled={deleteSubmitting} className="h-10 flex-1 sm:flex-none mt-0 order-2 sm:order-1">
                 Keep my account
               </AlertDialogCancel>
               <Button
                 variant="destructive"
                 disabled={deleteSubmitting || deleteConfirmText !== "DELETE"}
                 onClick={handleDeleteAccount}
-                className="flex-1 sm:flex-none h-10 transition-all"
+                className="h-10 flex-1 sm:flex-none order-1 sm:order-2"
               >
                 {deleteSubmitting
                   ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Scheduling...</>

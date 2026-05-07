@@ -10,6 +10,7 @@ import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, CameraIcon, CheckCircle2, XCircle } from "lucide-react"
 import { toast } from "sonner"
+import { ErrorState } from "@/components/error-state"
 
 interface ProfileSettingsProps {
   onNavigate?: (viewName: string) => void
@@ -20,6 +21,7 @@ export function ProfileSettings({ onNavigate }: ProfileSettingsProps = {}) {
   const [profile, setProfile] = React.useState<any>(null)
   const [isLoading, setIsLoading] = React.useState(true)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [error, setError] = React.useState(false)
 
   // Form states
   const [fullName, setFullName] = React.useState("")
@@ -29,14 +31,18 @@ export function ProfileSettings({ onNavigate }: ProfileSettingsProps = {}) {
   const [avatar, setAvatar] = React.useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = React.useState<string>("")
 
-  React.useEffect(() => {
-    authApi.getProfile().then(({ data }) => {
+  const loadProfile = React.useCallback(async () => {
+    setIsLoading(true)
+    setError(false)
+    try {
+      const { data, error: apiError } = await authApi.getProfile()
+      if (apiError) throw new Error(apiError)
+      
       if (data?.profile) {
         const p = data.profile
         setProfile(p)
         setFullName(p.fullName || "")
         if (p.dob) {
-           // Format Date to YYYY-MM-DD for input type="date"
            try {
              const d = new Date(p.dob)
              if (!isNaN(d.getTime())) {
@@ -50,9 +56,17 @@ export function ProfileSettings({ onNavigate }: ProfileSettingsProps = {}) {
         setAddress(p.address || "")
         setAvatarPreview(p.profilePhoto || "")
       }
+    } catch (err) {
+      console.error("Failed to load profile:", err)
+      setError(true)
+    } finally {
       setIsLoading(false)
-    })
+    }
   }, [])
+
+  React.useEffect(() => {
+    loadProfile()
+  }, [loadProfile])
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -97,6 +111,18 @@ export function ProfileSettings({ onNavigate }: ProfileSettingsProps = {}) {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-1 items-center justify-center py-10">
+        <ErrorState 
+          title="Couldn't load profile"
+          onRetry={loadProfile}
+          isRetrying={isLoading}
+        />
+      </div>
+    )
   }
 
   if (isLoading) {
