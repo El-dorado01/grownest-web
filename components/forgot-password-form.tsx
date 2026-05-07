@@ -5,7 +5,7 @@ import { authApi } from "@/lib/auth-api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Loader2, ArrowLeft } from "lucide-react"
+import { Loader2, ArrowLeft, Mail } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -113,7 +113,7 @@ export function ForgotPasswordForm({
               Enter your email address and we&apos;ll send you a link to reset your password.
             </p>
           </div>
-          <Field>
+          {/* <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
               id="email"
@@ -124,9 +124,31 @@ export function ForgotPasswordForm({
               required
               disabled={isLoading}
             />
-          </Field>
+          </Field> */}
+            <div className="flex flex-col gap-1.5">
+                    <label htmlFor="email" className="text-sm font-medium text-foreground">
+                      Email Address<span className="text-primary ml-0.5">*</span>
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="youremail@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="pl-9 h-11 bg-card"
+                      />
+                    </div>
+                  </div>
           <Field>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full h-11 mt-1 text-sm font-medium text-foreground"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
