@@ -95,7 +95,7 @@ export default function NotFound() {
       </p>
 
       {/* CTA */}
-      <Button asChild size="lg" className="px-8 rounded-full">
+      <Button asChild size="lg" className="px-8 rounded-full text-foreground">
         <Link href="/">Back to Home</Link>
       </Button>
     </div>
