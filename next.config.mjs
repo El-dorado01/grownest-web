@@ -3,20 +3,16 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'files.paystack.co',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.nomba.com',
+        protocol: "https",
+        hostname: "**",
       },
     ],
   },
   async redirects() {
     return [
       {
-        source: '/dashboard',
-        destination: '/',
+        source: "/dashboard",
+        destination: "/",
         permanent: true,
       },
     ]

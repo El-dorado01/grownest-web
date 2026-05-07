@@ -298,12 +298,15 @@ export function BankCardsSettings() {
               <Field>
                 <FieldLabel className="text-xs">Select Bank</FieldLabel>
                 <Combobox 
-                  value={selectedBankCode || null} 
+                  value={banks.find(b => b.code === selectedBankCode)?.name || null} 
                   onValueChange={(val) => {
-                    const code = val || ""
-                    setSelectedBankCode(code)
-                    if (code && accountNumber.length === 10) {
-                      handleLookup(code, accountNumber)
+                    const bank = banks.find(b => b.name === val)
+                    if (bank) {
+                      setSelectedBankCode(bank.code)
+                      setSearchQuery(bank.name)
+                      if (accountNumber.length === 10) {
+                        handleLookup(bank.code, accountNumber)
+                      }
                     }
                   }}
                   inputValue={searchQuery}
@@ -325,7 +328,14 @@ export function BankCardsSettings() {
                           {(() => {
                             const bank = banks.find(b => b.code === selectedBankCode)
                             return bank?.logo && bank.logo.startsWith("http") ? (
-                              <Image src={bank.logo} alt="" width={100} height={100} className="h-full w-full object-contain" />
+                              <Image 
+                                unoptimized
+                                src={bank.logo} 
+                                alt="" 
+                                width={24} 
+                                height={24} 
+                                className="h-full w-full object-contain" 
+                              />
                             ) : (
                               <Landmark className="h-3.5 w-3.5 text-muted-foreground" />
                             )
@@ -337,10 +347,17 @@ export function BankCardsSettings() {
                   <ComboboxContent className="z-50">
                     <ComboboxList className="pointer-events-auto">
                       {filteredBanks.map((bank) => (
-                        <ComboboxItem key={bank.code} value={bank.code} className="gap-3">
+                        <ComboboxItem key={bank.code} value={bank.name} className="gap-3">
                           <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted overflow-hidden border border-border/50">
                             {bank.logo && bank.logo.startsWith("http") ? (
-                              <Image src={bank.logo} alt="" width={100} height={100} className="h-full w-full object-contain" />
+                              <Image 
+                                unoptimized
+                                src={bank.logo} 
+                                alt="" 
+                                width={24} 
+                                height={24} 
+                                className="h-full w-full object-contain" 
+                              />
                             ) : (
                               <Landmark className="h-3.5 w-3.5 text-muted-foreground" />
                             )}
