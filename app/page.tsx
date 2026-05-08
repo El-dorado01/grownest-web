@@ -43,6 +43,7 @@ import {
 import { Button } from "@/components/ui/button"
 import * as React from "react"
 import { format } from "date-fns"
+import { ErrorState } from "@/components/error-state"
 
 function Dashboard() {
   const searchParams = useSearchParams()
@@ -56,6 +57,7 @@ function Dashboard() {
   } | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
+  const [error, setError] = React.useState(false)
 
   const fetchDashboardData = React.useCallback(async (isManualRefresh = false, isBackground = false) => {
     if (isManualRefresh) {
@@ -63,9 +65,12 @@ function Dashboard() {
     } else if (!isBackground) {
       setIsLoading(true)
     }
+    setError(false)
 
     try {
-      const { data } = await authApi.getProfile()
+      const { data, error: apiError } = await authApi.getProfile()
+      if (apiError) throw new Error(apiError)
+      
       if (data) {
         setDashboardData({
           balance: data.balance || 0,
@@ -74,7 +79,10 @@ function Dashboard() {
         })
       }
     } catch (error) {
-      console.error("Failed to fetch dashboard data")
+      console.error("Failed to fetch dashboard data:", error)
+      if (!isBackground) {
+        setError(true)
+      }
     } finally {
       setIsLoading(false)
       setIsRefreshing(false)
@@ -150,7 +158,17 @@ function Dashboard() {
         </header>
 
         <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-          {/* Greeting Section */}
+          {error ? (
+            <div className="flex flex-1 items-center justify-center">
+              <ErrorState 
+                title="Couldn't load dashboard"
+                onRetry={() => fetchDashboardData(true)}
+                isRetrying={isLoading}
+              />
+            </div>
+          ) : (
+            <>
+              {/* Greeting Section */}
           <section>
             <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
               Hello,{" "}
@@ -336,6 +354,8 @@ function Dashboard() {
               </div>
             )}
           </section>
+            </>
+          )}
         </div>
       </SidebarInset>
     </SidebarProvider>
