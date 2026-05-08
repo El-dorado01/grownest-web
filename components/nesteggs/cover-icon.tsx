@@ -58,13 +58,13 @@ const ICON_MAP: Record<string, LucideIcon> = {
   charity:    HeartHandshake,
 }
 
-interface CoverIconProps extends LucideProps {
+interface CoverIconProps extends Omit<LucideProps, "name"> {
   name: string | null | undefined
 }
 
 /** Renders the Lucide icon for a cover name. Falls back to Egg for unknown/null. */
 export function CoverIcon({ name, ...props }: CoverIconProps) {
-  const Icon = (name && ICON_MAP[name]) ?? Egg
+  const Icon: LucideIcon = name ? (ICON_MAP[name] ?? Egg) : Egg
   return <Icon {...props} />
 }
 
