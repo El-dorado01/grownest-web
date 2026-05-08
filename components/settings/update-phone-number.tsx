@@ -36,10 +36,11 @@ const AFRICAN_COUNTRIES = [
   { code: "263", name: "Zimbabwe", flagId: "zw" },
 ]
 
+import { useProfile } from "@/hooks/use-profile"
+
 export function UpdatePhoneNumber() {
   const { user } = useAuth()
-  const [profile, setProfile] = React.useState<any>(null)
-  const [isLoading, setIsLoading] = React.useState(true)
+  const { profile, isLoading, mutate } = useProfile()
 
   const [countryCode, setCountryCode] = React.useState("234")
   const [phone, setPhone] = React.useState("")
@@ -67,14 +68,8 @@ export function UpdatePhoneNumber() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
   }, [step])
 
-  React.useEffect(() => {
-    authApi.getProfile().then(({ data }) => {
-      if (data?.profile) {
-        setProfile(data.profile)
-      }
-      setIsLoading(false)
-    }).catch(() => setIsLoading(false))
-  }, [])
+
+
 
   const handleSendOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -115,6 +110,7 @@ export function UpdatePhoneNumber() {
       const result = await authApi.verifyPhoneOtp({ userId: user.userId, code: otp })
       if (result.data) {
         setStep("success")
+        mutate() // Refresh profile data to reflect new phone number
         toast.success("Phone number verified successfully!")
       } else {
         toast.error(result.error || "Invalid OTP code")

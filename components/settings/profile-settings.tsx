@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, CameraIcon, CheckCircle2, XCircle } from "lucide-react"
 import { toast } from "sonner"
 import { ErrorState } from "@/components/error-state"
+import { useProfile } from "@/hooks/use-profile"
 
 interface ProfileSettingsProps {
   onNavigate?: (viewName: string) => void
@@ -18,11 +19,11 @@ interface ProfileSettingsProps {
 
 export function ProfileSettings({ onNavigate }: ProfileSettingsProps = {}) {
   const { user } = useAuth()
-  const [profile, setProfile] = React.useState<any>(null)
-  const [isLoading, setIsLoading] = React.useState(true)
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
-  const [error, setError] = React.useState(false)
+  const { profile, isLoading, error, mutate } = useProfile()
 
+
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  
   // Form states
   const [fullName, setFullName] = React.useState("")
   const [dob, setDob] = React.useState("")
@@ -31,42 +32,26 @@ export function ProfileSettings({ onNavigate }: ProfileSettingsProps = {}) {
   const [avatar, setAvatar] = React.useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = React.useState<string>("")
 
-  const loadProfile = React.useCallback(async () => {
-    setIsLoading(true)
-    setError(false)
-    try {
-      const { data, error: apiError } = await authApi.getProfile()
-      if (apiError) throw new Error(apiError)
-      
-      if (data?.profile) {
-        const p = data.profile
-        setProfile(p)
-        setFullName(p.fullName || "")
-        if (p.dob) {
-           try {
-             const d = new Date(p.dob)
-             if (!isNaN(d.getTime())) {
-                setDob(d.toISOString().split('T')[0])
-             }
-           } catch (e) {
-             console.error("Invalid DOB format:", p.dob)
-           }
-        }
-        setGender(p.gender || "")
-        setAddress(p.address || "")
-        setAvatarPreview(p.profilePhoto || "")
-      }
-    } catch (err) {
-      console.error("Failed to load profile:", err)
-      setError(true)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
+  // Sync form state when profile data is loaded
   React.useEffect(() => {
-    loadProfile()
-  }, [loadProfile])
+    if (profile) {
+      setFullName(profile.fullName || "")
+      if (profile.dob) {
+        try {
+          const d = new Date(profile.dob)
+          if (!isNaN(d.getTime())) {
+            setDob(d.toISOString().split('T')[0])
+          }
+        } catch (e) {
+          console.error("Invalid DOB format:", profile.dob)
+        }
+      }
+      setGender(profile.gender || "")
+      setAddress(profile.address || "")
+      setAvatarPreview(profile.profilePhoto || "")
+    }
+  }, [profile])
+
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -102,7 +87,7 @@ export function ProfileSettings({ onNavigate }: ProfileSettingsProps = {}) {
 
       if (result.data) {
         toast.success("Profile updated successfully")
-        // Update local state if needed or refresh profile
+        mutate() // Refresh profile data
       } else {
         toast.error(result.error || "Failed to update profile")
       }
@@ -118,7 +103,7 @@ export function ProfileSettings({ onNavigate }: ProfileSettingsProps = {}) {
       <div className="flex flex-1 items-center justify-center py-10">
         <ErrorState 
           title="Couldn't load profile"
-          onRetry={loadProfile}
+          onRetry={() => mutate()}
           isRetrying={isLoading}
         />
       </div>

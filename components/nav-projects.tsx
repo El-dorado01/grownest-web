@@ -17,6 +17,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { MoreHorizontalIcon, FolderIcon, ShareIcon, Trash2Icon } from "lucide-react"
+import Link from "next/link"
+
 
 export function NavProjects({
   projects,
@@ -27,7 +29,8 @@ export function NavProjects({
     icon: React.ReactNode
   }[]
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile, setOpenMobile } = useSidebar()
+
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -35,12 +38,13 @@ export function NavProjects({
       <SidebarMenu className="gap-1">
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
-              <a href={item.url}>
+            <SidebarMenuButton asChild onClick={() => setOpenMobile(false)}>
+              <Link href={item.url}>
                 {item.icon}
                 <span>{item.name}</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction

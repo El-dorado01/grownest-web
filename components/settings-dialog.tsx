@@ -55,6 +55,8 @@ import { AppearanceSettings } from "./settings/appearance-settings"
 import { PrivacySecurity } from "./settings/privacy-security"
 import { SetupNestPursePin } from "./settings/setup-nestpurse-pin"
 import { BankCardsSettings } from "./settings/bank-cards"
+import { DeliveryAddressesSettings } from "./settings/delivery-addresses"
+
 
 const data = {
   nav: [
@@ -185,7 +187,7 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
       </header>
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 md:p-6">
         {activeItem?.name === "Profile Settings" ? (
-          <ProfileSettings onNavigate={(view) => {
+          <ProfileSettings onNavigate={(view: string) => {
             const target = data.nav.find(i => i.name === view)
             if (target) {
               setActiveItem(target)
@@ -202,7 +204,10 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
           <SetupNestPursePin />
         ) : activeItem?.name === "Bank & Cards" ? (
           <BankCardsSettings />
+        ) : activeItem?.name === "Delivery Addresses" ? (
+          <DeliveryAddressesSettings />
         ) : (
+
           <div className="flex flex-col gap-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <div

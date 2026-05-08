@@ -19,7 +19,9 @@ import {
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
+import useSWR from "swr"
 import { ErrorState } from "@/components/error-state"
+
 import {
   Combobox,
   ComboboxInput,
@@ -42,12 +44,24 @@ import {
 import Image from "next/image"
 
 export function BankCardsSettings() {
-  const [accounts, setAccounts] = React.useState<LinkedAccount[]>([])
-  const [banks, setBanks] = React.useState<Bank[]>([])
+  const { data: accountsRes, error: accountsError, isLoading: accountsLoading, mutate: mutateAccounts } = useSWR(
+    "linked-accounts",
+    () => nestPurseApi.getLinkedAccounts()
+  )
+
+  const { data: banksRes, error: banksError, isLoading: banksLoading } = useSWR(
+    "banks-list",
+    () => nestPurseApi.getBanks()
+  )
+
+  const accounts = accountsRes?.data?.linkedAccounts || []
+  const banks = banksRes?.data?.banks || []
+  const isLoading = accountsLoading || banksLoading
+  const error = !!(accountsError || banksError || accountsRes?.error || banksRes?.error)
+
   const [searchQuery, setSearchQuery] = React.useState("")
-  const [isLoading, setIsLoading] = React.useState(true)
-  const [error, setError] = React.useState<boolean>(false)
   const [showLinkForm, setShowLinkForm] = React.useState(false)
+
 
   // Filtered banks based on search
   const filteredBanks = React.useMemo(() => {
@@ -74,33 +88,8 @@ export function BankCardsSettings() {
   // Set Primary state
   const [isSettingPrimary, setIsSettingPrimary] = React.useState<string | null>(null)
 
-  React.useEffect(() => {
-    fetchData()
-  }, [])
 
-  const fetchData = async () => {
-    setIsLoading(true)
-    setError(false)
-    try {
-      const [accountsRes, banksRes] = await Promise.all([
-        nestPurseApi.getLinkedAccounts(),
-        nestPurseApi.getBanks()
-      ])
-      
-      if (accountsRes.error || banksRes.error) {
-        throw new Error(accountsRes.error || banksRes.error || "Unknown error occurred")
-      }
-      
-      if (accountsRes.data) setAccounts(accountsRes.data.linkedAccounts)
-      if (banksRes.data) setBanks(banksRes.data.banks)
-    } catch (error) {
-      console.error("Failed to fetch bank data:", error)
-      setError(true)
-      toast.error("Failed to load bank accounts")
-    } finally {
-      setIsLoading(false)
-    }
-  }
+
 
   const handleLookup = async (code: string, number: string) => {
     if (number.length !== 10) return
@@ -142,7 +131,7 @@ export function BankCardsSettings() {
         toast.success("Account linked successfully")
         setShowLinkForm(false)
         resetForm()
-        fetchData()
+        mutateAccounts()
       }
     } catch (err) {
       toast.error("Failed to link account")
@@ -163,7 +152,7 @@ export function BankCardsSettings() {
         toast.error(error)
       } else {
         toast.success("Primary account updated")
-        await fetchData()
+        await mutateAccounts()
       }
     } catch (err) {
       toast.error("Failed to update primary account")
@@ -189,7 +178,7 @@ export function BankCardsSettings() {
         toast.error(error)
       } else {
         toast.success("Account unlinked successfully")
-        fetchData()
+        mutateAccounts()
       }
     } catch (err) {
       toast.error("Failed to unlink account")
@@ -264,7 +253,7 @@ export function BankCardsSettings() {
             transition={{ duration: 0.2 }}
           >
             <ErrorState 
-              onRetry={fetchData} 
+              onRetry={() => mutateAccounts()} 
               isRetrying={isLoading} 
             />
           </motion.div>
@@ -275,24 +264,27 @@ export function BankCardsSettings() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="rounded-2xl border border-primary/20 bg-primary/5 p-5 space-y-6"
+            className="flex flex-col gap-6 py-2"
           >
-            <div className="flex items-center gap-2 -ml-1">
+            <div className="flex flex-col gap-4">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-8 rounded-full gap-1 pl-1 pr-3 hover:bg-primary/10" 
+                className="w-fit -ml-2 rounded-full h-8 gap-1 text-muted-foreground hover:text-foreground"
                 onClick={() => {
                   setShowLinkForm(false)
                   resetForm()
                 }}
               >
                 <ChevronLeft className="h-4 w-4" />
-                <span className="text-sm font-semibold">Back</span>
+                Back
               </Button>
-              <div className="h-4 w-px bg-primary/20 mx-1" />
-              <h4 className="text-xs font-bold uppercase tracking-wider text-primary/70">Link Account</h4>
+              <div className="space-y-1">
+                <h3 className="text-xl font-bold tracking-tight">Link Bank Account</h3>
+                <p className="text-sm text-muted-foreground">Add a new bank account for withdrawals and deposits.</p>
+              </div>
             </div>
+
 
             <div className="grid gap-5">
               <Field>

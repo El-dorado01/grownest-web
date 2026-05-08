@@ -10,8 +10,10 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils";
 import { ConnectivityListener } from "@/components/connectivity-listener"
 import { SettingsDialog } from "@/components/settings-dialog"
+import NextTopLoader from 'nextjs-toploader';
 
 const spaceGroteskHeading = Space_Grotesk({ subsets: ['latin'], variable: '--font-heading' });
+
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
 const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 
@@ -83,8 +85,20 @@ export default function RootLayout({
       className={cn("antialiased", fontMono.variable, "font-sans", geist.variable, spaceGroteskHeading.variable)}
     >
       <body>
+        <NextTopLoader 
+          color="#cca751"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #cca751,0 0 5px #cca751"
+        />
         <ThemeProvider>
           <AuthProvider>
+
             <TooltipProvider>
               {children}
               <ConnectivityListener />

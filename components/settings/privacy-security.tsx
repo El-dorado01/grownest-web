@@ -21,10 +21,11 @@ import { toast } from "sonner"
 
 type TwoFAStep = "idle" | "choose_medium" | "pending_otp" | "success"
 
+import { useProfile } from "@/hooks/use-profile"
+
 export function PrivacySecurity() {
   const { user, logout } = useAuth()
-  const [profile, setProfile] = React.useState<any>(null)
-  const [isLoading, setIsLoading] = React.useState(true)
+  const { profile, isLoading, mutate } = useProfile()
 
   // 2FA state
   const [twoFAStep, setTwoFAStep] = React.useState<TwoFAStep>("idle")
@@ -64,12 +65,8 @@ export function PrivacySecurity() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
   }, [twoFAStep])
 
-  React.useEffect(() => {
-    authApi.getProfile().then(({ data }) => {
-      if (data?.profile) setProfile(data.profile)
-      setIsLoading(false)
-    }).catch(() => setIsLoading(false))
-  }, [])
+
+
 
   const handleSetup2FA = () => {
     // Show medium picker before sending
@@ -103,7 +100,7 @@ export function PrivacySecurity() {
       const result = await authApi.verify2FASetup({ userId: user.userId, code: twoFACode })
       if (result.data) {
         setTwoFAStep("success")
-        setProfile((p: any) => ({ ...p, is2FAEnabled: true }))
+        mutate()
         toast.success("Two-Factor Authentication enabled!")
       } else {
         toast.error(result.error || "Invalid code. Please try again.")
@@ -122,7 +119,7 @@ export function PrivacySecurity() {
     try {
       const result = await authApi.disable2FA({ userId: user.userId, pin: disablePin || undefined })
       if (result.data) {
-        setProfile((p: any) => ({ ...p, is2FAEnabled: false }))
+        mutate()
         setShowDisableForm(false)
         setDisablePin("")
         toast.success("Two-Factor Authentication disabled.")

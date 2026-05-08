@@ -45,66 +45,42 @@ import * as React from "react"
 import { format } from "date-fns"
 import { ErrorState } from "@/components/error-state"
 
+import { useProfile } from "@/hooks/use-profile"
+
 function Dashboard() {
   const searchParams = useSearchParams()
-  const { user: authUser, isAuthenticated, isLoading: isAuthLoading } = useAuth()
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const [isInitialLoad, setIsInitialLoad] = React.useState(true)
   const [showBalance, setShowBalance] = React.useState(true)
-  const [dashboardData, setDashboardData] = React.useState<{
-    balance: number
-    recentActivity: any[]
-    profile: any
-  } | null>(null)
-  const [isLoading, setIsLoading] = React.useState(true)
+  
+  const { 
+    profile, 
+    balance, 
+    recentActivity, 
+    isLoading: isProfileLoading, 
+    error, 
+    mutate 
+  } = useProfile()
+
   const [isRefreshing, setIsRefreshing] = React.useState(false)
-  const [error, setError] = React.useState(false)
 
-  const fetchDashboardData = React.useCallback(async (isManualRefresh = false, isBackground = false) => {
-    if (isManualRefresh) {
-      setIsRefreshing(true)
-    } else if (!isBackground) {
-      setIsLoading(true)
-    }
-    setError(false)
-
-    try {
-      const { data, error: apiError } = await authApi.getProfile()
-      if (apiError) throw new Error(apiError)
-      
-      if (data) {
-        setDashboardData({
-          balance: data.balance || 0,
-          recentActivity: data.recentActivity || [],
-          profile: data.profile || {},
-        })
-      }
-    } catch (error) {
-      console.error("Failed to fetch dashboard data:", error)
-      if (!isBackground) {
-        setError(true)
-      }
-    } finally {
-      setIsLoading(false)
-      setIsRefreshing(false)
-    }
-  }, [])
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    await mutate()
+    setIsRefreshing(false)
+  }
 
   React.useEffect(() => {
     setIsInitialLoad(false)
+  }, [])
 
-    if (isAuthenticated) {
-      fetchDashboardData(false, false)
+  const isLoading = isProfileLoading || (isAuthLoading && isInitialLoad)
 
-      // Set up auto-refresh every 10 minutes (600,000 ms)
-      const intervalId = setInterval(() => {
-        fetchDashboardData(false, true)
-      }, 600000)
-
-      return () => clearInterval(intervalId)
-    } else if (!isAuthLoading) {
-      setIsLoading(false)
-    }
-  }, [isAuthenticated, isAuthLoading, fetchDashboardData])
+  const dashboardData = {
+    balance,
+    recentActivity,
+    profile: profile || {}
+  }
 
   const showSettingsAsPage =
     isInitialLoad && searchParams.get("settings") === "true"
@@ -112,6 +88,7 @@ function Dashboard() {
   if (showSettingsAsPage) {
     return <SettingsDialog isPage={true} />
   }
+
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-NG", {
@@ -162,7 +139,7 @@ function Dashboard() {
             <div className="flex flex-1 items-center justify-center">
               <ErrorState 
                 title="Couldn't load dashboard"
-                onRetry={() => fetchDashboardData(true)}
+                onRetry={() => handleRefresh()}
                 isRetrying={isLoading}
               />
             </div>
@@ -177,7 +154,6 @@ function Dashboard() {
               ) : (
                 <>
                   {dashboardData?.profile?.firstName ||
-                    authUser?.firstName ||
                     "GrowNester"}
                   ! 👋
                 </>
@@ -203,7 +179,7 @@ function Dashboard() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => fetchDashboardData(true)}
+                    onClick={() => handleRefresh()}
                     disabled={isRefreshing}
                     className="h-8 w-8 text-muted-foreground"
                   >
