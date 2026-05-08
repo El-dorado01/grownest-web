@@ -3,13 +3,19 @@ import { LoginRequest, LoginResponse } from "@/types/auth";
 
 export const authApi = {
   login: (credentials: LoginRequest) =>
-    api.post<LoginResponse>("/api/auth/login", credentials),
+    api.post<LoginResponse>("/api/auth/login", credentials).then(response => {
+      // console.log("Login response:", JSON.stringify(response, null, 2));
+      return response;
+    }),
 
   register: (data: any) =>
     api.post<{ message: string; userId: string }>("/api/auth/register", data),
 
   verify2FA: (data: { userId: string; code: string }) =>
-    api.post<LoginResponse>("/api/auth/login/2fa", data),
+    api.post<LoginResponse>("/api/auth/login/2fa", data).then(response => {
+      // console.log("2FA verification response:", JSON.stringify(response, null, 2));
+      return response;
+    }),
 
   resend2FALogin: (data: { userId: string }) =>
     api.post<{ message: string }>("/api/auth/login/2fa/resend", data),

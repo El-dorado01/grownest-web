@@ -112,13 +112,13 @@ export function GroupAutoSaveCard({ groupId, myMember, onUpdate }: GroupAutoSave
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Amount (₦)</label>
-            <Input type="number" placeholder="e.g. 5000" value={amount} onChange={(e) => setAmount(e.target.value)} disabled={isLoading} />
+            <Input type="number" placeholder="e.g. 5000" value={amount} onChange={(e) => setAmount(e.target.value)} disabled={isLoading} className="h-11" />
           </div>
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Frequency</label>
             <Select value={frequency} onValueChange={(v) => setFrequency(v as GroupFrequency)} disabled={isLoading}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
+              <SelectTrigger style={{height: "44px"}}><SelectValue /></SelectTrigger>
+              <SelectContent className="p-2">
                 <SelectItem value="daily">Daily</SelectItem>
                 <SelectItem value="weekly">Weekly</SelectItem>
                 <SelectItem value="monthly">Monthly</SelectItem>
@@ -132,11 +132,11 @@ export function GroupAutoSaveCard({ groupId, myMember, onUpdate }: GroupAutoSave
             <Input
               type="password" placeholder="4-digit PIN" maxLength={4}
               value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-              disabled={isLoading} className="tracking-widest text-center text-lg"
+              disabled={isLoading} className="tracking-widest text-center text-lg h-11"
             />
           </div>
         )}
-        <Button onClick={handleEnable} disabled={isLoading || !amount} size="sm" className="w-full gap-1.5">
+        <Button onClick={handleEnable} disabled={isLoading || !amount} size="sm" className="w-full gap-1.5 h-11 text-foreground">
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ZapIcon className="w-4 h-4" />}
           Enable Auto-Save
         </Button>

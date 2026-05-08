@@ -107,7 +107,7 @@ export default function GoalDetailPage() {
   }, [egg])
 
   const handleContributeSuccess = (savedAmount: number, progress: number) => {
-    setEgg((prev) => (prev ? { ...prev, savedAmount, progress } : prev))
+    setEgg((prev) => (prev ? { ...prev, savedAmount, progress, canWithdraw: progress >= 100 } : prev))
     setContributionRefreshKey((k) => k + 1)
   }
 
@@ -217,7 +217,7 @@ export default function GoalDetailPage() {
       )}
       {egg.canWithdraw && (
         <Button
-          className="w-full gap-1.5"
+          className="w-full gap-1.5 h-11 text-foreground"
           onClick={handleCompleteWithdraw}
           disabled={isCompleteWithdrawing}
         >
@@ -375,7 +375,7 @@ export default function GoalDetailPage() {
                       : `Withdraw ${formatCurrency(egg.savedAmount)}`}
                   </p>
                 </div>
-                <Button onClick={handleCompleteWithdraw} disabled={isCompleteWithdrawing} size="sm">
+                <Button onClick={handleCompleteWithdraw} disabled={isCompleteWithdrawing} size="sm" className="h-11 text-foreground">
                   {isCompleteWithdrawing ? "Processing..." : "Withdraw All"}
                 </Button>
               </div>
@@ -444,11 +444,11 @@ export default function GoalDetailPage() {
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel className="h-11">Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={handleCancel}
                           disabled={isCancelling}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90 h-11 text-foreground"
                         >
                           {isCancelling ? "Deleting..." : "Delete"}
                         </AlertDialogAction>
@@ -490,7 +490,7 @@ export default function GoalDetailPage() {
                     ? `Withdraw ${formatCurrency(egg.savedAmount + egg.targetAmount * 0.01)} incl. 1% interest`
                     : `You hit 100% — ready to collect ${formatCurrency(egg.savedAmount)}`}
                 </p>
-                <Button onClick={handleCompleteWithdraw} disabled={isCompleteWithdrawing} className="w-full gap-1.5">
+                <Button onClick={handleCompleteWithdraw} disabled={isCompleteWithdrawing} className="w-full gap-1.5 h-11 text-foreground">
                   <TrophyIcon className="w-4 h-4" />
                   {isCompleteWithdrawing ? "Processing..." : "Withdraw All"}
                 </Button>
@@ -516,14 +516,7 @@ export default function GoalDetailPage() {
             </div>
 
             {/* Auto-save card */}
-            {!egg.isFixed && (
-              <AutoSaveCard egg={egg} onUpdate={handleAutoSaveUpdate} />
-            )}
-            {egg.isFixed && (
-              <div className="bg-card border border-border rounded-2xl p-4 text-sm text-muted-foreground text-center">
-                Fixed savings don&apos;t support auto-save.
-              </div>
-            )}
+            <AutoSaveCard egg={egg} onUpdate={handleAutoSaveUpdate} />
 
             {/* Delete goal */}
             {isActive && egg.contributions.length === 0 && (
@@ -562,6 +555,7 @@ export default function GoalDetailPage() {
         onClose={() => setContributeOpen(false)}
         nestEggId={egg.id}
         nestEggTitle={egg.title}
+        remaining={Math.max(0, egg.targetAmount - egg.savedAmount)}
         onSuccess={handleContributeSuccess}
       />
       <FlexibleWithdrawModal

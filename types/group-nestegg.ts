@@ -37,7 +37,7 @@ export interface GroupNestEgg {
   progress: number
   daysRemaining: number
   isMature: boolean
-  ownerId: string
+  ownerId?: string
   owner: {
     profileId: string
     fullName: string | null
@@ -58,7 +58,7 @@ export interface GroupListItem {
   status: GroupStatus
   maxMembers: number
   memberCount: number
-  ownerId: string
+  ownerId?: string
   members: Array<{
     profileId: string
     role: MemberRole

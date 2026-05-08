@@ -80,15 +80,15 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
       toast.error("Enter a valid target amount")
       return
     }
-    if (isFixed && durationDays < 20) {
-      toast.error("Fixed goals require a minimum duration of 20 days")
+    if (isFixed && durationDays < 15) {
+      toast.error("Fixed goals require a minimum duration of 15 days")
       return
     }
     if (durationDays < 1) {
       toast.error("Enter a valid duration")
       return
     }
-    if (isAutoSave && !isFixed) {
+    if (isAutoSave) {
       const numAutoSave = parseFloat(autoSaveAmount)
       if (!numAutoSave || numAutoSave <= 0) {
         toast.error("Enter a valid auto-save amount")
@@ -108,8 +108,8 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
         targetAmount: numTarget,
         durationDays,
         isFixed,
-        isAutoSave: isFixed ? false : isAutoSave,
-        ...(isAutoSave && !isFixed
+        isAutoSave,
+        ...(isAutoSave
           ? { frequency, autoSaveAmount: parseFloat(autoSaveAmount) }
           : {}),
       })
@@ -248,7 +248,7 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium">Duration</label>
                   {isFixed && (
-                    <span className="text-xs text-primary font-medium">Min. 20 days for Fixed</span>
+                    <span className="text-xs text-primary font-medium">Min. 15 days for Fixed</span>
                   )}
                 </div>
                 {/* Quick-pick chips */}
@@ -272,7 +272,7 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
-                    min={isFixed ? 20 : 1}
+                    min={isFixed ? 15 : 1}
                     max={1095}
                     value={durationDays}
                     onChange={(e) => {
@@ -285,8 +285,8 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
                 </div>
               </div>
 
-              {/* Auto-save toggle (flexible only) */}
-              {!isFixed && (
+              {/* Auto-save toggle */}
+              {(
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <div>

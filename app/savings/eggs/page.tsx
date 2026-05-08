@@ -18,7 +18,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { PlusIcon } from "lucide-react"
+import { PlusIcon, Search } from "lucide-react"
 import { nestEggsApi } from "@/lib/nesteggs-api"
 import { BalanceSummaryCards } from "@/components/nesteggs/balance-summary"
 import { GoalCard } from "@/components/nesteggs/goal-card"
@@ -32,11 +32,22 @@ const formatCurrency = (amount: number) =>
     maximumFractionDigits: 0,
   }).format(amount)
 
+type Filter = "all" | "active" | "fixed" | "autosave" | "completed"
+
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "active", label: "Active" },
+  { key: "fixed", label: "Fixed" },
+  { key: "autosave", label: "Auto-Save" },
+  { key: "completed", label: "Completed" },
+]
+
 export default function MyEggsPage() {
   const [eggs, setEggs] = React.useState<NestEgg[]>([])
   const [summary, setSummary] = React.useState<BalanceSummary | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
   const [showCreate, setShowCreate] = React.useState(false)
+  const [filter, setFilter] = React.useState<Filter>("all")
 
   const fetchData = React.useCallback(async () => {
     setIsLoading(true)
@@ -57,6 +68,15 @@ export default function MyEggsPage() {
     setEggs((prev) => [egg, ...prev])
     fetchData()
   }
+
+  const filtered = eggs.filter((egg) => {
+    if (filter === "all") return true
+    if (filter === "active") return egg.status === "active"
+    if (filter === "fixed") return egg.isFixed
+    if (filter === "autosave") return egg.isAutoSave
+    if (filter === "completed") return egg.status === "completed"
+    return true
+  })
 
   return (
     <SidebarProvider>
@@ -104,12 +124,31 @@ export default function MyEggsPage() {
             <Button
               onClick={() => setShowCreate(true)}
               size="sm"
-              className="gap-1.5 text-foreground"
+              className="gap-1.5 text-foreground h-11"
             >
               <PlusIcon className="w-4 h-4" />
               New Goal
             </Button>
           </div>
+
+          {/* Filter tabs */}
+          {!isLoading && eggs.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    filter === f.key
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Goal grid */}
           {isLoading ? (
@@ -121,19 +160,22 @@ export default function MyEggsPage() {
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <span className="text-5xl">🥚</span>
               <p className="text-lg font-semibold">No savings goals yet</p>
-              <p className="text-sm text-muted-foreground">
-                Create your first goal to start saving
-              </p>
-              <Button
-                onClick={() => setShowCreate(true)}
-                className="mt-2 gap-1.5 text-foreground"
-              >
+              <p className="text-sm text-muted-foreground">Create your first goal to start saving</p>
+              <Button onClick={() => setShowCreate(true)} className="mt-2 gap-1.5 text-foreground">
                 <PlusIcon className="w-4 h-4" /> Create Goal
               </Button>
             </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <span className="text-4xl"><Search /></span>
+              <p className="text-base font-semibold">No {FILTERS.find(f => f.key === filter)?.label.toLowerCase()} goals</p>
+              <button onClick={() => setFilter("all")} className="text-sm text-primary underline-offset-2 hover:underline">
+                Show all goals
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in duration-500">
-              {eggs.map((egg, i) => (
+              {filtered.map((egg, i) => (
                 <GoalCard
                   key={egg.id}
                   egg={egg}

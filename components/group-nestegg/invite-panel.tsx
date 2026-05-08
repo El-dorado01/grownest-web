@@ -54,10 +54,10 @@ export function InvitePanel({ groupId, groupTitle }: InvitePanelProps) {
             onChange={(e) => setEmail(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleInvite()}
             disabled={isSending}
-            className="pl-9"
+            className="pl-9 h-11"
           />
         </div>
-        <Button onClick={handleInvite} disabled={isSending || !email} className="w-full gap-1.5">
+        <Button onClick={handleInvite} disabled={isSending || !email} className="w-full gap-1.5 h-11">
           {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
           Send invite
         </Button>

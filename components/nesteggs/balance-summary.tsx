@@ -62,7 +62,7 @@ export function BalanceSummaryCards({ summary, isLoading, formatCurrency }: Bala
           <div className="min-w-0 flex-1">
             <p className="text-xs text-muted-foreground truncate">{card.label}</p>
             {isLoading ? (
-              <Skeleton className="h-7 w-32 mt-1 mb-1" />
+              <Skeleton className="h-7 w-3/4 mt-1 mb-1" />
             ) : (
               <p className="text-lg font-bold text-foreground">{formatCurrency(values[i].value)}</p>
             )}

@@ -103,7 +103,7 @@ export default function MyGroupsPage() {
                     <p className="text-sm text-muted-foreground">{groups.length} group{groups.length !== 1 ? "s" : ""}</p>
                   )}
                 </div>
-                <Button onClick={() => setShowCreate(true)} size="sm" className="gap-1.5">
+                <Button onClick={() => setShowCreate(true)} size="sm" className="gap-1.5 h-11 text-foreground">
                   <PlusIcon className="w-4 h-4" /> Create Group
                 </Button>
               </div>

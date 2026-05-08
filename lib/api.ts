@@ -152,6 +152,10 @@ export async function apiFetch<T>(
       };
     }
 
+    // if (endpoint.includes("/api/nesteggs/group")) {
+    //   console.log(`[group-api] ${method} ${endpoint}`, JSON.stringify(data, null, 2))
+    // }
+
     return {
       data: data as T,
       error: null,

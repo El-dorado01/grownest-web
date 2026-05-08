@@ -16,11 +16,12 @@ interface GroupContributeModalProps {
   onClose: () => void
   groupId: string
   groupTitle: string
+  remaining: number
   onSuccess: (savedAmount: number, progress: number) => void
 }
 
 export function GroupContributeModal({
-  open, onClose, groupId, groupTitle, onSuccess,
+  open, onClose, groupId, groupTitle, remaining, onSuccess,
 }: GroupContributeModalProps) {
   const [amount, setAmount] = useState("")
   const [pin, setPin] = useState("")
@@ -35,6 +36,10 @@ export function GroupContributeModal({
   const handleSubmit = async () => {
     const numAmount = parseFloat(amount)
     if (!numAmount || numAmount <= 0) { toast.error("Enter a valid amount"); return }
+    if (numAmount > remaining) {
+      toast.error(`Maximum contribution is ₦${remaining.toLocaleString()} (remaining balance)`)
+      return
+    }
 
     setIsLoading(true)
     try {
@@ -82,11 +87,13 @@ export function GroupContributeModal({
             <label className="text-sm font-medium">Amount (₦)</label>
             <Input
               type="number"
-              placeholder="e.g. 5000"
+              placeholder={`Max ₦${remaining.toLocaleString()}`}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               disabled={isLoading}
               min={1}
+              max={remaining}
+              className="h-11"
             />
           </div>
           {requirePin && (
@@ -99,14 +106,14 @@ export function GroupContributeModal({
                 value={pin}
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
                 disabled={isLoading}
-                className="tracking-widest text-center text-lg"
+                className="tracking-widest text-center text-lg h-11"
               />
             </div>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={isLoading}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isLoading}>
+          <Button variant="outline" onClick={handleClose} disabled={isLoading} className="h-11">Cancel</Button>
+          <Button onClick={handleSubmit} disabled={isLoading} className="h-11 text-foreground">
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             {requirePin ? "Confirm" : "Contribute"}
           </Button>

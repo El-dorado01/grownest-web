@@ -28,6 +28,7 @@ import { GroupContributionList } from "@/components/group-nestegg/group-contribu
 import { GroupAutoSaveCard } from "@/components/group-nestegg/group-autosave-card"
 import { GroupContributeModal } from "@/components/group-nestegg/group-contribute-modal"
 import { InvitePanel } from "@/components/group-nestegg/invite-panel"
+import { CoverIcon } from "@/components/nesteggs/cover-icon"
 import type { GroupNestEgg, GroupMember, WeeklyScoreboard } from "@/types/group-nestegg"
 
 const formatCurrency = (amount: number) =>
@@ -69,7 +70,7 @@ export default function GroupDetailPage() {
   }, [activeTab, scoreboard, fetchScoreboard])
 
   const handleContributeSuccess = (savedAmount: number, progress: number) => {
-    setGroup((prev) => prev ? { ...prev, savedAmount, progress } : prev)
+    setGroup((prev) => prev ? { ...prev, savedAmount, progress, isMature: progress >= 100 } : prev)
     setContributionRefreshKey((k) => k + 1)
   }
 
@@ -123,10 +124,9 @@ export default function GroupDetailPage() {
     )
   }
 
-  const isOwner = group.ownerId === user?.userId
+  const isOwner = group.owner?.profileId === user?.userId
   const myMember = group.members.find((m) => m.profileId === user?.userId)
-  const hasContributions = group.members.some((m) => m.totalContributed > 0)
-  const isActive = group.status === "active"
+const isActive = group.status === "active"
 
   const statRows = [
     { label: "Target", value: formatCurrency(group.targetAmount) },
@@ -173,8 +173,10 @@ export default function GroupDetailPage() {
                 formatCurrency={formatCurrency}
               />
               <div className="flex items-center gap-2 flex-wrap justify-center">
-                <span className="text-xl">{group.cover ?? "👥"}</span>
-                <h1 className="text-xl font-bold">{group.title}</h1>
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <CoverIcon name={group.cover} className="w-5 h-5 text-primary" />
+                </div>
+                <h1 className="text-xl font-bold capitalize">{group.title}</h1>
               </div>
               {group.description && (
                 <p className="text-sm text-muted-foreground text-center max-w-sm">{group.description}</p>
@@ -197,24 +199,59 @@ export default function GroupDetailPage() {
               </div>
             </div>
 
-            {/* Mobile: contribute button */}
-            {isActive && (
-              <div className="flex gap-2 lg:hidden">
-                <Button className="flex-1 gap-1.5" onClick={() => setContributeOpen(true)}>
+            {/* Mobile: contribute + delete buttons */}
+            <div className="flex gap-2 lg:hidden">
+              {isActive && (
+                <Button className="flex-1 gap-1.5 h-11 text-foreground" onClick={() => setContributeOpen(true)}>
                   <PlusCircleIcon className="w-4 h-4" /> Contribute
                 </Button>
+              )}
+              {isOwner && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-11 w-11 text-destructive border-destructive/30 hover:bg-destructive/10 shrink-0">
+                      <Trash2Icon className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete &quot;{group.title}&quot;?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete the group and remove all members. This cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="h-11">Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive text-destructive-foreground text-foreground hover:bg-destructive/90 h-11">
+                        {isDeleting ? "Deleting..." : "Delete"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
+
+            {/* Pre-maturity info banner — approaching end date OR target nearly hit */}
+            {isActive && !group.isMature && group.progress < 100 && (group.daysRemaining <= 7 || group.progress >= 80) && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
+                <TrophyIcon className="w-5 h-5 text-amber-600 shrink-0" />
+                <p className="text-xs text-amber-800">
+                  {group.daysRemaining <= 7
+                    ? <><span className="font-semibold">Ending in {group.daysRemaining} day{group.daysRemaining !== 1 ? "s" : ""}.</span>{" "}Once the maturity date is reached, {formatCurrency(group.savedAmount)} will be automatically deposited to the group owner.</>
+                    : <><span className="font-semibold">Almost there — {group.progress.toFixed(0)}% saved!</span>{" "}Once the target is reached, funds will be automatically deposited to the group owner.</>
+                  }
+                </p>
               </div>
             )}
 
-            {/* Maturity banner */}
-            {group.isMature && isActive && (
+            {/* Maturity banner — end date passed OR target reached */}
+            {isActive && (group.isMature || group.progress >= 100) && (
               <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center gap-3">
                 <TrophyIcon className="w-5 h-5 text-primary shrink-0" />
                 <div>
-                  <p className="font-semibold text-sm">Goal period ended!</p>
+                  <p className="font-semibold text-sm">{group.progress >= 100 ? "Target reached!" : "Maturity date reached!"}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Saved {formatCurrency(group.savedAmount)} of {formatCurrency(group.targetAmount)}.
-                    Contact the group owner to process payout.
+                    {formatCurrency(group.savedAmount)} will be automatically deposited to the group owner once the maturity date is processed.
                   </p>
                 </div>
               </div>
@@ -243,6 +280,13 @@ export default function GroupDetailPage() {
                   formatCurrency={formatCurrency}
                   currentUserId={user?.userId}
                 />
+                {/* Mobile invite panel — owner only */}
+                {isOwner && isActive && (
+                  <div className="lg:hidden">
+                    <InvitePanel groupId={group.id} groupTitle={group.title} />
+                  </div>
+                )}
+
                 {/* Mobile auto-save card */}
                 {myMember && isActive && (
                   <div className="lg:hidden">
@@ -280,7 +324,7 @@ export default function GroupDetailPage() {
             {isActive && (
               <div className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-2">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</p>
-                <Button className="w-full gap-1.5" onClick={() => setContributeOpen(true)}>
+                <Button className="w-full gap-1.5 h-11 text-foreground" onClick={() => setContributeOpen(true)}>
                   <PlusCircleIcon className="w-4 h-4" /> Contribute
                 </Button>
               </div>
@@ -310,8 +354,8 @@ export default function GroupDetailPage() {
               />
             )}
 
-            {/* Delete group — owner, no contributions */}
-            {isOwner && !hasContributions && (
+            {/* Delete group — owner only */}
+            {isOwner && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive gap-1.5 self-start">
@@ -347,6 +391,7 @@ export default function GroupDetailPage() {
         onClose={() => setContributeOpen(false)}
         groupId={group.id}
         groupTitle={group.title}
+        remaining={Math.max(0, group.targetAmount - group.savedAmount)}
         onSuccess={handleContributeSuccess}
       />
     </SidebarProvider>

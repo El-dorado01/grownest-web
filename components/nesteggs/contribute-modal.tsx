@@ -19,6 +19,7 @@ interface ContributeModalProps {
   onClose: () => void
   nestEggId: string
   nestEggTitle: string
+  remaining: number
   onSuccess: (savedAmount: number, progress: number) => void
 }
 
@@ -27,6 +28,7 @@ export function ContributeModal({
   onClose,
   nestEggId,
   nestEggTitle,
+  remaining,
   onSuccess,
 }: ContributeModalProps) {
   const [amount, setAmount] = useState("")
@@ -45,6 +47,10 @@ export function ContributeModal({
     const numAmount = parseFloat(amount)
     if (!numAmount || numAmount <= 0) {
       toast.error("Enter a valid amount")
+      return
+    }
+    if (numAmount > remaining) {
+      toast.error(`Maximum contribution is ₦${remaining.toLocaleString()} (remaining balance)`)
       return
     }
 
@@ -94,11 +100,12 @@ export function ContributeModal({
             <label className="text-sm font-medium">Amount (₦)</label>
             <Input
               type="number"
-              placeholder="e.g. 5000"
+              placeholder={`Max ₦${remaining.toLocaleString()}`}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               disabled={isLoading}
               min={1}
+              max={remaining}
               className="h-11 bg-card"
             />
           </div>

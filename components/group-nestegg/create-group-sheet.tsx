@@ -10,8 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { groupNestEggApi } from "@/lib/group-nestegg-api"
-
-const COVER_EMOJIS = ["👥", "🏠", "🚗", "✈️", "🎓", "💼", "🌱", "🎯", "💰", "🏋️", "🎁", "🔥"]
+import { COVER_PICKER_LIST, CoverIcon } from "@/components/nesteggs/cover-icon"
 
 const DURATION_OPTIONS = [
   { label: "30 days", value: 30 },
@@ -30,15 +29,16 @@ interface CreateGroupSheetProps {
 export function CreateGroupSheet({ open, onClose, onCreated }: CreateGroupSheetProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [title, setTitle] = useState("")
-  const [cover, setCover] = useState("👥")
+  const [cover, setCover] = useState("house")
   const [description, setDescription] = useState("")
   const [targetAmount, setTargetAmount] = useState("")
   const [durationDays, setDurationDays] = useState(90)
+  const [customDays, setCustomDays] = useState("")
   const [maxMembers, setMaxMembers] = useState(8)
 
   const handleClose = () => {
     setTitle(""); setCover("👥"); setDescription("")
-    setTargetAmount(""); setDurationDays(90); setMaxMembers(8)
+    setTargetAmount(""); setDurationDays(90); setMaxMembers(8); setCustomDays(""); setCover("house")
     onClose()
   }
 
@@ -83,30 +83,33 @@ export function CreateGroupSheet({ open, onClose, onCreated }: CreateGroupSheetP
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={60}
-                className="flex-1"
+                className="flex-1 h-11 capitalize"
               />
-              <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center text-xl shrink-0">
-                {cover}
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <CoverIcon name={cover} className="w-5 h-5 text-primary" />
               </div>
             </div>
           </div>
 
-          {/* Cover emoji picker */}
+          {/* Cover picker */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">Group Icon</label>
-            <div className="grid grid-cols-6 gap-2">
-              {COVER_EMOJIS.map((emoji) => (
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-56 overflow-y-auto py-2 pr-1 pl-1">
+              {COVER_PICKER_LIST.map((item) => (
                 <button
-                  key={emoji}
+                  key={item.name}
                   type="button"
-                  onClick={() => setCover(emoji)}
-                  className={`h-10 w-full rounded-xl text-xl flex items-center justify-center transition-all ${
-                    cover === emoji
+                  onClick={() => setCover(item.name)}
+                  className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all ${
+                    cover === item.name
                       ? "bg-primary/20 ring-2 ring-primary"
                       : "bg-muted hover:bg-muted/80"
                   }`}
                 >
-                  {emoji}
+                  <item.Icon className={`w-5 h-5 ${cover === item.name ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className="text-[9px] text-muted-foreground leading-tight text-center line-clamp-1">
+                    {item.label}
+                  </span>
                 </button>
               ))}
             </div>
@@ -136,6 +139,7 @@ export function CreateGroupSheet({ open, onClose, onCreated }: CreateGroupSheetP
               value={targetAmount}
               onChange={(e) => setTargetAmount(e.target.value)}
               min={1}
+              className="h-11"
             />
           </div>
 
@@ -147,7 +151,7 @@ export function CreateGroupSheet({ open, onClose, onCreated }: CreateGroupSheetP
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => setDurationDays(opt.value)}
+                  onClick={() => { setDurationDays(opt.value); setCustomDays("") }}
                   className={`px-3 py-1.5 rounded-xl text-sm border transition-all ${
                     durationDays === opt.value
                       ? "border-primary bg-primary/10 text-primary font-medium"
@@ -158,6 +162,25 @@ export function CreateGroupSheet({ open, onClose, onCreated }: CreateGroupSheetP
                 </button>
               ))}
             </div>
+
+               {/* Custom days input */}
+                <div className="flex items-center gap-2 my-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={1095}
+                    placeholder="Custom days..."
+                    value={customDays}
+                    onChange={(e) => {
+                      const raw = e.target.value
+                      setCustomDays(raw)
+                      const val = parseInt(raw, 10)
+                      if (!isNaN(val) && val >= 1 && val <= 1095) setDurationDays(val)
+                    }}
+                    className="h-11 bg-card"
+                  />
+                  <span className="text-sm text-muted-foreground shrink-0">days</span>
+                </div>
           </div>
 
           {/* Max members slider */}
@@ -165,13 +188,13 @@ export function CreateGroupSheet({ open, onClose, onCreated }: CreateGroupSheetP
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">Max Members</label>
               <span className="text-sm font-semibold text-primary">
-                Members: {maxMembers}/20
+                Members: {maxMembers}/50
               </span>
             </div>
             <input
               type="range"
               min={2}
-              max={20}
+              max={50}
               step={1}
               value={maxMembers}
               onChange={(e) => setMaxMembers(Number(e.target.value))}
@@ -179,7 +202,7 @@ export function CreateGroupSheet({ open, onClose, onCreated }: CreateGroupSheetP
             />
             <div className="flex justify-between text-[10px] text-muted-foreground">
               <span>2</span>
-              <span>20</span>
+              <span>50</span>
             </div>
           </div>
         </div>
@@ -189,7 +212,7 @@ export function CreateGroupSheet({ open, onClose, onCreated }: CreateGroupSheetP
           <Button
             onClick={handleCreate}
             disabled={isLoading}
-            className="w-full h-11 gap-2"
+            className="w-full h-11 gap-2 text-foreground"
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             Create & Invite

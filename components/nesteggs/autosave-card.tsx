@@ -1,7 +1,7 @@
 // components/nesteggs/autosave-card.tsx
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -23,6 +23,13 @@ interface AutoSaveCardProps {
 
 export function AutoSaveCard({ egg, onUpdate }: AutoSaveCardProps) {
   const [isEditing, setIsEditing] = useState(false)
+
+  useEffect(() => {
+    if (egg.progress >= 100 && egg.isAutoSave && !egg.isAutoSavePaused) {
+      call({ isAutoSave: false }, "Auto-save disabled — target reached!")
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [egg.progress])
   const [isLoading, setIsLoading] = useState(false)
   const [newAmount, setNewAmount] = useState(String(egg.autoSaveAmount ?? ""))
   const [newFrequency, setNewFrequency] = useState<NestEggFrequency>(egg.frequency ?? "monthly")
