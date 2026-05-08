@@ -18,7 +18,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { PlusIcon, Search } from "lucide-react"
+import { Loader2, PlusIcon, Search } from "lucide-react"
 import { nestEggsApi } from "@/lib/nesteggs-api"
 import { BalanceSummaryCards } from "@/components/nesteggs/balance-summary"
 import { GoalCard } from "@/components/nesteggs/goal-card"
@@ -151,11 +151,13 @@ export default function MyEggsPage() {
           )}
 
           {/* Goal grid */}
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-              <p className="text-sm text-muted-foreground">Getting your eggs...</p>
-            </div>
+          {isLoading ? (       
+        <div className="flex flex-col items-center justify-center py-12 gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground font-medium animate-pulse">
+        Getting your eggs...
+        </p>
+      </div>
           ) : eggs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <span className="text-5xl">🥚</span>
