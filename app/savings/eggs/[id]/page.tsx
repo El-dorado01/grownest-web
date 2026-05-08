@@ -3,6 +3,7 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
+import confetti from "canvas-confetti"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
@@ -74,6 +75,9 @@ export default function GoalDetailPage() {
   const [contributionRefreshKey, setContributionRefreshKey] = React.useState(0)
   const [isCompleteWithdrawing, setIsCompleteWithdrawing] = React.useState(false)
   const [isCancelling, setIsCancelling] = React.useState(false)
+  const [isWithdrawn, setIsWithdrawn] = React.useState(false)
+  const [withdrawnAmount, setWithdrawnAmount] = React.useState(0)
+  const confettiFired = React.useRef(false)
 
   const fetchEgg = React.useCallback(async () => {
     const { data, error } = await nestEggsApi.get(id)
@@ -89,6 +93,18 @@ export default function GoalDetailPage() {
   }, [id])
 
   React.useEffect(() => { fetchEgg() }, [fetchEgg])
+
+  // Confetti Animation
+  React.useEffect(() => {
+    if (!egg || confettiFired.current) return
+    if (egg.progress >= 100 && egg.status === "active") {
+      confettiFired.current = true
+      const colors = ["#C9A84C", "#F5D78E", "#8B6914", "#FFF8E7", "#E8C14A"]
+      confetti({ particleCount: 80, spread: 60, origin: { y: 0.5 }, colors, scalar: 1.1 })
+      setTimeout(() => confetti({ particleCount: 50, spread: 80, origin: { y: 0.4 }, colors, angle: 60, scalar: 0.9 }), 200)
+      setTimeout(() => confetti({ particleCount: 50, spread: 80, origin: { y: 0.4 }, colors, angle: 120, scalar: 0.9 }), 350)
+    }
+  }, [egg])
 
   const handleContributeSuccess = (savedAmount: number, progress: number) => {
     setEgg((prev) => (prev ? { ...prev, savedAmount, progress } : prev))
@@ -110,12 +126,13 @@ export default function GoalDetailPage() {
     const { data, error } = await nestEggsApi.completeWithdraw(egg.id)
     setIsCompleteWithdrawing(false)
     if (error) { toast.error(error); return }
-    toast.success(
-      egg.isFixed
-        ? `${formatCurrency(data!.totalReceived ?? data!.amount)} (+ ${formatCurrency(data!.interest ?? 0)} interest) credited to NestPurse!`
-        : `${formatCurrency(data!.amount)} credited to NestPurse!`
-    )
-    router.push("/savings/eggs")
+    const received = egg.isFixed ? (data!.totalReceived ?? data!.amount) : data!.amount
+    setWithdrawnAmount(received)
+    setIsWithdrawn(true)
+    const colors = ["#C9A84C", "#F5D78E", "#8B6914", "#FFF8E7", "#E8C14A"]
+    confetti({ particleCount: 120, spread: 70, origin: { y: 0.5 }, colors, scalar: 1.2 })
+    setTimeout(() => confetti({ particleCount: 80, spread: 100, origin: { y: 0.4 }, colors, angle: 60 }), 300)
+    setTimeout(() => confetti({ particleCount: 80, spread: 100, origin: { y: 0.4 }, colors, angle: 120 }), 500)
   }
 
   const handleCancel = async () => {
@@ -176,8 +193,7 @@ export default function GoalDetailPage() {
       : []),
   ]
 
-  // Shared action buttons — rendered in right col on desktop, inline on mobile
-  const ActionButtons = () => (
+  const actionButtons = (
     <>
       {isActive && !egg.canWithdraw && (
         <>
@@ -211,6 +227,55 @@ export default function GoalDetailPage() {
       )}
     </>
   )
+
+  if (isWithdrawn) {
+    return (
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 data-vertical:h-4 data-vertical:self-auto" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem><BreadcrumbLink href="/">Dashboard</BreadcrumbLink></BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem><BreadcrumbLink href="/savings/eggs">My Eggs</BreadcrumbLink></BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem><BreadcrumbPage className="truncate max-w-40">{egg.title}</BreadcrumbPage></BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          </header>
+          <div className="flex flex-1 items-center justify-center p-6">
+            <div className="flex flex-col items-center gap-6 text-center max-w-sm">
+              <div className="relative flex items-center justify-center">
+                <div className="w-28 h-28 rounded-full bg-primary/10 flex items-center justify-center animate-[ping_1s_ease-out_1]" />
+                <div className="absolute w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
+                  <TrophyIcon className="w-9 h-9 text-primary animate-[bounce_0.6s_ease-out_3]" />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <h2 className="text-2xl font-bold">NestEgg Withdrawn!</h2>
+                <p className="text-muted-foreground text-sm">
+                  <span className="font-semibold text-foreground">{formatCurrency(withdrawnAmount)}</span> has been credited to your NestPurse.
+                </p>
+                {egg.isFixed && (
+                  <p className="text-xs text-primary font-medium">Includes 1% fixed interest</p>
+                )}
+              </div>
+              <div className="w-full h-px bg-border" />
+              <p className="text-xs text-muted-foreground">Your goal <span className="font-medium text-foreground">&quot;{egg.title}&quot;</span> has been completed.</p>
+              <Button className="w-full gap-2" onClick={() => router.push("/savings/eggs")}>
+                Back to My Eggs
+              </Button>
+            </div>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    )
+  }
 
   return (
     <SidebarProvider>
@@ -319,7 +384,7 @@ export default function GoalDetailPage() {
             {/* Mobile action buttons — hidden on lg+ (shown in right column) */}
             {(isActive || egg.canWithdraw) && (
               <div className="flex flex-col gap-2 lg:hidden">
-                <ActionButtons />
+                {actionButtons}
               </div>
             )}
 
@@ -436,7 +501,7 @@ export default function GoalDetailPage() {
             {isActive && !egg.canWithdraw && (
               <div className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-2">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Actions</p>
-                <ActionButtons />
+                {actionButtons}
               </div>
             )}
 
