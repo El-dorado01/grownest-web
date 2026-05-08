@@ -75,10 +75,10 @@ const data = {
           title: "Group Nest",
           url: "/savings/group",
         },
-        {
-          title: "Locked Savings",
-          url: "/savings/locked",
-        },
+        // {
+        //   title: "Locked Savings",
+        //   url: "/savings/locked",
+        // },
       ],
     },
     {
