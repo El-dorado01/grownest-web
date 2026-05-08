@@ -9,6 +9,15 @@ export interface LinkedAccount {
   isPrimary: boolean;
 }
 
+export interface VirtualAccount {
+  provider: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  currency: string;
+  isPrimary: boolean;
+}
+
 export interface Bank {
   name: string;
   code: string;
@@ -36,4 +45,31 @@ export const nestPurseApi = {
 
   setPrimaryAccount: (data: { bankCode: string; accountNumber: string }) =>
     api.patch<{ message: string; primaryAccount: any }>("/api/nestpurse/linked-accounts/set-primary", data),
+
+  getVirtualAccount: () =>
+    api.get<{ 
+      message: string; 
+      accounts?: VirtualAccount[]; 
+      bankName?: string;
+      accountNumber?: string;
+      accountName?: string;
+      provider?: string;
+      balance?: number;
+    }>("/api/nestpurse/virtual-account"),
+
+
+  initiateTopup: (data: { 
+    amount: number; 
+    paymentMethod: "card" | "bank";
+    redirectUrl?: string;
+    cancelUrl?: string;
+  }) =>
+
+    api.post<{ 
+      message: string; 
+      checkoutUrl: string; 
+      orderReference: string; 
+      amount: number; 
+      gateway: string 
+    }>("/api/nestpurse/topup", data),
 };

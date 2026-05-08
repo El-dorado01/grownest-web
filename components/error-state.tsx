@@ -28,7 +28,7 @@ export function ErrorState({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "flex flex-col items-center justify-center py-12 px-4 text-center rounded-2xl border border-destructive/10 bg-destructive/5",
+        "flex flex-col items-center justify-center py-12 px-4 text-center rounded-2xl border border-destructive/10 bg-destructive/5 w-full",
         className
       )}
     >
@@ -40,7 +40,7 @@ export function ErrorState({
         {title}
       </h3>
       
-      <p className="text-sm text-muted-foreground max-w-[280px] leading-relaxed mb-8">
+      <p className="text-sm text-muted-foreground max-w-md leading-relaxed mb-8">
         {message}
       </p>
 

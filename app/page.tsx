@@ -44,6 +44,7 @@ import { Button } from "@/components/ui/button"
 import * as React from "react"
 import { format } from "date-fns"
 import { ErrorState } from "@/components/error-state"
+import { AddMoneyDialog } from "@/components/purse/add-money-dialog"
 
 import { useProfile } from "@/hooks/use-profile"
 
@@ -63,6 +64,7 @@ function Dashboard() {
   } = useProfile()
 
   const [isRefreshing, setIsRefreshing] = React.useState(false)
+  const [showAddMoney, setShowAddMoney] = React.useState(false)
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -232,6 +234,7 @@ function Dashboard() {
               <Button
                 className="h-14 justify-start gap-3 rounded-xl text-base text-black dark:text-white"
                 size="lg"
+                onClick={() => setShowAddMoney(true)}
               >
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
                   <Plus size={18} />
@@ -333,6 +336,11 @@ function Dashboard() {
             </>
           )}
         </div>
+        <AddMoneyDialog 
+          open={showAddMoney} 
+          onOpenChange={setShowAddMoney} 
+          profile={profile}
+        />
       </SidebarInset>
     </SidebarProvider>
   )
