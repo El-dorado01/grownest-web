@@ -110,6 +110,7 @@ export function FlexibleWithdrawModal({
               disabled={isLoading || maxWithdrawable <= 0}
               max={maxWithdrawable}
               min={1}
+              className="h-11 bg-card"
             />
           </div>
           {hasOutstandingDebt && (

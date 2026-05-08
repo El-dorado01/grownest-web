@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { LockIcon, LockOpenIcon, TrophyIcon } from "lucide-react"
 import { toast } from "sonner"
+import { CoverIcon } from "@/components/nesteggs/cover-icon"
 import { nestEggsApi } from "@/lib/nesteggs-api"
 import type { FixedNestEgg } from "@/types/nesteggs"
 
@@ -56,7 +57,7 @@ function LockedEggCard({ egg, isWithdrawing, onWithdraw }: LockedEggCardProps) {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-base leading-none">{egg.cover ?? "🔒"}</span>
+              <CoverIcon name={egg.cover} className="w-4 h-4 text-primary" />
               <p className="font-semibold text-sm leading-tight truncate">{egg.title}</p>
             </div>
           </div>
@@ -83,7 +84,7 @@ function LockedEggCard({ egg, isWithdrawing, onWithdraw }: LockedEggCardProps) {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-2 text-xs">
+      <div className="grid grid-cols-2 gap-3 text-xs">
         <div>
           <p className="text-background/60">Saved</p>
           <p className="font-semibold">{formatCurrency(egg.savedAmount)}</p>
@@ -197,55 +198,57 @@ export default function LockedSavingsPage() {
         </header>
 
         <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-          {/* Summary banner */}
-          {!isLoading && eggs.length > 0 && (
-            <div className="bg-foreground text-background rounded-2xl p-5 grid grid-cols-3 gap-4">
-              <div>
-                <p className="text-xs text-background/60">Total Locked</p>
-                <p className="text-lg font-bold">{formatCurrency(totalLocked)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-background/60">Expected Interest</p>
-                <p className="text-lg font-bold text-primary">
-                  {formatCurrency(totalInterest)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-background/60">Ready to Withdraw</p>
-                <p className="text-lg font-bold">{matureCount}</p>
-              </div>
+
+          {/* Summary banner — always visible, skeleton amounts while loading */}
+          <div className="bg-foreground text-background rounded-2xl p-5 grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-xs text-background/60">Total Locked</p>
+              {isLoading
+                ? <Skeleton className="h-7 w-24 mt-1 bg-background/20" />
+                : <p className="text-lg font-bold">{formatCurrency(totalLocked)}</p>
+              }
             </div>
-          )}
+            <div>
+              <p className="text-xs text-background/60">Expected Interest</p>
+              {isLoading
+                ? <Skeleton className="h-7 w-20 mt-1 bg-background/20" />
+                : <p className="text-lg font-bold text-primary">{formatCurrency(totalInterest)}</p>
+              }
+            </div>
+            <div>
+              <p className="text-xs text-background/60">Ready to Withdraw</p>
+              {isLoading
+                ? <Skeleton className="h-7 w-8 mt-1 bg-background/20" />
+                : <p className="text-lg font-bold">{matureCount}</p>
+              }
+            </div>
+          </div>
 
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Fixed Savings</h2>
             <Link href="/savings/eggs">
-              <Button size="sm" variant="outline">
-                + New Goal
-              </Button>
+              <Button size="sm" variant="outline">+ New Goal</Button>
             </Link>
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[0, 1, 2].map((i) => (
-                <Skeleton key={i} className="h-72 rounded-2xl" />
-              ))}
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              <p className="text-sm text-muted-foreground">Loading your locked savings...</p>
             </div>
           ) : eggs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <LockIcon className="w-12 h-12 text-muted-foreground" />
               <p className="text-lg font-semibold">No locked savings</p>
               <p className="text-sm text-muted-foreground text-center max-w-xs">
-                Create a Fixed savings goal to lock in your money and earn 1%
-                interest on maturity.
+                Create a Fixed savings goal to lock in your money and earn 1% interest on maturity.
               </p>
               <Link href="/savings/eggs">
                 <Button className="mt-2">Create Fixed Goal</Button>
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in duration-500">
               {eggs.map((egg) => (
                 <LockedEggCard
                   key={egg.id}

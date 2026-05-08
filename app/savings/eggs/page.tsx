@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { PlusIcon } from "lucide-react"
-import { Skeleton } from "@/components/ui/skeleton"
 import { nestEggsApi } from "@/lib/nesteggs-api"
 import { BalanceSummaryCards } from "@/components/nesteggs/balance-summary"
 import { GoalCard } from "@/components/nesteggs/goal-card"
@@ -105,7 +104,7 @@ export default function MyEggsPage() {
             <Button
               onClick={() => setShowCreate(true)}
               size="sm"
-              className="gap-1.5"
+              className="gap-1.5 text-foreground"
             >
               <PlusIcon className="w-4 h-4" />
               New Goal
@@ -114,10 +113,9 @@ export default function MyEggsPage() {
 
           {/* Goal grid */}
           {isLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {[0, 1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-56 rounded-2xl" />
-              ))}
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              <p className="text-sm text-muted-foreground">Getting your eggs...</p>
             </div>
           ) : eggs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -128,13 +126,13 @@ export default function MyEggsPage() {
               </p>
               <Button
                 onClick={() => setShowCreate(true)}
-                className="mt-2 gap-1.5"
+                className="mt-2 gap-1.5 text-foreground"
               >
                 <PlusIcon className="w-4 h-4" /> Create Goal
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in duration-500">
               {eggs.map((egg, i) => (
                 <GoalCard
                   key={egg.id}

@@ -99,6 +99,7 @@ export function ContributeModal({
               onChange={(e) => setAmount(e.target.value)}
               disabled={isLoading}
               min={1}
+              className="h-11 bg-card"
             />
           </div>
           {requirePin && (
@@ -111,16 +112,16 @@ export function ContributeModal({
                 value={pin}
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
                 disabled={isLoading}
-                className="tracking-widest text-center text-lg"
+                className="tracking-widest text-center text-lg h-11 bg-card"
               />
             </div>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={isLoading}>
+          <Button variant="outline" onClick={handleClose} disabled={isLoading} className="h-11">
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isLoading}>
+          <Button onClick={handleSubmit} disabled={isLoading} className="h-11 text-foreground">
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             {requirePin ? "Confirm" : "Add Money"}
           </Button>

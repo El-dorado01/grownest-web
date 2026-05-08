@@ -50,6 +50,7 @@ import {
   FlexibleWithdrawModal,
   RepayWithdrawalModal,
 } from "@/components/nesteggs/withdraw-modals"
+import { CoverIcon } from "@/components/nesteggs/cover-icon"
 import type { NestEgg, NestEggDetailResponse } from "@/types/nesteggs"
 
 const formatCurrency = (amount: number) =>
@@ -77,7 +78,13 @@ export default function GoalDetailPage() {
   const fetchEgg = React.useCallback(async () => {
     const { data, error } = await nestEggsApi.get(id)
     if (error) { toast.error("Failed to load goal"); return }
-    if (data) setEgg(data)
+    if (data) {
+      console.log("Egg detail full:", JSON.stringify(data, null, 2))
+      if (data.canWithdraw === undefined) {
+        data.canWithdraw = data.progress >= 100
+      }
+      setEgg(data)
+    }
     setIsLoading(false)
   }, [id])
 
@@ -174,18 +181,18 @@ export default function GoalDetailPage() {
     <>
       {isActive && !egg.canWithdraw && (
         <>
-          <Button className="w-full gap-1.5" onClick={() => setContributeOpen(true)}>
+          <Button className="w-full gap-1.5 h-11 text-foreground" onClick={() => setContributeOpen(true)}>
             <PlusCircleIcon className="w-4 h-4" />
             Add Money
           </Button>
           {!egg.isFixed && canFlexWithdraw && !hasOutstandingFlex && (
-            <Button variant="outline" className="w-full gap-1.5" onClick={() => setFlexWithdrawOpen(true)}>
+            <Button variant="outline" className="w-full gap-1.5 h-11 text-foreground" onClick={() => setFlexWithdrawOpen(true)}>
               <ArrowDownCircleIcon className="w-4 h-4" />
               Flexible Withdrawal
             </Button>
           )}
           {hasOutstandingFlex && (
-            <Button variant="outline" className="w-full gap-1.5" onClick={() => setRepayOpen(true)}>
+            <Button variant="outline" className="w-full gap-1.5 h-11 text-foreground" onClick={() => setRepayOpen(true)}>
               <RotateCcwIcon className="w-4 h-4" />
               Repay Withdrawal
             </Button>
@@ -242,7 +249,9 @@ export default function GoalDetailPage() {
                 formatCurrency={formatCurrency}
               />
               <div className="flex items-center gap-2 flex-wrap justify-center">
-                <span className="text-xl">{egg.cover ?? "🥚"}</span>
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <CoverIcon name={egg.cover} className="w-5 h-5 text-primary" />
+              </div>
                 <h1 className="text-xl font-bold">{egg.title}</h1>
                 {egg.isFixed && (
                   <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/15 text-primary">

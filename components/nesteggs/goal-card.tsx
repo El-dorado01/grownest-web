@@ -4,6 +4,7 @@
 import Link from "next/link"
 import { LockIcon, ZapIcon } from "lucide-react"
 import { ProgressRing } from "./progress-ring"
+import { CoverIcon } from "./cover-icon"
 import type { NestEgg } from "@/types/nesteggs"
 
 interface GoalCardProps {
@@ -34,18 +35,12 @@ export function GoalCard({ egg, variant = "light", formatCurrency }: GoalCardPro
             : "bg-card text-foreground border border-border"
         }`}
       >
-        {/* Top row: cover emoji + badges */}
+        {/* Top row: cover icon + badges */}
         <div className="flex items-start justify-between">
-          <div className={`text-2xl w-10 h-10 rounded-xl flex items-center justify-center ${
-            isDark ? "bg-white/10" : "bg-muted"
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+            isDark ? "bg-primary/20" : "bg-primary/10"
           }`}>
-            {egg.cover && !egg.cover.startsWith("http") ? (
-              <span>{egg.cover}</span>
-            ) : egg.cover ? (
-              <img src={egg.cover} alt={egg.title} className="w-7 h-7 object-cover rounded-lg" />
-            ) : (
-              <span>🥚</span>
-            )}
+            <CoverIcon name={egg.cover} className="w-5 h-5 text-primary" />
           </div>
           <div className="flex items-center gap-1.5 flex-wrap justify-end">
             {egg.isFixed && (

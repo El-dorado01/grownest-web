@@ -20,9 +20,8 @@ import {
 import { Loader2, LockIcon, ZapIcon } from "lucide-react"
 import { toast } from "sonner"
 import { nestEggsApi } from "@/lib/nesteggs-api"
+import { COVER_PICKER_LIST } from "@/components/nesteggs/cover-icon"
 import type { NestEgg, NestEggFrequency } from "@/types/nesteggs"
-
-const COVER_EMOJIS = ["🥚", "🏠", "🚗", "✈️", "📱", "💍", "🎓", "💼", "🏋️", "🌱", "🎯", "💰"]
 
 const DURATION_OPTIONS = [
   { label: "30 days", value: 30 },
@@ -44,7 +43,7 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
 
   // Step 1
   const [title, setTitle] = useState("")
-  const [cover, setCover] = useState("🥚")
+  const [cover, setCover] = useState("house")
   const [isFixed, setIsFixed] = useState(false)
 
   // Step 2
@@ -57,7 +56,7 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
   const handleClose = () => {
     setStep(1)
     setTitle("")
-    setCover("🥚")
+    setCover("house")
     setIsFixed(false)
     setTargetAmount("")
     setDurationDays(90)
@@ -79,6 +78,14 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
     const numTarget = parseFloat(targetAmount)
     if (!numTarget || numTarget <= 0) {
       toast.error("Enter a valid target amount")
+      return
+    }
+    if (isFixed && durationDays < 20) {
+      toast.error("Fixed goals require a minimum duration of 20 days")
+      return
+    }
+    if (durationDays < 1) {
+      toast.error("Enter a valid duration")
       return
     }
     if (isAutoSave && !isFixed) {
@@ -152,25 +159,29 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   maxLength={50}
+                   className="h-11 bg-card"
                 />
               </div>
 
-              {/* Cover emoji */}
+              {/* Cover picker */}
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium">Cover</label>
-                <div className="grid grid-cols-6 gap-2">
-                  {COVER_EMOJIS.map((emoji) => (
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 py-5 px-2 max-h-56 overflow-y-auto pr-1">
+                  {COVER_PICKER_LIST.map((item) => (
                     <button
-                      key={emoji}
+                      key={item.name}
                       type="button"
-                      onClick={() => setCover(emoji)}
-                      className={`h-10 w-full rounded-xl text-xl flex items-center justify-center transition-all ${
-                        cover === emoji
+                      onClick={() => setCover(item.name)}
+                      className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all ${
+                        cover === item.name
                           ? "bg-primary/20 ring-2 ring-primary"
                           : "bg-muted hover:bg-muted/80"
                       }`}
                     >
-                      {emoji}
+                      <item.Icon className={`w-5 h-5 ${cover === item.name ? "text-primary" : "text-muted-foreground"}`} />
+                      <span className="text-[9px] text-muted-foreground leading-tight text-center line-clamp-1">
+                        {item.label}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -228,12 +239,19 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
                   value={targetAmount}
                   onChange={(e) => setTargetAmount(e.target.value)}
                   min={1}
+                  className="h-11 bg-card"  
                 />
               </div>
 
               {/* Duration */}
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium">Duration</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Duration</label>
+                  {isFixed && (
+                    <span className="text-xs text-primary font-medium">Min. 20 days for Fixed</span>
+                  )}
+                </div>
+                {/* Quick-pick chips */}
                 <div className="flex flex-wrap gap-2">
                   {DURATION_OPTIONS.map((opt) => (
                     <button
@@ -249,6 +267,21 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
                       {opt.label}
                     </button>
                   ))}
+                </div>
+                {/* Custom days input */}
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={isFixed ? 20 : 1}
+                    max={1095}
+                    value={durationDays}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value)
+                      if (!isNaN(val) && val > 0) setDurationDays(val)
+                    }}
+                    className="h-11 bg-card"
+                  />
+                  <span className="text-sm text-muted-foreground shrink-0">days</span>
                 </div>
               </div>
 
@@ -271,7 +304,7 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
                     >
                       <span
                         className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                          isAutoSave ? "translate-x-5" : "translate-x-0.5"
+                          isAutoSave ? "translate-x-0.8" : "-translate-x-5"
                         }`}
                       />
                     </button>
@@ -287,6 +320,7 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
                           placeholder="e.g. 5000"
                           value={autoSaveAmount}
                           onChange={(e) => setAutoSaveAmount(e.target.value)}
+                          className="h-11 bg-card"
                         />
                       </div>
                       <div>
@@ -297,10 +331,10 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
                           value={frequency}
                           onValueChange={(v) => setFrequency(v as NestEggFrequency)}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger style={{ height: "44px"}}>
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="p-2">
                             <SelectItem value="daily">Daily</SelectItem>
                             <SelectItem value="weekly">Weekly</SelectItem>
                             <SelectItem value="monthly">Monthly</SelectItem>
@@ -319,19 +353,19 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
         <div className="flex gap-2 pt-4 mt-4 border-t border-border px-4">
           {step === 1 ? (
             <>
-              <Button variant="outline" onClick={handleClose} className="flex-1">
+              <Button variant="outline" onClick={handleClose} className="flex-1 h-11 bg-card">
                 Cancel
               </Button>
-              <Button onClick={handleNext} className="flex-1">
+              <Button onClick={handleNext} className="flex-1 h-11 text-foreground">
                 Next →
               </Button>
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
+              <Button variant="outline" onClick={() => setStep(1)} className="flex-1 h-11">
                 ← Back
               </Button>
-              <Button onClick={handleCreate} disabled={isLoading} className="flex-1">
+              <Button onClick={handleCreate} disabled={isLoading} className="flex-1 h-11 text-foreground">
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Create Goal
               </Button>

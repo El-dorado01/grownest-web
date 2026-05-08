@@ -91,6 +91,7 @@ export function AutoSaveCard({ egg, onUpdate }: AutoSaveCardProps) {
                 value={newAmount}
                 onChange={(e) => setNewAmount(e.target.value)}
                 disabled={isLoading}
+                className="h-11 bg-card"
               />
             </div>
             <div>
@@ -100,10 +101,10 @@ export function AutoSaveCard({ egg, onUpdate }: AutoSaveCardProps) {
                 onValueChange={(v) => setNewFrequency(v as NestEggFrequency)}
                 disabled={isLoading}
               >
-                <SelectTrigger>
+                <SelectTrigger style={{height: "44px"}}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="p-2">
                   <SelectItem value="daily">Daily</SelectItem>
                   <SelectItem value="weekly">Weekly</SelectItem>
                   <SelectItem value="monthly">Monthly</SelectItem>
@@ -114,7 +115,7 @@ export function AutoSaveCard({ egg, onUpdate }: AutoSaveCardProps) {
           <Button
             onClick={handleEnable}
             disabled={isLoading || !newAmount || parseFloat(newAmount) <= 0}
-            className="w-full"
+            className="w-full h-11"
             size="sm"
           >
             {isLoading ? (
