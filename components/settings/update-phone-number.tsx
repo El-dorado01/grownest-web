@@ -9,6 +9,7 @@ import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, SmartphoneIcon, CheckCircle2, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
+import { PinInput } from "@/components/ui/pin-input"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,13 +102,14 @@ export function UpdatePhoneNumber() {
     }
   }
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!otp || !user?.userId) return
+  const handleVerifyOtp = async (e?: React.FormEvent, codeOverride?: string) => {
+    if (e) e.preventDefault()
+    const code = codeOverride || otp
+    if (!code || !user?.userId) return
 
     setIsSubmitting(true)
     try {
-      const result = await authApi.verifyPhoneOtp({ userId: user.userId, code: otp })
+      const result = await authApi.verifyPhoneOtp({ userId: user.userId, code })
       if (result.data) {
         setStep("success")
         mutate() // Refresh profile data to reflect new phone number
@@ -163,13 +165,14 @@ export function UpdatePhoneNumber() {
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="otp">Verification Code</FieldLabel>
-              <Input
-                id="otp"
+              <PinInput
+                length={6}
                 value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
-                className="text-center text-2xl tracking-widest h-14 font-mono"
-                required
+                onChange={(val) => {
+                  setOtp(val)
+                  if (val.length === 6) handleVerifyOtp(undefined, val)
+                }}
+                disabled={isSubmitting}
               />
             </Field>
 
@@ -223,11 +226,11 @@ export function UpdatePhoneNumber() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
             </div>
-            <AlertDialogFooter className="flex-col sm:flex-row gap-3 mt-4">
-              <AlertDialogCancel className="h-12 rounded-xl flex-1 mt-0">Continue Verifying</AlertDialogCancel>
+            <AlertDialogFooter className="h-30 md:h-auto flex-col sm:flex-row gap-3 mt-4">
+              <AlertDialogCancel className="rounded-xl flex-1 mt-0">Continue Verifying</AlertDialogCancel>
               <AlertDialogAction 
                 onClick={() => setStep("input")}
-                className="h-12 rounded-xl flex-1 bg-destructive hover:bg-destructive/90"
+                className="rounded-xl flex-1 bg-destructive hover:bg-destructive/90"
               >
                 Yes, Go Back
               </AlertDialogAction>

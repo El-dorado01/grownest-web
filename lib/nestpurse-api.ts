@@ -7,6 +7,8 @@ export interface LinkedAccount {
   label: string | null;
   linkedAt: string | null;
   isPrimary: boolean;
+  bankLogo?: string | null;
+  bankName?: string | null;
 }
 
 export interface VirtualAccount {
@@ -16,6 +18,25 @@ export interface VirtualAccount {
   accountName: string;
   currency: string;
   isPrimary: boolean;
+}
+
+export interface MandateBank {
+  name: string;
+  code: string;
+  logo?: string;
+  bankLogo?: string;
+}
+
+export interface Mandate {
+  id: string;
+  mandateId: string;
+  bankName: string;
+  accountNumber: string;
+  amount: number;
+  frequency: string;
+  status: string;
+  startDate: string;
+  endDate: string;
 }
 
 export interface Bank {
@@ -72,4 +93,66 @@ export const nestPurseApi = {
       amount: number; 
       gateway: string 
     }>("/api/nestpurse/topup", data),
+
+  getMandateBanks: () =>
+    api.get<{ status: boolean; message: string; banks: MandateBank[] }>("/api/nestpurse/mandates/banks"),
+
+  createMandate: (data: {
+    bankCode: string;
+    accountNumber: string;
+    accountName: string;
+    amount: number;
+    frequency: string;
+    startDate: string;
+    endDate: string;
+    narration?: string;
+    redirectUrl?: string;
+    cancelUrl?: string;
+  }) =>
+    api.post<{ 
+      message: string; 
+      checkoutUrl?: string; 
+      mandateId: string; 
+      status: string;
+      mandate: any;
+    }>("/api/nestpurse/mandates", data),
+
+  getMandates: () =>
+    api.get<{ mandates: Mandate[] }>("/api/nestpurse/mandates"),
+
+  updateMandateStatus: (id: string, status: "SUSPEND" | "ACTIVE") =>
+    api.put<{ message: string; mandate: Mandate }>(`/api/nestpurse/mandates/${id}/status`, { status }),
+
+  deleteMandate: (id: string) =>
+    api.delete<{ message: string }>(`/api/nestpurse/mandates/${id}`),
+
+  sendMoney: (data: {
+    amount: number;
+    pin: string;
+    narration: string;
+    bankDetails: {
+      bankCode: string;
+      accountNumber: string;
+    };
+    otp?: string;
+  }) =>
+    api.post<{ message: string; requiresOtp?: boolean; merchantTxRef?: string }>(
+      "/api/nestpurse/send",
+      data
+    ),
+
+  withdrawMoney: (data: {
+    bankCode: string;
+    accountNumber: string;
+    amount: number;
+    pin: string;
+    narration: string;
+    otp?: string;
+  }) =>
+    api.post<{ message: string; requiresOtp?: boolean; merchantTxRef?: string }>(
+      "/api/nestpurse/withdraw",
+      data
+    ),
 };
+
+

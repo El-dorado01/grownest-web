@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion } from "framer-motion"
-import { AlertCircle, RefreshCw, WifiOff } from "lucide-react"
+import { AlertCircle, RefreshCw, WifiOff, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -19,10 +19,24 @@ export function ErrorState({
   title = "Something went wrong",
   message = "We couldn't load the information. Please check your internet connection and try again.",
   onRetry,
-  isRetrying = false,
+  isRetrying: externalIsRetrying,
   className,
   icon
 }: ErrorStateProps) {
+  const [internalIsRetrying, setInternalIsRetrying] = React.useState(false)
+  const isRetrying = Boolean(externalIsRetrying || internalIsRetrying)
+
+  const handleRetry = async () => {
+    if (!onRetry) return
+    setInternalIsRetrying(true)
+    try {
+      await onRetry()
+    } finally {
+      // Small delay to ensure the user sees the success state/transition
+      setTimeout(() => setInternalIsRetrying(false), 500)
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -46,12 +60,16 @@ export function ErrorState({
 
       {onRetry && (
         <Button 
-          onClick={onRetry} 
+          onClick={handleRetry} 
           disabled={isRetrying}
           variant="outline"
           className="rounded-xl h-11 px-8 gap-2 bg-background hover:bg-muted transition-all shadow-sm"
         >
-          <RefreshCw className={cn("h-4 w-4", isRetrying && "animate-spin")} />
+          {isRetrying ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
           {isRetrying ? "Retrying..." : "Try Again"}
         </Button>
       )}

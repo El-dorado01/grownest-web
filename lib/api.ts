@@ -145,6 +145,15 @@ export async function apiFetch<T>(
     }
 
     if (!response.ok) {
+      // Handle Zod validation errors specifically
+      if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+        return {
+          data: null,
+          error: data.errors[0].message || "Validation failed",
+          status: response.status,
+        };
+      }
+
       return {
         data: null,
         error: data.error || data.message || "An error occurred",

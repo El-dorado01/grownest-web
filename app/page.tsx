@@ -45,6 +45,8 @@ import * as React from "react"
 import { format } from "date-fns"
 import { ErrorState } from "@/components/error-state"
 import { AddMoneyDialog } from "@/components/purse/add-money-dialog"
+import { SendMoneyDialog } from "@/components/purse/send-money-dialog"
+import { WithdrawDialog } from "@/components/purse/withdraw-dialog"
 
 import { useProfile } from "@/hooks/use-profile"
 
@@ -65,6 +67,8 @@ function Dashboard() {
 
   const [isRefreshing, setIsRefreshing] = React.useState(false)
   const [showAddMoney, setShowAddMoney] = React.useState(false)
+  const [showSendMoney, setShowSendMoney] = React.useState(false)
+  const [showWithdraw, setShowWithdraw] = React.useState(false)
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -142,7 +146,7 @@ function Dashboard() {
               <ErrorState 
                 title="Couldn't load dashboard"
                 onRetry={() => handleRefresh()}
-                isRetrying={isLoading}
+                isRetrying={isLoading || isRefreshing}
               />
             </div>
           ) : (
@@ -245,6 +249,7 @@ function Dashboard() {
                 variant="outline"
                 className="h-14 justify-start gap-3 rounded-xl text-base"
                 size="lg"
+                onClick={() => setShowSendMoney(true)}
               >
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
                   <SendIcon size={18} />
@@ -255,6 +260,7 @@ function Dashboard() {
                 variant="outline"
                 className="h-14 justify-start gap-3 rounded-xl text-base"
                 size="lg"
+                onClick={() => setShowWithdraw(true)}
               >
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10 text-red-500">
                   <ArrowDownIcon size={18} />
@@ -339,6 +345,16 @@ function Dashboard() {
         <AddMoneyDialog 
           open={showAddMoney} 
           onOpenChange={setShowAddMoney} 
+          profile={profile}
+        />
+        <SendMoneyDialog
+          open={showSendMoney}
+          onOpenChange={setShowSendMoney}
+          profile={profile}
+        />
+        <WithdrawDialog
+          open={showWithdraw}
+          onOpenChange={setShowWithdraw}
           profile={profile}
         />
       </SidebarInset>

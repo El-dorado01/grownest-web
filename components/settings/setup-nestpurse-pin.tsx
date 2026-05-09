@@ -30,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { PinInput } from "@/components/ui/pin-input"
 
 type FlowState = "initial" | "create" | "verify_current" | "verify_otp" | "success"
 
@@ -106,15 +107,17 @@ export function SetupNestPursePin() {
     }
   }
 
-  const handleRequestOtp = async () => {
-    if (currentPin.length !== 4) {
+  const handleRequestOtp = async (e?: React.MouseEvent | string) => {
+    if (e && typeof e !== 'string') e.preventDefault()
+    const pin = typeof e === 'string' ? e : currentPin
+    if (pin.length !== 4) {
       toast.error("Current PIN must be 4 digits")
       return
     }
 
     setIsSubmitting(true)
     try {
-      const { data, error } = await authApi.requestPinUpdateOtp({ currentPin, otpMedium })
+      const { data, error } = await authApi.requestPinUpdateOtp({ currentPin: pin, otpMedium })
       if (error) {
         toast.error(error)
       } else if (data?.sessionId) {
@@ -130,15 +133,17 @@ export function SetupNestPursePin() {
     }
   }
 
-  const handleVerifyOtp = async () => {
-    if (otp.length !== 6) {
+  const handleVerifyOtp = async (e?: React.MouseEvent | string) => {
+    if (e && typeof e !== 'string') e.preventDefault()
+    const code = typeof e === 'string' ? e : otp
+    if (code.length !== 6) {
       toast.error("OTP must be 6 digits")
       return
     }
 
     setIsSubmitting(true)
     try {
-      const { error } = await authApi.verifyPinUpdateOtp({ sessionId, otp })
+      const { error } = await authApi.verifyPinUpdateOtp({ sessionId, otp: code })
       if (error) {
         toast.error(error)
       } else {
@@ -305,27 +310,19 @@ export function SetupNestPursePin() {
               <div className="grid gap-6">
                 <Field>
                   <FieldLabel>Enter New PIN</FieldLabel>
-                  <Input
-                    type="password"
-                    inputMode="numeric"
-                    maxLength={4}
-                    autoFocus
-                    className="h-12 rounded-2xl bg-muted/30 text-center text-3xl tracking-[0.75em] border-transparent focus:border-primary/20 transition-all shadow-inner"
+                  <PinInput
                     value={newPin}
-                    onChange={(e) => setNewPin(e.target.value.replace(/[^0-9]/g, ""))}
-                    placeholder="****"
+                    onChange={(val) => setNewPin(val)}
+                    disabled={isSubmitting}
                   />
                 </Field>
                 <Field>
                   <FieldLabel>Confirm New PIN</FieldLabel>
-                  <Input
-                    type="password"
-                    inputMode="numeric"
-                    maxLength={4}
-                    className="h-12 rounded-2xl bg-muted/30 text-center text-3xl tracking-[0.75em] border-transparent focus:border-primary/20 transition-all shadow-inner"
+                  <PinInput
                     value={confirmPin}
-                    onChange={(e) => setConfirmPin(e.target.value.replace(/[^0-9]/g, ""))}
-                    placeholder="****"
+                    onChange={(val) => setConfirmPin(val)}
+                    disabled={isSubmitting}
+                    autoFocus={false}
                   />
                 </Field>
               </div>
@@ -371,15 +368,13 @@ export function SetupNestPursePin() {
               <div className="grid gap-8">
                 <Field>
                   <FieldLabel>Current 4-Digit PIN</FieldLabel>
-                  <Input
-                    type="password"
-                    inputMode="numeric"
-                    maxLength={4}
-                    autoFocus
-                    className="h-12 rounded-2xl bg-muted/30 text-center text-3xl tracking-[0.75em] border-transparent focus:border-primary/20 transition-all shadow-inner"
+                  <PinInput
                     value={currentPin}
-                    onChange={(e) => setCurrentPin(e.target.value.replace(/[^0-9]/g, ""))}
-                    placeholder="****"
+                    onChange={(val) => {
+                      setCurrentPin(val)
+                      if (val.length === 4) handleRequestOtp(val)
+                    }}
+                    disabled={isSubmitting}
                   />
                 </Field>
 
@@ -467,15 +462,14 @@ export function SetupNestPursePin() {
             <div className="space-y-8">
               <Field>
                 <FieldLabel>Verification Code</FieldLabel>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  autoFocus
-                  className="h-12 rounded-2xl bg-muted/30 text-center text-3xl font-black tracking-[0.5em] border-transparent focus:border-primary/20 transition-all shadow-inner"
+                <PinInput
+                  length={6}
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ""))}
-                  placeholder="000000"
+                  onChange={(val) => {
+                    setOtp(val)
+                    if (val.length === 6) handleVerifyOtp(val)
+                  }}
+                  disabled={isSubmitting}
                 />
               </Field>
               
@@ -542,7 +536,7 @@ export function SetupNestPursePin() {
               </AlertDialogDescription>
             </AlertDialogHeader>
           </div>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-3 mt-4">
+          <AlertDialogFooter className="h-30 md:h-auto flex-col sm:flex-row gap-3 mt-4">
             <AlertDialogCancel className="h-12 rounded-xl flex-1 mt-0">Keep Verifying</AlertDialogCancel>
             <AlertDialogAction 
               onClick={resetAll}

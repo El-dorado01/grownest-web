@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Loader2, AlertTriangle, CheckCircle2, Mail, SmartphoneIcon } from "lucide-react"
 import { toast } from "sonner"
+import { PinInput } from "@/components/ui/pin-input"
 
 type TwoFAStep = "idle" | "choose_medium" | "pending_otp" | "success"
 
@@ -92,12 +93,13 @@ export function PrivacySecurity() {
     }
   }
 
-  const handleVerify2FA = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user?.userId || !twoFACode) return
+  const handleVerify2FA = async (e?: React.FormEvent, codeOverride?: string) => {
+    if (e) e.preventDefault()
+    const code = codeOverride || twoFACode
+    if (!user?.userId || !code) return
     setTwoFASubmitting(true)
     try {
-      const result = await authApi.verify2FASetup({ userId: user.userId, code: twoFACode })
+      const result = await authApi.verify2FASetup({ userId: user.userId, code })
       if (result.data) {
         setTwoFAStep("success")
         mutate()
@@ -112,12 +114,13 @@ export function PrivacySecurity() {
     }
   }
 
-  const handleDisable2FA = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleDisable2FA = async (e?: React.FormEvent, pinOverride?: string) => {
+    if (e) e.preventDefault()
     if (!user?.userId) return
+    const pin = pinOverride || disablePin
     setDisableSubmitting(true)
     try {
-      const result = await authApi.disable2FA({ userId: user.userId, pin: disablePin || undefined })
+      const result = await authApi.disable2FA({ userId: user.userId, pin: pin || undefined })
       if (result.data) {
         mutate()
         setShowDisableForm(false)
@@ -276,13 +279,14 @@ export function PrivacySecurity() {
             </p>
             <Field>
               <FieldLabel htmlFor="twofa-code">Verification Code</FieldLabel>
-              <Input
-                id="twofa-code"
+              <PinInput
+                length={6}
                 value={twoFACode}
-                onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
-                className="text-center text-xl tracking-widest h-12 font-mono max-w-xs"
-                required
+                onChange={(val) => {
+                  setTwoFACode(val)
+                  if (val.length === 6) handleVerify2FA(undefined, val) 
+                }}
+                disabled={twoFASubmitting}
               />
             </Field>
             <div className="flex flex-wrap gap-3 items-center">
@@ -326,14 +330,14 @@ export function PrivacySecurity() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
             </div>
-            <AlertDialogFooter className="flex-col sm:flex-row gap-3 mt-4">
-              <AlertDialogCancel className="h-11 rounded-xl flex-1 mt-0">Continue Setup</AlertDialogCancel>
+            <AlertDialogFooter className="h-30 md:h-auto flex-col sm:flex-row gap-3 mt-4">
+              <AlertDialogCancel className="rounded-xl flex-1 mt-0">Continue Setup</AlertDialogCancel>
               <AlertDialogAction 
                 onClick={() => {
                   setTwoFAStep("idle")
                   setTwoFACode("")
                 }}
-                className="h-11 rounded-xl flex-1 bg-destructive hover:bg-destructive/90"
+                className="rounded-xl flex-1 bg-destructive hover:bg-destructive/90"
               >
                 Yes, Discard
               </AlertDialogAction>
@@ -359,17 +363,15 @@ export function PrivacySecurity() {
                 </p>
                 <Field>
                   <FieldLabel htmlFor="disable-pin">Transaction PIN</FieldLabel>
-                  <Input
-                    id="disable-pin"
-                    type="password"
+                  <PinInput
                     value={disablePin}
-                    onChange={(e) => setDisablePin(e.target.value)}
-                    placeholder="••••••"
-                    className="h-11 max-w-xs"
-                    maxLength={6}
-                    required
+                    onChange={(val) => {
+                      setDisablePin(val)
+                      if (val.length === 4) handleDisable2FA(undefined, val)
+                    }}
+                    disabled={disableSubmitting}
                   />
-                  <FieldDescription>Your 4–6 digit transaction PIN is required to disable 2FA.</FieldDescription>
+                  <FieldDescription>Your 4-digit transaction PIN is required to disable 2FA.</FieldDescription>
                 </Field>
               </>
             ) : (
