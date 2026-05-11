@@ -18,7 +18,7 @@ import {
 
 import { SettingsDialog } from "@/components/settings-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { useAuth } from "@/context/auth-context"
 import { authApi } from "@/lib/auth-api"
 import {
@@ -31,7 +31,9 @@ import {
   TrendingUpIcon,
   TrendingDownIcon,
   Loader2Icon,
-  RotateCcw
+  RotateCcw,
+  WalletIcon,
+  ArrowUpRight
 } from "lucide-react"
 import {
   Card,
@@ -47,11 +49,14 @@ import { ErrorState } from "@/components/error-state"
 import { AddMoneyDialog } from "@/components/purse/add-money-dialog"
 import { SendMoneyDialog } from "@/components/purse/send-money-dialog"
 import { WithdrawDialog } from "@/components/purse/withdraw-dialog"
+import { SetupPurseDialog } from "@/components/purse/setup-purse-dialog"
 
 import { useProfile } from "@/hooks/use-profile"
+import Link from "next/link"
 
 function Dashboard() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const [isInitialLoad, setIsInitialLoad] = React.useState(true)
   const [showBalance, setShowBalance] = React.useState(true)
@@ -69,6 +74,7 @@ function Dashboard() {
   const [showAddMoney, setShowAddMoney] = React.useState(false)
   const [showSendMoney, setShowSendMoney] = React.useState(false)
   const [showWithdraw, setShowWithdraw] = React.useState(false)
+  const [showSetupPurse, setShowSetupPurse] = React.useState(false)
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -87,6 +93,9 @@ function Dashboard() {
     recentActivity,
     profile: profile || {}
   }
+
+  // Detect if NestPurse needs setup (checking for virtual account)
+  const needsSetup = !profile?.hasPurse
 
   const showSettingsAsPage =
     isInitialLoad && searchParams.get("settings") === "true"
@@ -152,7 +161,7 @@ function Dashboard() {
           ) : (
             <>
               {/* Greeting Section */}
-          <section>
+           <section>
             <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
               Hello,{" "}
               {isLoading ? (
@@ -170,10 +179,35 @@ function Dashboard() {
             </p>
           </section>
 
+          {needsSetup && !isLoading && (
+            <Card className="border-muted bg-muted/30 shadow-none">
+              <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <WalletIcon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-foreground leading-none">Complete NestPurse Setup</h3>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-xl leading-relaxed">
+                      Set your transaction PIN and link a bank account to start moving funds securely.
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  className="w-full md:w-auto rounded-xl h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground dark:text-white whitespace-nowrap font-bold text-sm"
+                  onClick={() => setShowSetupPurse(true)}
+                >
+                  Setup Now <ArrowUpRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Balance & Quick Actions Grid */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {/* Balance Card */}
-            <Card className="relative overflow-hidden lg:col-span-2">
+            {!needsSetup && (
+              <Card className="relative overflow-hidden lg:col-span-2">
               <div className="pointer-events-none absolute top-0 right-0 p-4 opacity-10">
                 <TrendingUpIcon size={120} />
               </div>
@@ -231,10 +265,12 @@ function Dashboard() {
                 </p>
               </CardContent>
             </Card>
+            )}
 
             {/* Quick Actions */}
-            <div className="flex flex-col gap-3">
-              <h3 className="text-sm font-medium">Quick Actions</h3>
+            {!needsSetup && (
+              <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-medium">Quick Actions</h3>
               <Button
                 className="h-14 justify-start gap-3 rounded-xl text-base text-black dark:text-white"
                 size="lg"
@@ -268,7 +304,8 @@ function Dashboard() {
                 Withdraw
               </Button>
             </div>
-          </div>
+          )}
+        </div>
 
           {/* Recent Activity Section */}
           <section className="flex flex-col gap-4">
@@ -276,8 +313,10 @@ function Dashboard() {
               <h2 className="text-lg font-semibold tracking-tight">
                 Recent Activity
               </h2>
-              <Button variant="link" className="px-0">
-                View all
+              <Button variant="link" className="px-0" asChild>
+                <Link href="/nestpurse/transactions">
+                  View all
+                </Link>
               </Button>
             </div>
 
@@ -351,11 +390,18 @@ function Dashboard() {
           open={showSendMoney}
           onOpenChange={setShowSendMoney}
           profile={profile}
+          balance={balance}
         />
         <WithdrawDialog
           open={showWithdraw}
           onOpenChange={setShowWithdraw}
           profile={profile}
+          balance={balance}
+        />
+        {/* We will create this component next */}
+        <SetupPurseDialog 
+          open={showSetupPurse}
+          onOpenChange={setShowSetupPurse}
         />
       </SidebarInset>
     </SidebarProvider>

@@ -119,7 +119,7 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
         const params = new URLSearchParams(searchParams.toString())
         params.delete("settings")
         params.delete("tab")
-        router.push(pathname + (params.toString() ? `?${params.toString()}` : ""))
+        router.push(pathname + (params.toString() ? `?${params.toString()}` : ""), { scroll: false })
       }
     }
   }

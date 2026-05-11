@@ -153,6 +153,39 @@ export const nestPurseApi = {
       "/api/nestpurse/withdraw",
       data
     ),
+
+  setupPurse: (data: { linkedAccount?: { bankCode: string; accountNumber: string; label?: string } } = {}) =>
+    api.post<{ message: string; accountRef: string; bankAccountNumber: string }>("/api/nestpurse/setup", data),
+
+  getTransactions: (params: {
+    limit?: number;
+    cursor?: string;
+    startDate?: string;
+    endDate?: string;
+  }) => {
+    const query = new URLSearchParams();
+    if (params.limit) query.set("limit", String(params.limit));
+    if (params.cursor) query.set("cursor", params.cursor);
+    if (params.startDate) query.set("startDate", params.startDate);
+    if (params.endDate) query.set("endDate", params.endDate);
+    return api.get<{
+      transactions: Array<{
+        id: string;
+        type: "credit" | "debit";
+        amount: number;
+        status: string;
+        method: string;
+        reference: string;
+        date: string;
+        senderName?: string;
+        senderBankName?: string;
+        senderAccountNumber?: string;
+        narration?: string;
+      }>;
+      pagination: { hasMore: boolean; nextCursor?: string; limit: number };
+      filters: { startDate?: string; endDate?: string };
+    }>(`/api/nestpurse/transactions?${query.toString()}`);
+  },
 };
 
 

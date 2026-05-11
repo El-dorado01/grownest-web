@@ -15,6 +15,11 @@ const nextConfig = {
         destination: "/",
         permanent: true,
       },
+      {
+        source: "/purse",
+        destination: "/nestpurse",
+        permanent: true,
+      },
     ]
   },
 }

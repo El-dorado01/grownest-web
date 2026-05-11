@@ -41,24 +41,19 @@ const data = {
       title: "Dashboard",
       url: "/dashboard",
       icon: <LayoutDashboardIcon />,
-      isActive: true,
     },
     {
       title: "NestPurse",
-      url: "/purse",
+      url: "/nestpurse",
       icon: <WalletIcon />,
       items: [
         {
           title: "Overview",
-          url: "/purse",
+          url: "/nestpurse",
         },
         {
           title: "Transactions",
-          url: "/purse/transactions",
-        },
-        {
-          title: "Withdrawals",
-          url: "/purse/withdrawals",
+          url: "/nestpurse/transactions",
         },
       ],
     },

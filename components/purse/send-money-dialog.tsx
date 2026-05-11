@@ -48,6 +48,7 @@ interface SendMoneyDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   profile?: any
+  balance?: number
 }
 
 type Step = "bank" | "account" | "amount" | "pin" | "otp" | "success"
@@ -56,6 +57,7 @@ export function SendMoneyDialog({
   open,
   onOpenChange,
   profile,
+  balance = 0,
 }: SendMoneyDialogProps) {
   const isMobile = useIsMobile()
   const { mutate } = useSWRConfig()
@@ -355,7 +357,7 @@ export function SendMoneyDialog({
                     className={cn(
                       "h-14 rounded-xl border-2 pl-10 text-2xl font-bold",
                       formData.amount &&
-                        parseFloat(formData.amount) < 50 &&
+                        (parseFloat(formData.amount) < 50 || parseFloat(formData.amount) > balance) &&
                         "border-destructive focus-visible:ring-destructive/20"
                     )}
                     autoFocus
@@ -364,6 +366,11 @@ export function SendMoneyDialog({
                 {formData.amount && parseFloat(formData.amount) < 50 && (
                   <p className="ml-1 text-[10px] font-bold text-destructive">
                     Minimum amount is ₦50
+                  </p>
+                )}
+                {formData.amount && parseFloat(formData.amount) > balance && (
+                  <p className="ml-1 text-[10px] font-bold text-destructive">
+                    Insufficient wallet balance
                   </p>
                 )}
               </div>
@@ -389,7 +396,11 @@ export function SendMoneyDialog({
             <div className="flex flex-col gap-3">
               <Button
                 className="h-14 w-full rounded-xl text-lg font-bold"
-                disabled={!formData.amount || parseFloat(formData.amount) < 50}
+                disabled={
+                  !formData.amount || 
+                  parseFloat(formData.amount) < 50 || 
+                  parseFloat(formData.amount) > balance
+                }
                 onClick={() => setStep("pin")}
               >
                 Continue

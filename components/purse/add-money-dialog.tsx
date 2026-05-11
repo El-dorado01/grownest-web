@@ -1098,8 +1098,8 @@ export function AddMoneyDialog({
               frequency: mandateData.frequency,
               startDate: mandateData.startDate,
               endDate: mandateData.endDate,
-              redirectUrl: window.location.origin + "/purse?status=success",
-              cancelUrl: window.location.origin + "/purse?status=cancel",
+              redirectUrl: window.location.origin + "/nestpurse?status=success",
+              cancelUrl: window.location.origin + "/nestpurse?status=cancel",
             })
             const checkoutUrl = res?.data?.checkoutUrl
             if (checkoutUrl) {
@@ -1382,7 +1382,7 @@ export function AddMoneyDialog({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[85vh] px-4 pb-8">
+        <DrawerContent className="h-[70vh] px-4 pb-8">
           <div className="flex h-full flex-col overflow-hidden">
             <DrawerHeader className="shrink-0 px-0">
               <DrawerTitle>
