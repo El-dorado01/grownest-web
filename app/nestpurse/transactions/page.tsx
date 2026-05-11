@@ -316,11 +316,11 @@ export default function TransactionsPage() {
                 {isLoading ? "Loading…" : `${filtered.length} transaction${filtered.length !== 1 ? "s" : ""}${transactions.length > filtered.length ? ` (filtered from ${transactions.length})` : ""}`}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-lg h-9"
+                className="rounded-lg h-9 flex-1 sm:flex-none"
                 onClick={() => loadTransactions()}
                 disabled={isLoading}
               >
@@ -329,7 +329,7 @@ export default function TransactionsPage() {
               </Button>
               <Button
                 size="sm"
-                className="rounded-lg h-9"
+                className="rounded-lg h-9 flex-1 sm:flex-none"
                 onClick={() => {
                   if (filtered.length === 0) { toast.error("No transactions to export"); return }
                   exportToCSV(filtered)
@@ -503,7 +503,10 @@ export default function TransactionsPage() {
                         <p className="text-sm font-semibold truncate capitalize">
                           {tx.narration || METHOD_LABELS[tx.method] || "Transaction"}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate font-mono">{tx.reference}</p>
+                        <p className="text-[11px] text-muted-foreground truncate md:font-mono">
+                          <span className="md:hidden">{format(new Date(tx.date), "MMM dd, yyyy • hh:mm a")}</span>
+                          <span className="hidden md:inline">{tx.reference}</span>
+                        </p>
                       </div>
                     </div>
 
@@ -521,15 +524,23 @@ export default function TransactionsPage() {
                     </div>
 
                     {/* Amount */}
-                    <div className="text-right">
+                    <div className="text-right flex flex-col items-end gap-1">
                       <p className={cn("text-sm font-bold tabular-nums", TYPE_COLORS[tx.type])}>
                         {tx.type === "credit" ? "+" : "−"}{formatCurrency(tx.amount)}
                       </p>
-                      <p className="text-[10px] text-muted-foreground md:hidden">{format(new Date(tx.date), "MMM dd")}</p>
+                      <div className="md:hidden">
+                        <span className={cn("text-[9px] font-black tracking-widest uppercase px-1.5 py-0.5 rounded-md border", 
+                          tx.status === 'success' ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" :
+                          tx.status === 'pending' ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+                          "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                        )}>
+                          {tx.status}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Status */}
-                    <div>
+                    <div className="hidden md:block">
                       <span className={cn("text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full", STATUS_STYLES[tx.status] || STATUS_STYLES.pending)}>
                         {tx.status}
                       </span>

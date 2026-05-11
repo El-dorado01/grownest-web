@@ -9,7 +9,7 @@ export const authApi = {
     }),
 
   register: (data: any) =>
-    api.post<{ message: string; userId: string }>("/api/auth/register", data),
+    api.post<{ message: string; userId: string; token?: string }>("/api/auth/register", data),
 
   verify2FA: (data: { userId: string; code: string }) =>
     api.post<LoginResponse>("/api/auth/login/2fa", data).then(response => {
@@ -32,7 +32,11 @@ export const authApi = {
     const formData = new FormData();
     Object.keys(data).forEach((key) => {
       if (data[key] !== undefined && data[key] !== null) {
-        formData.append(key, data[key]);
+        if (Array.isArray(data[key])) {
+          data[key].forEach((val) => formData.append(key, val));
+        } else {
+          formData.append(key, data[key]);
+        }
       }
     });
     return api.patch<{ message: string; profilePhoto?: string }>(
@@ -58,6 +62,12 @@ export const authApi = {
 
   verify2FASetup: (data: { userId: string; code: string }) =>
     api.post<{ message: string }>("/api/auth/2fa/verify", data),
+
+  verifyAccount: (data: { userId: string; code: string }) =>
+    api.post<{ message: string; token?: string }>("/api/auth/verify", data),
+
+  resendVerification: (data: { userId: string }) =>
+    api.post<{ message: string }>("/api/auth/resend-verification", data),
 
   disable2FA: (data: { userId: string; pin?: string }) =>
     api.post<{ message: string }>("/api/auth/2fa/disable", data),

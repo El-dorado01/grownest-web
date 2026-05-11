@@ -184,6 +184,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         return { success: false, error };
       }
+
+      if (data?.token) {
+        setAuthToken(data.token);
+        const user: User = {
+          userId: data.userId,
+          email: regData.email,
+        };
+        localStorage.setItem("user", JSON.stringify(user));
+
+        setState({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+          requires2FA: false,
+          pendingUserId: null,
+        });
+      }
       
       return { success: true };
     },

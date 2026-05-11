@@ -47,8 +47,8 @@ export function SignupForm({
       if (!result.success) {
         toast.error(result.error || "Registration failed")
       } else {
-        toast.success("Registration successful! Please check your email for verification.")
-        router.push("/login")
+        toast.success("Registration successful!")
+        router.push("/signup/verify")
       }
     } catch (err) {
       toast.error("An unexpected error occurred. Please try again.")

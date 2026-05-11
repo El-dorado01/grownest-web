@@ -234,14 +234,14 @@ export function ProfileSettings({ onNavigate }: ProfileSettingsProps = {}) {
           </Field>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <Field>
+        <div className="grid gap-6 md:grid-cols-2 min-w-0">
+          <Field className="min-w-0">
             <FieldLabel>Date of Birth</FieldLabel>
             <Input 
               type="date" 
               value={dob} 
               onChange={(e) => setDob(e.target.value)} 
-              className="h-11"
+              className="h-11 w-full min-w-0"
             />
           </Field>
         </div>

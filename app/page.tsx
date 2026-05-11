@@ -49,12 +49,11 @@ import { ErrorState } from "@/components/error-state"
 import { AddMoneyDialog } from "@/components/purse/add-money-dialog"
 import { SendMoneyDialog } from "@/components/purse/send-money-dialog"
 import { WithdrawDialog } from "@/components/purse/withdraw-dialog"
-import { SetupPurseDialog } from "@/components/purse/setup-purse-dialog"
 
 import { useProfile } from "@/hooks/use-profile"
 import Link from "next/link"
 
-function Dashboard() {
+export function Dashboard() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
@@ -74,7 +73,6 @@ function Dashboard() {
   const [showAddMoney, setShowAddMoney] = React.useState(false)
   const [showSendMoney, setShowSendMoney] = React.useState(false)
   const [showWithdraw, setShowWithdraw] = React.useState(false)
-  const [showSetupPurse, setShowSetupPurse] = React.useState(false)
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -87,6 +85,22 @@ function Dashboard() {
   }, [])
 
   const isLoading = isProfileLoading || (isAuthLoading && isInitialLoad)
+
+  React.useEffect(() => {
+    if (!isLoading && isAuthenticated && profile) {
+      // 1. If email not verified, go to verify
+      if (!profile.isVerified) {
+        router.push("/signup/verify")
+        return
+      }
+      
+      // 2. If profile incomplete (no name), go to onboarding
+      if (!profile.fullName) {
+        router.push("/onboarding")
+        return
+      }
+    }
+  }, [isLoading, isAuthenticated, profile, router])
 
   const dashboardData = {
     balance,
@@ -195,7 +209,7 @@ function Dashboard() {
                 </div>
                 <Button 
                   className="w-full md:w-auto rounded-xl h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground dark:text-white whitespace-nowrap font-bold text-sm"
-                  onClick={() => setShowSetupPurse(true)}
+                  onClick={() => router.push("/onboarding")}
                 >
                   Setup Now <ArrowUpRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -397,11 +411,6 @@ function Dashboard() {
           onOpenChange={setShowWithdraw}
           profile={profile}
           balance={balance}
-        />
-        {/* We will create this component next */}
-        <SetupPurseDialog 
-          open={showSetupPurse}
-          onOpenChange={setShowSetupPurse}
         />
       </SidebarInset>
     </SidebarProvider>
