@@ -30,6 +30,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog"
+import { ErrorState } from "@/components/error-state"
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription,
 } from "@/components/ui/drawer"
@@ -466,9 +467,12 @@ export default function TransactionsPage() {
                 ))}
               </div>
             ) : error ? (
-              <div className="py-16 flex flex-col items-center gap-3 text-center">
-                <p className="text-muted-foreground font-medium">Failed to load transactions</p>
-                <Button variant="outline" size="sm" className="rounded-lg" onClick={() => loadTransactions()}>Retry</Button>
+              <div className="py-20">
+                <ErrorState
+                  title="Couldn't load transactions"
+                  message="We ran into an issue while fetching your transaction history."
+                  onRetry={() => loadTransactions()}
+                />
               </div>
             ) : filtered.length === 0 ? (
               <div className="py-20 flex flex-col items-center gap-3 text-center">

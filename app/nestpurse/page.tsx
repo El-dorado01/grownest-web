@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   CreditCardIcon,
   ArrowUpRight,
+  Loader2,
 } from "lucide-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
@@ -145,6 +146,16 @@ function NestPursePage() {
         </header>
 
         <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 md:p-6">
+          {profileError ? (
+            <div className="flex flex-1 items-center justify-center py-24">
+              <ErrorState
+                title="Couldn't load NestPurse"
+                onRetry={handleRefresh}
+                isRetrying={isRefreshing}
+              />
+            </div>
+          ) : (
+          <>
           {/* Header Section */}
           <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
@@ -466,6 +477,8 @@ function NestPursePage() {
               </Card>
             </div>
           </div>
+          </>
+          )}
         </div>
 
         {/* Dialogs */}
@@ -490,4 +503,16 @@ function NestPursePage() {
   )
 }
 
-export default NestPursePage
+export default function Page() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="flex h-screen w-full items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <NestPursePage />
+    </React.Suspense>
+  )
+}
