@@ -18,9 +18,11 @@ import {
   AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { PlusCircleIcon, Trash2Icon, TrophyIcon } from "lucide-react"
+import useSWR from "swr"
 import { toast } from "sonner"
 import { useAuth } from "@/context/auth-context"
 import { groupNestEggApi } from "@/lib/group-nestegg-api"
+import { useGroupDetail } from "@/hooks/use-group-detail"
 import { SemiProgressRing } from "@/components/nesteggs/progress-ring"
 import { MemberList } from "@/components/group-nestegg/member-list"
 import { Scoreboard } from "@/components/group-nestegg/scoreboard"
@@ -29,7 +31,7 @@ import { GroupAutoSaveCard } from "@/components/group-nestegg/group-autosave-car
 import { GroupContributeModal } from "@/components/group-nestegg/group-contribute-modal"
 import { InvitePanel } from "@/components/group-nestegg/invite-panel"
 import { CoverIcon } from "@/components/nesteggs/cover-icon"
-import type { GroupNestEgg, GroupMember, WeeklyScoreboard } from "@/types/group-nestegg"
+import type { GroupMember } from "@/types/group-nestegg"
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(amount)
@@ -40,51 +42,46 @@ export default function GroupDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { user } = useAuth()
-  const [group, setGroup] = React.useState<GroupNestEgg | null>(null)
-  const [scoreboard, setScoreboard] = React.useState<WeeklyScoreboard | null>(null)
-  const [isLoading, setIsLoading] = React.useState(true)
-  const [isScoreboardLoading, setIsScoreboardLoading] = React.useState(false)
+  const { group, isLoading, mutate, updateGroup } = useGroupDetail(id)
   const [activeTab, setActiveTab] = React.useState<Tab>("overview")
+  const [scoreboardEnabled, setScoreboardEnabled] = React.useState(false)
   const [contributeOpen, setContributeOpen] = React.useState(false)
   const [contributionRefreshKey, setContributionRefreshKey] = React.useState(0)
   const [isDeleting, setIsDeleting] = React.useState(false)
 
-  const fetchGroup = React.useCallback(async () => {
-    const { data, error } = await groupNestEggApi.get(id)
-    if (error) { toast.error("Failed to load group"); return }
-    if (data) setGroup(data.group)
-    setIsLoading(false)
-  }, [id])
-
-  const fetchScoreboard = React.useCallback(async () => {
-    setIsScoreboardLoading(true)
-    const { data } = await groupNestEggApi.scoreboard(id)
-    if (data) setScoreboard(data)
-    setIsScoreboardLoading(false)
-  }, [id])
-
-  React.useEffect(() => { fetchGroup() }, [fetchGroup])
-
-  React.useEffect(() => {
-    if (activeTab === "scoreboard" && !scoreboard) fetchScoreboard()
-  }, [activeTab, scoreboard, fetchScoreboard])
+  // Lazy-load scoreboard only when that tab is first opened
+  const { data: scoreboardRes, isLoading: isScoreboardLoading } = useSWR(
+    scoreboardEnabled ? ["group-scoreboard", id] : null,
+    () => groupNestEggApi.scoreboard(id),
+    { revalidateOnFocus: true, dedupingInterval: 2000 }
+  )
+  const scoreboard = scoreboardRes?.data || null
 
   const handleContributeSuccess = (savedAmount: number, progress: number) => {
-    setGroup((prev) => prev ? { ...prev, savedAmount, progress, isMature: progress >= 100 } : prev)
+    updateGroup({ savedAmount, progress, isMature: progress >= 100 })
     setContributionRefreshKey((k) => k + 1)
   }
 
   const handleAutoSaveUpdate = (updated: Partial<GroupMember>) => {
     if (!group || !user) return
-    setGroup((prev) => {
-      if (!prev) return prev
-      return {
-        ...prev,
-        members: prev.members.map((m) =>
-          m.profileId === user.userId ? { ...m, ...updated } : m
-        ),
-      }
-    })
+    mutate(
+      (current) => {
+        if (!current?.data?.group) return current
+        return {
+          ...current,
+          data: {
+            ...current.data,
+            group: {
+              ...current.data.group,
+              members: current.data.group.members.map((m) =>
+                m.profileId === user.userId ? { ...m, ...updated } : m
+              ),
+            },
+          },
+        }
+      },
+      { revalidate: false }
+    )
   }
 
   const handleDelete = async () => {
@@ -262,7 +259,7 @@ const isActive = group.status === "active"
               {(["overview", "contributions", "scoreboard"] as Tab[]).map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => { setActiveTab(tab); if (tab === "scoreboard") setScoreboardEnabled(true) }}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
                     activeTab === tab ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                   }`}

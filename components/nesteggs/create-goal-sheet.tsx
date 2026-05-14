@@ -49,6 +49,7 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
   // Step 2
   const [targetAmount, setTargetAmount] = useState("")
   const [durationDays, setDurationDays] = useState(90)
+  const [customDays, setCustomDays] = useState("")
   const [isAutoSave, setIsAutoSave] = useState(false)
   const [autoSaveAmount, setAutoSaveAmount] = useState("")
   const [frequency, setFrequency] = useState<NestEggFrequency>("monthly")
@@ -60,6 +61,7 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
     setIsFixed(false)
     setTargetAmount("")
     setDurationDays(90)
+    setCustomDays("")
     setIsAutoSave(false)
     setAutoSaveAmount("")
     setFrequency("monthly")
@@ -234,12 +236,13 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium">Target Amount (₦)</label>
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   placeholder="e.g. 500000"
                   value={targetAmount}
-                  onChange={(e) => setTargetAmount(e.target.value)}
-                  min={1}
-                  className="h-11 bg-card"  
+                  onChange={(e) => setTargetAmount(e.target.value.replace(/[^0-9]/g, ""))}
+                  className="h-11 bg-card"
                 />
               </div>
 
@@ -271,13 +274,16 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
                 {/* Custom days input */}
                 <div className="flex items-center gap-2">
                   <Input
-                    type="number"
-                    min={isFixed ? 15 : 1}
-                    max={1095}
-                    value={durationDays}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="Custom days..."
+                    value={customDays}
                     onChange={(e) => {
-                      const val = parseInt(e.target.value)
-                      if (!isNaN(val) && val > 0) setDurationDays(val)
+                      const raw = e.target.value.replace(/[^0-9]/g, "")
+                      setCustomDays(raw)
+                      const val = parseInt(raw, 10)
+                      if (!isNaN(val) && val >= 1 && val <= 1095) setDurationDays(val)
                     }}
                     className="h-11 bg-card"
                   />
@@ -316,10 +322,12 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
                           Amount (₦)
                         </label>
                         <Input
-                          type="number"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           placeholder="e.g. 5000"
                           value={autoSaveAmount}
-                          onChange={(e) => setAutoSaveAmount(e.target.value)}
+                          onChange={(e) => setAutoSaveAmount(e.target.value.replace(/[^0-9]/g, ""))}
                           className="h-11 bg-card"
                         />
                       </div>
@@ -331,7 +339,7 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
                           value={frequency}
                           onValueChange={(v) => setFrequency(v as NestEggFrequency)}
                         >
-                          <SelectTrigger style={{ height: "44px"}}>
+                          <SelectTrigger style={{ height: "44px", width: "100%" }}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="p-2">
@@ -350,7 +358,7 @@ export function CreateGoalSheet({ open, onClose, onCreated }: CreateGoalSheetPro
         </div>
 
         {/* Footer */}
-        <div className="flex gap-2 pt-4 mt-4 border-t border-border px-4">
+        <div className="flex gap-2 pt-4 pb-4 mt-4 border-t border-border px-4">
           {step === 1 ? (
             <>
               <Button variant="outline" onClick={handleClose} className="flex-1 h-11 bg-card">

@@ -166,13 +166,13 @@ export function CreateGroupSheet({ open, onClose, onCreated }: CreateGroupSheetP
                {/* Custom days input */}
                 <div className="flex items-center gap-2 my-2">
                   <Input
-                    type="number"
-                    min={1}
-                    max={1095}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     placeholder="Custom days..."
                     value={customDays}
                     onChange={(e) => {
-                      const raw = e.target.value
+                      const raw = e.target.value.replace(/[^0-9]/g, "")
                       setCustomDays(raw)
                       const val = parseInt(raw, 10)
                       if (!isNaN(val) && val >= 1 && val <= 1095) setDurationDays(val)

@@ -62,7 +62,7 @@ export function GoalCard({ egg, variant = "light", formatCurrency }: GoalCardPro
         </div>
 
         {/* Title */}
-        <p className={`text-sm font-semibold leading-tight line-clamp-2 ${isDark ? "text-background" : "text-foreground"}`}>
+        <p className={`text-sm font-semibold capitalize leading-tight line-clamp-2 ${isDark ? "text-background" : "text-foreground"}`}>
           {egg.title}
         </p>
 

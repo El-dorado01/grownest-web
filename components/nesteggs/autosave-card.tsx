@@ -108,7 +108,7 @@ export function AutoSaveCard({ egg, onUpdate }: AutoSaveCardProps) {
                 onValueChange={(v) => setNewFrequency(v as NestEggFrequency)}
                 disabled={isLoading}
               >
-                <SelectTrigger style={{height: "44px"}}>
+                <SelectTrigger style={{height: "44px", width: "100%"}}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="p-2">

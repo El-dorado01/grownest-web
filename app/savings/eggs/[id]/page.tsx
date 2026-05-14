@@ -43,6 +43,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { nestEggsApi } from "@/lib/nesteggs-api"
+import { useNestEggDetail } from "@/hooks/use-nestegg-detail"
 import { SemiProgressRing } from "@/components/nesteggs/progress-ring"
 import { ContributionList } from "@/components/nesteggs/contribution-list"
 import { AutoSaveCard } from "@/components/nesteggs/autosave-card"
@@ -52,7 +53,7 @@ import {
   RepayWithdrawalModal,
 } from "@/components/nesteggs/withdraw-modals"
 import { CoverIcon } from "@/components/nesteggs/cover-icon"
-import type { NestEgg, NestEggDetailResponse } from "@/types/nesteggs"
+import type { NestEgg } from "@/types/nesteggs"
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("en-NG", {
@@ -66,8 +67,7 @@ type Tab = "overview" | "history" | "autosave"
 export default function GoalDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const [egg, setEgg] = React.useState<NestEggDetailResponse | null>(null)
-  const [isLoading, setIsLoading] = React.useState(true)
+  const { egg, isLoading, mutate, updateEgg } = useNestEggDetail(id)
   const [activeTab, setActiveTab] = React.useState<Tab>("overview")
   const [contributeOpen, setContributeOpen] = React.useState(false)
   const [flexWithdrawOpen, setFlexWithdrawOpen] = React.useState(false)
@@ -78,21 +78,6 @@ export default function GoalDetailPage() {
   const [isWithdrawn, setIsWithdrawn] = React.useState(false)
   const [withdrawnAmount, setWithdrawnAmount] = React.useState(0)
   const confettiFired = React.useRef(false)
-
-  const fetchEgg = React.useCallback(async () => {
-    const { data, error } = await nestEggsApi.get(id)
-    if (error) { toast.error("Failed to load goal"); return }
-    if (data) {
-      console.log("Egg detail full:", JSON.stringify(data, null, 2))
-      if (data.canWithdraw === undefined) {
-        data.canWithdraw = data.progress >= 100
-      }
-      setEgg(data)
-    }
-    setIsLoading(false)
-  }, [id])
-
-  React.useEffect(() => { fetchEgg() }, [fetchEgg])
 
   // Confetti Animation
   React.useEffect(() => {
@@ -107,16 +92,16 @@ export default function GoalDetailPage() {
   }, [egg])
 
   const handleContributeSuccess = (savedAmount: number, progress: number) => {
-    setEgg((prev) => (prev ? { ...prev, savedAmount, progress, canWithdraw: progress >= 100 } : prev))
+    updateEgg({ savedAmount, progress, canWithdraw: progress >= 100 })
     setContributionRefreshKey((k) => k + 1)
   }
 
   const handleAutoSaveUpdate = (updated: Partial<NestEgg>) => {
-    setEgg((prev) => (prev ? { ...prev, ...updated } : prev))
+    updateEgg(updated)
   }
 
   const handleFlexSuccess = () => {
-    fetchEgg()
+    mutate()
     setContributionRefreshKey((k) => k + 1)
   }
 
@@ -317,7 +302,7 @@ export default function GoalDetailPage() {
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                 <CoverIcon name={egg.cover} className="w-5 h-5 text-primary" />
               </div>
-                <h1 className="text-xl font-bold">{egg.title}</h1>
+                <h1 className="text-xl font-bold capitalize">{egg.title}</h1>
                 {egg.isFixed && (
                   <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/15 text-primary">
                     <LockIcon className="w-3 h-3" /> Fixed · 1% interest
