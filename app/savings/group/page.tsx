@@ -12,11 +12,10 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PlusIcon, UsersIcon } from "lucide-react"
-import { groupNestEggApi } from "@/lib/group-nestegg-api"
 import { GroupCard } from "@/components/group-nestegg/group-card"
 import { CreateGroupSheet } from "@/components/group-nestegg/create-group-sheet"
 import { MyInvitations } from "@/components/group-nestegg/my-invitations"
-import type { GroupListItem, ReceivedInvitation } from "@/types/group-nestegg"
+import { useGroupNest } from "@/hooks/use-group-nest"
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(amount)
@@ -25,24 +24,9 @@ type Tab = "groups" | "invitations"
 
 export default function MyGroupsPage() {
   const router = useRouter()
-  const [groups, setGroups] = React.useState<GroupListItem[]>([])
-  const [pendingInvites, setPendingInvites] = React.useState<ReceivedInvitation[]>([])
-  const [isLoading, setIsLoading] = React.useState(true)
+  const { groups, pendingInvites, isLoading, mutate } = useGroupNest()
   const [activeTab, setActiveTab] = React.useState<Tab>("groups")
   const [showCreate, setShowCreate] = React.useState(false)
-
-  const fetchData = React.useCallback(async () => {
-    setIsLoading(true)
-    const [groupsRes, invitesRes] = await Promise.all([
-      groupNestEggApi.myGroups(),
-      groupNestEggApi.myInvitations(),
-    ])
-    if (groupsRes.data) setGroups(groupsRes.data.groups)
-    if (invitesRes.data) setPendingInvites(invitesRes.data.pending)
-    setIsLoading(false)
-  }, [])
-
-  React.useEffect(() => { fetchData() }, [fetchData])
 
   const handleCreated = (groupId: string) => {
     router.push(`/savings/group/${groupId}`)
@@ -142,7 +126,7 @@ export default function MyGroupsPage() {
                   {[0, 1].map((i) => <Skeleton key={i} className="h-32 rounded-2xl" />)}
                 </div>
               ) : (
-                <MyInvitations pending={pendingInvites} onResponded={fetchData} />
+                <MyInvitations pending={pendingInvites} onResponded={() => mutate()} />
               )}
             </>
           )}

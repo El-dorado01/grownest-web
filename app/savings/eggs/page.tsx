@@ -19,11 +19,10 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Loader2, PlusIcon, Search } from "lucide-react"
-import { nestEggsApi } from "@/lib/nesteggs-api"
 import { BalanceSummaryCards } from "@/components/nesteggs/balance-summary"
 import { GoalCard } from "@/components/nesteggs/goal-card"
 import { CreateGoalSheet } from "@/components/nesteggs/create-goal-sheet"
-import type { NestEgg, BalanceSummary } from "@/types/nesteggs"
+import { useNestEggs } from "@/hooks/use-nesteggs"
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("en-NG", {
@@ -43,30 +42,12 @@ const FILTERS: { key: Filter; label: string }[] = [
 ]
 
 export default function MyEggsPage() {
-  const [eggs, setEggs] = React.useState<NestEgg[]>([])
-  const [summary, setSummary] = React.useState<BalanceSummary | null>(null)
-  const [isLoading, setIsLoading] = React.useState(true)
+  const { eggs, summary, isLoading, mutate } = useNestEggs()
   const [showCreate, setShowCreate] = React.useState(false)
   const [filter, setFilter] = React.useState<Filter>("all")
 
-  const fetchData = React.useCallback(async () => {
-    setIsLoading(true)
-    const [eggsRes, summaryRes] = await Promise.all([
-      nestEggsApi.list(),
-      nestEggsApi.balanceSummary(),
-    ])
-    if (eggsRes.data) setEggs(eggsRes.data.nestEggs)
-    if (summaryRes.data) setSummary(summaryRes.data)
-    setIsLoading(false)
-  }, [])
-
-  React.useEffect(() => {
-    fetchData()
-  }, [fetchData])
-
-  const handleCreated = (egg: NestEgg) => {
-    setEggs((prev) => [egg, ...prev])
-    fetchData()
+  const handleCreated = () => {
+    mutate()
   }
 
   const filtered = eggs.filter((egg) => {

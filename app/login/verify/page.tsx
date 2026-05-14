@@ -42,6 +42,14 @@ export default function Verify2FAPage() {
     }
   }, [countdown])
 
+  // Auto-submit when 6 digits are entered
+  useEffect(() => {
+    if (code.length === 6 && !isSubmitting) {
+      handleSubmit({ preventDefault: () => {} } as React.FormEvent)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!code || code.length < 6) return
