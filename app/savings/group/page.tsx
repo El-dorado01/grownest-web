@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { PlusIcon, UsersIcon } from "lucide-react"
+import { Loader2, PlusIcon, UsersIcon } from "lucide-react"
 import { GroupCard } from "@/components/group-nestegg/group-card"
 import { CreateGroupSheet } from "@/components/group-nestegg/create-group-sheet"
 import { MyInvitations } from "@/components/group-nestegg/my-invitations"
@@ -93,8 +93,14 @@ export default function MyGroupsPage() {
               </div>
 
               {isLoading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-52 rounded-2xl" />)}
+                // <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                //   {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-16 sm:h-52 rounded-2xl" />)}
+                // </div>
+                 <div className="flex flex-col items-center justify-center py-12 gap-4">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground font-medium animate-pulse">
+                  Getting your groups...
+                  </p>
                 </div>
               ) : groups.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -108,7 +114,7 @@ export default function MyGroupsPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {groups.map((group) => (
                     <GroupCard key={group.id} group={group} formatCurrency={formatCurrency} />
                   ))}
@@ -122,8 +128,15 @@ export default function MyGroupsPage() {
             <>
               <h2 className="text-lg font-semibold">Pending Invitations</h2>
               {isLoading ? (
-                <div className="flex flex-col gap-3">
-                  {[0, 1].map((i) => <Skeleton key={i} className="h-32 rounded-2xl" />)}
+                // <div className="flex flex-col gap-3">
+                //   {[0, 1].map((i) => <Skeleton key={i} className="h-32 rounded-2xl" />)}
+                // </div>
+                     
+                <div className="flex flex-col items-center justify-center py-12 gap-4">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground font-medium animate-pulse">
+                  Getting your invitations...
+                  </p>
                 </div>
               ) : (
                 <MyInvitations pending={pendingInvites} onResponded={() => mutate()} />
