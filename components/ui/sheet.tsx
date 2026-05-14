@@ -37,7 +37,7 @@ function SheetOverlay({
     <SheetPrimitive.Overlay
       data-slot="sheet-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-black/10 duration-100 data-closed:animate-out data-closed:fade-out-0 data-open:animate-in data-open:fade-in-0 supports-backdrop-filter:backdrop-blur-xs",
+        "fixed inset-0 z-50 bg-black/20 duration-300 data-closed:animate-out data-closed:fade-out-0 data-open:animate-in data-open:fade-in-0 supports-backdrop-filter:backdrop-blur-sm",
         className
       )}
       {...props}
@@ -62,11 +62,11 @@ function SheetContent({
         data-slot="sheet-content"
         data-side={side}
         className={cn(
-          "fixed z-50 flex flex-col gap-4 bg-popover bg-clip-padding text-sm text-popover-foreground shadow-lg transition duration-200 ease-in-out data-closed:animate-out data-closed:fade-out-0 data-open:animate-in data-open:fade-in-0",
-          side === "bottom" && "inset-x-0 bottom-0 h-auto border-t data-closed:slide-out-to-bottom-10 data-open:slide-in-from-bottom-10",
-          side === "top" && "inset-x-0 top-0 h-auto border-b data-closed:slide-out-to-top-10 data-open:slide-in-from-top-10",
-          side === "left" && "inset-y-0 left-0 h-full w-3/4 border-r data-closed:slide-out-to-left-10 data-open:slide-in-from-left-10 sm:max-w-sm",
-          side === "right" && "inset-y-0 right-0 h-full w-3/4 border-l data-closed:slide-out-to-right-10 data-open:slide-in-from-right-10 sm:max-w-sm",
+          "fixed z-50 flex flex-col gap-4 bg-popover bg-clip-padding text-sm text-popover-foreground shadow-xl transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] data-closed:animate-out data-closed:fade-out-0 data-open:animate-in data-open:fade-in-0",
+          side === "bottom" && "inset-x-0 bottom-0 h-auto border-t data-closed:slide-out-to-bottom data-open:slide-in-from-bottom",
+          side === "top" && "inset-x-0 top-0 h-auto border-b data-closed:slide-out-to-top data-open:slide-in-from-top",
+          side === "left" && "inset-y-0 left-0 h-full w-3/4 border-r data-closed:slide-out-to-left data-open:slide-in-from-left sm:max-w-sm",
+          side === "right" && "inset-y-0 right-0 h-full w-3/4 border-l data-closed:slide-out-to-right data-open:slide-in-from-right sm:max-w-sm",
           className
         )}
         {...props}

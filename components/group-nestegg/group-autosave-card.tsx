@@ -117,7 +117,7 @@ export function GroupAutoSaveCard({ groupId, myMember, onUpdate }: GroupAutoSave
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Frequency</label>
             <Select value={frequency} onValueChange={(v) => setFrequency(v as GroupFrequency)} disabled={isLoading}>
-              <SelectTrigger style={{height: "44px"}}><SelectValue /></SelectTrigger>
+              <SelectTrigger style={{height: "44px", width: "100%"}}><SelectValue /></SelectTrigger>
               <SelectContent className="p-2">
                 <SelectItem value="daily">Daily</SelectItem>
                 <SelectItem value="weekly">Weekly</SelectItem>
