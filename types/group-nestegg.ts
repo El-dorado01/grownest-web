@@ -211,6 +211,10 @@ export interface UpdateGroupAutoSaveRequest {
 // Response types
 export interface MyGroupsResponse {
   groups: GroupListItem[]
+  total: number
+  page: number
+  limit: number
+  hasNext: boolean
 }
 
 export interface GroupDetailResponse {

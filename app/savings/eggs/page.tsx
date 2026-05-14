@@ -42,7 +42,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 ]
 
 export default function MyEggsPage() {
-  const { eggs, summary, isLoading, mutate } = useNestEggs()
+  const { eggs, summary, isLoading, mutate, hasMore, isLoadingMore, loadMore } = useNestEggs()
   const [showCreate, setShowCreate] = React.useState(false)
   const [filter, setFilter] = React.useState<Filter>("all")
 
@@ -157,16 +157,33 @@ export default function MyEggsPage() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 animate-in fade-in duration-500">
-              {filtered.map((egg, i) => (
-                <GoalCard
-                  key={egg.id}
-                  egg={egg}
-                  variant={i % 2 === 1 ? "dark" : "light"}
-                  formatCurrency={formatCurrency}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 animate-in fade-in duration-500">
+                {filtered.map((egg, i) => (
+                  <GoalCard
+                    key={egg.id}
+                    egg={egg}
+                    variant={i % 2 === 1 ? "dark" : "light"}
+                    formatCurrency={formatCurrency}
+                  />
+                ))}
+              </div>
+              {hasMore && filter === "all" && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={loadMore}
+                    disabled={isLoadingMore}
+                    className="gap-2 h-10 px-6 bg-card"
+                  >
+                    {isLoadingMore ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : null}
+                    {isLoadingMore ? "Loading..." : "Load more eggs"}
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </SidebarInset>

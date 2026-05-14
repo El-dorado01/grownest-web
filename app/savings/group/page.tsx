@@ -24,7 +24,7 @@ type Tab = "groups" | "invitations"
 
 export default function MyGroupsPage() {
   const router = useRouter()
-  const { groups, pendingInvites, isLoading, mutate } = useGroupNest()
+  const { groups, pendingInvites, isLoading, mutate, hasMore, isLoadingMore, loadMore } = useGroupNest()
   const [activeTab, setActiveTab] = React.useState<Tab>("groups")
   const [showCreate, setShowCreate] = React.useState(false)
 
@@ -114,11 +114,26 @@ export default function MyGroupsPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {groups.map((group) => (
-                    <GroupCard key={group.id} group={group} formatCurrency={formatCurrency} />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {groups.map((group) => (
+                      <GroupCard key={group.id} group={group} formatCurrency={formatCurrency} />
+                    ))}
+                  </div>
+                  {hasMore && (
+                    <div className="flex justify-center pt-2">
+                      <Button
+                        variant="outline"
+                        onClick={loadMore}
+                        disabled={isLoadingMore}
+                        className="gap-2 h-10 px-6 bg-card"
+                      >
+                        {isLoadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                        {isLoadingMore ? "Loading..." : "Load more groups"}
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}

@@ -137,6 +137,9 @@ export interface ManualWithdrawRequest {
 export interface NestEggsListResponse {
   nestEggs: NestEgg[]
   total: number
+  page: number
+  limit: number
+  hasNext: boolean
 }
 
 export interface FixedNestEggsResponse {

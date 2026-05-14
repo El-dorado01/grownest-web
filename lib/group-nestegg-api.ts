@@ -18,8 +18,8 @@ import type {
 } from '@/types/group-nestegg'
 
 export const groupNestEggApi = {
-  myGroups: () =>
-    api.get<MyGroupsResponse>('/api/nesteggs/group/my-groups'),
+  myGroups: (page = 1, limit = 15) =>
+    api.get<MyGroupsResponse>(`/api/nesteggs/group/my-groups?page=${page}&limit=${limit}`),
 
   myInvitations: () =>
     api.get<MyInvitationsResponse>('/api/nesteggs/group/my-invitations'),

@@ -17,8 +17,8 @@ import type {
 } from '@/types/nesteggs'
 
 export const nestEggsApi = {
-  list: () =>
-    api.get<NestEggsListResponse>('/api/nesteggs'),
+  list: (page = 1, limit = 15) =>
+    api.get<NestEggsListResponse>(`/api/nesteggs?page=${page}&limit=${limit}`),
 
   balanceSummary: () =>
     api.get<BalanceSummary>('/api/nesteggs/balance-summary'),
