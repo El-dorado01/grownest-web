@@ -17,6 +17,7 @@ import {
   clearAuthTokens,
 } from "@/lib/api";
 import { authApi } from "@/lib/auth-api";
+import { supabase } from "@/lib/supabase";
 import type { User, AuthState, LoginRequest } from "@/types/auth";
 import { toast } from "sonner";
 
@@ -27,6 +28,9 @@ interface AuthContextValue extends AuthState {
   register: (
     data: any
   ) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: (
+    idToken: string
+  ) => Promise<{ success: boolean; error?: string; requires2FA?: boolean }>;
   verify2FA: (code: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
@@ -175,6 +179,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [router]
   );
 
+  const loginWithGoogle = useCallback(
+    async (idToken: string) => {
+      setState((prev) => ({ ...prev, isLoading: true }));
+
+      // 1. Authenticate with Supabase using Google ID token
+      const { data: supaData, error: supaError } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: idToken,
+      });
+
+      if (supaError || !supaData.session) {
+        setState((prev) => ({ ...prev, isLoading: false }));
+        return { success: false, error: supaError?.message || "Google authentication failed" };
+      }
+
+      // 2. Send Supabase session token to backend
+      const { data, error } = await authApi.socialLogin({
+        provider: 'google',
+        sessionToken: supaData.session.access_token,
+        dataConsent: true,
+      });
+
+      if (error || !data) {
+        setState((prev) => ({ ...prev, isLoading: false }));
+        return { success: false, error: error || "Backend login failed" };
+      }
+
+      if (data.token) {
+        setAuthToken(data.token);
+        const user: User = {
+          userId: data.userId,
+          role: data.role,
+          email: supaData.user?.email || "",
+        };
+        localStorage.setItem("user", JSON.stringify(user));
+
+        setState({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+          requires2FA: false,
+          pendingUserId: null,
+        });
+
+        return { success: true };
+      }
+
+      setState((prev) => ({ ...prev, isLoading: false }));
+      return { success: false, error: "Unexpected response from server" };
+    },
+    []
+  );
+
   const register = useCallback(
     async (regData: any) => {
       setState((prev) => ({ ...prev, isLoading: true }));
@@ -278,6 +335,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         ...state,
         login,
+        loginWithGoogle,
         register,
         verify2FA,
         logout,

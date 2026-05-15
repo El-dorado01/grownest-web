@@ -8,18 +8,20 @@ import { useAuth } from "@/context/auth-context"
 import { Loader2, Eye, EyeOff, Mail, Lock } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { useGoogleLogin } from '@react-oauth/google'
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const { login, isLoading: isAuthLoading } = useAuth()
+  const { login, loginWithGoogle, isLoading: isAuthLoading } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
-  const isLoading = isAuthLoading || isSubmitting
+  const isLoading = isAuthLoading || isSubmitting || isGoogleLoading
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,6 +45,36 @@ export function LoginForm({
     }
   }
 
+  // To get an id_token with useGoogleLogin, we must use the auth-code flow or 
+  // simply fetch the user profile using the access_token.
+  // However, Supabase signInWithIdToken REQUIRES an id_token.
+  // Since we are using Supabase on the backend, a better approach for the custom button
+  // is to use Supabase's built-in OAuth flow which handles the redirect.
+  // But since the user specifically provided Google credentials for the frontend,
+  // we will fetch the user info from Google using the access_token, then register/login.
+  // Wait, if we fetch user info, we don't have an id_token for Supabase!
+  // Let's use Supabase directly for the Google Login button. It's much simpler.
+
+  const handleGoogleClick = async () => {
+    setIsGoogleLoading(true)
+    try {
+      // Instead of manual token exchange, we use Supabase's OAuth
+      // which will redirect the user to Google.
+      const { supabase } = await import('@/lib/supabase');
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to initialize Google Login");
+      setIsGoogleLoading(false);
+    }
+  }
+
   return (
     <div className={cn("w-full max-w-sm", className)} {...props}>
       {/* Heading */}
@@ -59,15 +91,20 @@ export function LoginForm({
       <Button
         variant="outline"
         type="button"
+        onClick={handleGoogleClick}
         className="w-full mb-5 gap-3 bg-card border-border h-11"
         disabled={isLoading}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4 shrink-0">
-          <path
-            d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-            fill="currentColor"
-          />
-        </svg>
+        {isGoogleLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4 shrink-0">
+            <path
+              d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
+              fill="currentColor"
+            />
+          </svg>
+        )}
         Continue with Google
       </Button>
 
@@ -145,7 +182,7 @@ export function LoginForm({
           className="w-full h-11 mt-1 text-sm font-medium text-foreground"
           disabled={isLoading}
         >
-          {isLoading ? (
+          {isLoading && !isGoogleLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Logging in...

@@ -426,21 +426,20 @@ function NestPursePage() {
 
             {/* Side Column: Bank & Cards Summary */}
             <div className="space-y-6">
-              <Card className="border-none bg-linear-to-br from-slate-900 to-slate-800 text-white shadow-xl">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                    <CreditCardIcon className="h-4 w-4" />
+                    <CreditCardIcon className="h-4 w-4 text-muted-foreground" />
                     Saved Accounts
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="mb-4 text-xs opacity-70">
+                <CardContent className="space-y-4">
+                  <p className="text-xs text-muted-foreground">
                     You have multiple accounts linked for easy withdrawals.
                   </p>
                   <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full rounded-xl border-none bg-white/10 text-white hover:bg-white/20"
+                    variant="outline"
+                    className="w-full gap-2 rounded-xl"
                     onClick={() => openSettings("billing")}
                   >
                     Manage Banks
@@ -464,11 +463,11 @@ function NestPursePage() {
                   >
                     <SendIcon className="h-4 w-4" /> Send Money Now
                   </Button>
-                  <div className="flex items-start gap-3 rounded-xl bg-blue-50 p-3 dark:bg-blue-900/20">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-800">
-                      <ArrowUpRight className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <div className="flex items-start gap-3 rounded-xl bg-primary/10 p-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20">
+                      <ArrowUpRight className="h-4 w-4 text-primary" />
                     </div>
-                    <p className="text-[10px] leading-relaxed text-blue-800 dark:text-blue-300">
+                    <p className="text-[10px] leading-relaxed text-foreground/80 font-medium">
                       Transfer money to other banks within seconds. Secure and
                       reliable.
                     </p>

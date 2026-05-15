@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { ConnectivityListener } from "@/components/connectivity-listener"
 import { SettingsDialog } from "@/components/settings-dialog"
 import NextTopLoader from 'nextjs-toploader';
+import { GoogleOAuthProvider } from '@react-oauth/google'
 
 const spaceGroteskHeading = Space_Grotesk({ subsets: ['latin'], variable: '--font-heading' });
 
@@ -97,17 +98,19 @@ export default function RootLayout({
           shadow="0 0 10px #cca751,0 0 5px #cca751"
         />
         <ThemeProvider>
-          <AuthProvider>
+          <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
+            <AuthProvider>
 
-            <TooltipProvider>
-              {children}
-              <ConnectivityListener />
-              <Toaster position="bottom-center" richColors />
-            </TooltipProvider>
-                  <React.Suspense fallback={null}>
-                    <SettingsDialog />
-                  </React.Suspense>
-          </AuthProvider>
+              <TooltipProvider>
+                {children}
+                <ConnectivityListener />
+                <Toaster position="bottom-center" richColors />
+              </TooltipProvider>
+                    <React.Suspense fallback={null}>
+                      <SettingsDialog />
+                    </React.Suspense>
+            </AuthProvider>
+          </GoogleOAuthProvider>
         </ThemeProvider>
       </body>
     </html>

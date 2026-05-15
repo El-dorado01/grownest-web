@@ -4,7 +4,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -16,9 +15,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { MoreHorizontalIcon, FolderIcon, ShareIcon, Trash2Icon } from "lucide-react"
+import { MoreHorizontalIcon, ExternalLinkIcon, LinkIcon } from "lucide-react"
 import Link from "next/link"
-
+import { toast } from "sonner"
 
 export function NavProjects({
   projects,
@@ -27,21 +26,33 @@ export function NavProjects({
     name: string
     url: string
     icon: React.ReactNode
+    badge?: number
   }[]
 }) {
   const { isMobile, setOpenMobile } = useSidebar()
 
+  const handleCopyLink = (url: string) => {
+    navigator.clipboard.writeText(window.location.origin + url)
+    toast.success("Link copied to clipboard")
+  }
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Projects</SidebarGroupLabel>
+      <SidebarGroupLabel>Quick Links</SidebarGroupLabel>
       <SidebarMenu className="gap-1">
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild onClick={() => setOpenMobile(false)}>
-              <Link href={item.url}>
-                {item.icon}
-                <span>{item.name}</span>
+              <Link href={item.url} className="flex w-full items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {item.icon}
+                  <span>{item.name}</span>
+                </div>
+                {!!item.badge && item.badge > 0 && (
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground mr-1">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             </SidebarMenuButton>
 
@@ -51,8 +62,7 @@ export function NavProjects({
                   showOnHover
                   className="aria-expanded:bg-muted"
                 >
-                  <MoreHorizontalIcon
-                  />
+                  <MoreHorizontalIcon />
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>
               </DropdownMenuTrigger>
@@ -61,30 +71,20 @@ export function NavProjects({
                 side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}
               >
-                <DropdownMenuItem>
-                  <FolderIcon className="text-muted-foreground" />
-                  <span>View Project</span>
+                <DropdownMenuItem asChild className="cursor-pointer py-2">
+                  <Link href={item.url} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                    <ExternalLinkIcon className="text-muted-foreground mr-2 h-4 w-4" />
+                    <span>Open in new tab</span>
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <ShareIcon className="text-muted-foreground" />
-                  <span>Share Project</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Trash2Icon className="text-muted-foreground" />
-                  <span>Delete Project</span>
+                <DropdownMenuItem onClick={() => handleCopyLink(item.url)} className="cursor-pointer py-2">
+                  <LinkIcon className="text-muted-foreground mr-2 h-4 w-4" />
+                  <span>Copy link</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
         ))}
-        <SidebarMenuItem>
-          <SidebarMenuButton>
-            <MoreHorizontalIcon
-            />
-            <span>More</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>
   )

@@ -8,6 +8,9 @@ export const authApi = {
       return response;
     }),
 
+  socialLogin: (data: { provider: string; sessionToken: string; dataConsent: boolean }) =>
+    api.post<LoginResponse>("/api/auth/social", data),
+
   register: (data: any) =>
     api.post<{ message: string; userId: string; token?: string }>("/api/auth/register", data),
 

@@ -56,6 +56,7 @@ import { PrivacySecurity } from "./settings/privacy-security"
 import { SetupNestPursePin } from "./settings/setup-nestpurse-pin"
 import { BankCardsSettings } from "./settings/bank-cards"
 import { DeliveryAddressesSettings } from "./settings/delivery-addresses"
+import { NotificationSettings } from "./settings/notifications-settings"
 
 
 const data = {
@@ -206,6 +207,8 @@ export function SettingsDialog({ isPage = false }: SettingsDialogProps) {
           <BankCardsSettings />
         ) : activeItem?.name === "Delivery Addresses" ? (
           <DeliveryAddressesSettings />
+        ) : activeItem?.name === "Notifications" ? (
+          <NotificationSettings />
         ) : (
 
           <div className="flex flex-col gap-4">

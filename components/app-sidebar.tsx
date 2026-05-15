@@ -8,6 +8,8 @@ import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import { useAuth } from "@/context/auth-context"
 import { authApi } from "@/lib/auth-api"
+import useSWR from "swr"
+import { notificationsApi } from "@/lib/notifications-api"
 import {
   Sidebar,
   SidebarContent,
@@ -146,6 +148,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     avatar: "",
   };
 
+  const { data: notificationsData } = useSWR(
+    isAuthenticated ? "notifications_badge" : null,
+    async () => {
+      const res = await notificationsApi.getNotifications()
+      return res.data
+    },
+    { refreshInterval: 60000 }
+  );
+
+  const unreadCount = notificationsData?.unreadCount || 0;
+
+  const projectsWithBadges = React.useMemo(() => {
+    return data.projects.map(p => {
+      if (p.name === "Notifications") {
+        return { ...p, badge: unreadCount }
+      }
+      return p
+    })
+  }, [unreadCount])
+
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -165,7 +187,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavProjects projects={projectsWithBadges} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
