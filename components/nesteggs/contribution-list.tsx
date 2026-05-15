@@ -9,6 +9,8 @@ import { nestEggsApi } from "@/lib/nesteggs-api"
 import { format } from "date-fns"
 import type { NestEggContribution } from "@/types/nesteggs"
 
+import useSWR from "swr"
+
 interface ContributionListProps {
   nestEggId: string
   formatCurrency: (n: number) => string
@@ -30,38 +32,43 @@ const typeLabel: Record<string, string> = {
 }
 
 export function ContributionList({ nestEggId, formatCurrency, refreshKey }: ContributionListProps) {
-  const [contributions, setContributions] = useState<NestEggContribution[]>([])
+  const [extraContributions, setExtraContributions] = useState<NestEggContribution[]>([])
   const [page, setPage] = useState(1)
   const [hasNext, setHasNext] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
 
-  const fetchPage = useCallback(
-    async (pageNum: number, append = false) => {
-      if (pageNum === 1) setIsLoading(true)
-      else setIsLoadingMore(true)
-
-      const { data } = await nestEggsApi.contributions(nestEggId, pageNum, 20)
-
-      if (data) {
-        setContributions((prev) =>
-          append ? [...prev, ...data.contributions] : data.contributions
-        )
-        setHasNext(data.pagination.hasNext)
-        setPage(pageNum)
+  const { data: res, isLoading, mutate } = useSWR(
+    nestEggId ? ["egg-contributions", nestEggId, refreshKey] : null,
+    () => nestEggsApi.contributions(nestEggId, 1, 20),
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60000, // Cache for 1 minute
+      onSuccess: (data) => {
+        setHasNext(data.data?.pagination.hasNext ?? false)
+        setExtraContributions([])
+        setPage(1)
       }
-
-      setIsLoading(false)
-      setIsLoadingMore(false)
-    },
-    [nestEggId]
+    }
   )
 
-  useEffect(() => {
-    setPage(1)
-    setContributions([])
-    fetchPage(1, false)
-  }, [nestEggId, refreshKey, fetchPage])
+  const firstPage = res?.data?.contributions ?? []
+  const contributions = [...firstPage, ...extraContributions]
+
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || !hasNext) return
+    setIsLoadingMore(true)
+    try {
+      const nextPage = page + 1
+      const { data } = await nestEggsApi.contributions(nestEggId, nextPage, 20)
+      if (data) {
+        setExtraContributions((prev) => [...prev, ...data.contributions])
+        setHasNext(data.pagination.hasNext)
+        setPage(nextPage)
+      }
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }, [nestEggId, page, hasNext, isLoadingMore])
 
   if (isLoading) {
     return (
@@ -114,7 +121,7 @@ export function ContributionList({ nestEggId, formatCurrency, refreshKey }: Cont
           variant="ghost"
           size="sm"
           className="mt-2 self-center"
-          onClick={() => fetchPage(page + 1, true)}
+          onClick={loadMore}
           disabled={isLoadingMore}
         >
           {isLoadingMore ? "Loading..." : "Load more"}

@@ -90,5 +90,12 @@ export const authApi = {
 
   verifyPinUpdateOtp: (data: { sessionId: string; otp: string }) =>
     api.post<{ message: string }>("/api/nestpurse/set-pin", data),
+
+  // Tier Upgrades
+  upgradeTier2: (data: { id: string; isVirtual?: boolean }) =>
+    api.post<{ message: string; tier: number }>("/api/auth/tier/upgrade/tier2", data),
+
+  upgradeTier3: (data: { id: string }) =>
+    api.post<{ message: string; tier: number }>("/api/auth/tier/upgrade/tier3", data),
 };
 

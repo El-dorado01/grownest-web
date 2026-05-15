@@ -40,10 +40,11 @@ import {
   Trash2Icon,
   LockIcon,
   ZapIcon,
+  Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { nestEggsApi } from "@/lib/nesteggs-api"
-import { useNestEggDetail } from "@/hooks/use-nestegg-detail"
+import useSWR from "swr"
 import { SemiProgressRing } from "@/components/nesteggs/progress-ring"
 import { ContributionList } from "@/components/nesteggs/contribution-list"
 import { AutoSaveCard } from "@/components/nesteggs/autosave-card"
@@ -53,7 +54,7 @@ import {
   RepayWithdrawalModal,
 } from "@/components/nesteggs/withdraw-modals"
 import { CoverIcon } from "@/components/nesteggs/cover-icon"
-import type { NestEgg } from "@/types/nesteggs"
+import type { NestEgg, NestEggDetailResponse } from "@/types/nesteggs"
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("en-NG", {
@@ -67,7 +68,23 @@ type Tab = "overview" | "history" | "autosave"
 export default function GoalDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const { egg, isLoading, mutate, updateEgg } = useNestEggDetail(id)
+  
+  const { data: res, isLoading, mutate } = useSWR(
+    id ? ["nestegg-detail", id] : null,
+    () => nestEggsApi.get(id),
+    { revalidateOnFocus: true, revalidateIfStale: true, dedupingInterval: 2000 }
+  )
+
+  const egg = res?.data || null
+
+  const updateEgg = (updates: Partial<NestEggDetailResponse>) => {
+    mutate(
+      (current) =>
+        current?.data ? { ...current, data: { ...current.data, ...updates } } : current,
+      { revalidate: false }
+    )
+  }
+
   const [activeTab, setActiveTab] = React.useState<Tab>("overview")
   const [contributeOpen, setContributeOpen] = React.useState(false)
   const [flexWithdrawOpen, setFlexWithdrawOpen] = React.useState(false)

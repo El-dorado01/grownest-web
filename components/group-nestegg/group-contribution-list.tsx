@@ -8,6 +8,8 @@ import { groupNestEggApi } from "@/lib/group-nestegg-api"
 import { format } from "date-fns"
 import type { GroupContribution } from "@/types/group-nestegg"
 
+import useSWR from "swr"
+
 interface GroupContributionListProps {
   groupId: string
   formatCurrency: (n: number) => string
@@ -15,30 +17,43 @@ interface GroupContributionListProps {
 }
 
 export function GroupContributionList({ groupId, formatCurrency, refreshKey }: GroupContributionListProps) {
-  const [contributions, setContributions] = useState<GroupContribution[]>([])
+  const [extraContributions, setExtraContributions] = useState<GroupContribution[]>([])
   const [page, setPage] = useState(1)
   const [hasNext, setHasNext] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
 
-  const fetchPage = useCallback(async (pageNum: number, append = false) => {
-    if (pageNum === 1) setIsLoading(true)
-    else setIsLoadingMore(true)
-
-    const { data } = await groupNestEggApi.contributions(groupId, pageNum, 20)
-    if (data) {
-      setContributions((prev) => append ? [...prev, ...data.contributions] : data.contributions)
-      setHasNext(data.pagination.hasNext)
-      setPage(pageNum)
+  const { data: res, isLoading, mutate } = useSWR(
+    groupId ? ["group-contributions", groupId, refreshKey] : null,
+    () => groupNestEggApi.contributions(groupId, 1, 20),
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60000,
+      onSuccess: (data) => {
+        setHasNext(data.data?.pagination.hasNext ?? false)
+        setExtraContributions([])
+        setPage(1)
+      }
     }
-    setIsLoading(false)
-    setIsLoadingMore(false)
-  }, [groupId])
+  )
 
-  useEffect(() => {
-    setPage(1); setContributions([])
-    fetchPage(1, false)
-  }, [groupId, refreshKey, fetchPage])
+  const firstPage = res?.data?.contributions ?? []
+  const contributions = [...firstPage, ...extraContributions]
+
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || !hasNext) return
+    setIsLoadingMore(true)
+    try {
+      const nextPage = page + 1
+      const { data } = await groupNestEggApi.contributions(groupId, nextPage, 20)
+      if (data) {
+        setExtraContributions((prev) => [...prev, ...data.contributions])
+        setHasNext(data.pagination.hasNext)
+        setPage(nextPage)
+      }
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }, [groupId, page, hasNext, isLoadingMore])
 
   if (isLoading) {
     return (
@@ -77,7 +92,7 @@ export function GroupContributionList({ groupId, formatCurrency, refreshKey }: G
         )
       })}
       {hasNext && (
-        <Button variant="ghost" size="sm" className="mt-2 self-center" onClick={() => fetchPage(page + 1, true)} disabled={isLoadingMore}>
+        <Button variant="ghost" size="sm" className="mt-2 self-center" onClick={loadMore} disabled={isLoadingMore}>
           {isLoadingMore ? "Loading..." : "Load more"}
         </Button>
       )}

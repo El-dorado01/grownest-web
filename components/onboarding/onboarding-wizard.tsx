@@ -291,6 +291,7 @@ export function OnboardingWizard({
       const res = await authApi.setNestPursePin({ newPin: pin })
       if (res.data) {
         toast.success("Security PIN set successfully")
+        await mutate()
         nextStep()
       } else {
         toast.error(res.error || "Failed to set PIN")
@@ -307,8 +308,8 @@ export function OnboardingWizard({
     try {
       const res = await nestPurseApi.setupPurse({ linkedAccount: undefined })
       if (res.data) {
-        mutate()
-        handleComplete()
+        await mutate()
+        nextStep()
       } else {
         toast.error(res.error || "Failed to activate wallet")
       }

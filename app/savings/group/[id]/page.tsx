@@ -17,7 +17,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader,
   AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { PlusCircleIcon, Trash2Icon, TrophyIcon } from "lucide-react"
+import { PlusCircleIcon, Trash2Icon, TrophyIcon, Loader2 } from "lucide-react"
 import useSWR from "swr"
 import { toast } from "sonner"
 import { useAuth } from "@/context/auth-context"

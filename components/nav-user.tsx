@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/sidebar"
 import { ChevronsUpDownIcon, SparklesIcon, BadgeCheckIcon, CreditCardIcon, BellIcon, LogOutIcon } from "lucide-react"
 import { useAuth } from "@/context/auth-context"
+import Link from "next/link"
 
 export function NavUser({
   user,
@@ -87,20 +88,15 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup className="flex flex-col gap-1">
-              <DropdownMenuItem className="py-2">
-                <BadgeCheckIcon
-                />
-                Account
+              <DropdownMenuItem className="py-2" asChild>
+                <Link href="/account">
+                  <BadgeCheckIcon />
+                  Account
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem className="py-2">
-                <CreditCardIcon
-                />
+                <CreditCardIcon />
                 Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem className="py-2">
-                <BellIcon
-                />
-                Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
