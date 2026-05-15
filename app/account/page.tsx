@@ -39,23 +39,44 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
+import { 
+  Drawer, 
+  DrawerContent, 
+  DrawerClose, 
+  DrawerDescription, 
+  DrawerHeader, 
+  DrawerTitle, 
+  DrawerTrigger, 
+  DrawerFooter 
+} from "@/components/ui/drawer"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 const TIER_FEATURES = [
-  { label: "Daily Transaction Limit", values: ["₦50,000", "₦100,000", "₦500,000"] },
-  { label: "Bank Transfers", values: ["No", "Yes", "Yes"] },
-  { label: "External Withdrawals", values: ["No", "Yes", "Yes"] },
-  { label: "Group Savings", values: ["Yes", "Yes", "Yes"] },
-  { label: "NestBaskets Access", values: ["Yes", "Yes", "Yes"] },
-  { label: "Investment Products", values: ["No", "Limited", "Full Access"] },
+  { label: "Daily Transaction Limit", values: ["₦50,000", "₦200,000", "₦1,000,000"] },
+  { label: "Withdrawal Frequency", values: ["Weekly", "Daily", "Unlimited"] },
+  { label: "Group Savings Access", values: ["Basic", "Standard", "Premium"] },
+  { label: "Virtual Account", values: ["Yes", "Yes", "Yes"] },
+  { label: "Interest Rate Bonus", values: ["No", "No", "Yes (2%)"] },
 ]
 
 export default function AccountPage() {
   const { profile, mutate, isLoading: isProfileLoading } = useProfile()
   const currentTier = profile?.tier || 1
+  const isMobile = useIsMobile()
   
   const [nin, setNin] = React.useState("")
   const [bvn, setBvn] = React.useState("")
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false)
 
   const getTierBadgeColor = (tier: number) => {
     switch (tier) {
@@ -78,6 +99,7 @@ export default function AccountPage() {
         toast.success("Account upgraded to Tier 2!")
         await mutate()
         setNin("")
+        setIsDrawerOpen(false)
       } else {
         toast.error(res.error || "Verification failed")
       }
@@ -100,6 +122,7 @@ export default function AccountPage() {
         toast.success("Account upgraded to Tier 3!")
         await mutate()
         setBvn("")
+        setIsDrawerOpen(false)
       } else {
         toast.error(res.error || "Verification failed")
       }
@@ -109,6 +132,50 @@ export default function AccountPage() {
       setIsSubmitting(false)
     }
   }
+
+  const UpgradeForm = () => (
+    <div className="px-6 space-y-6 py-4">
+      <div className="space-y-2">
+        <label className="text-xs font-bold uppercase text-muted-foreground tracking-tight">
+          {currentTier === 1 ? "National Identity Number (NIN)" : "Bank Verification Number (BVN)"}
+        </label>
+        <Input 
+          value={currentTier === 1 ? nin : bvn}
+          onChange={(e) => {
+            const val = e.target.value.replace(/\D/g, '').substring(0, 11)
+            currentTier === 1 ? setNin(val) : setBvn(val)
+          }}
+          placeholder="00000000000"
+          className="h-14 text-lg bg-muted/30 border-0 focus-visible:ring-2 focus-visible:ring-primary/20"
+          maxLength={11}
+        />
+        <p className="text-[10px] text-muted-foreground italic">
+          * Your data is strictly used for verification with official databases only.
+        </p>
+      </div>
+
+      <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 text-xs text-muted-foreground border border-primary/10">
+        <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
+        <p>
+          We use banking-grade encryption to ensure your details are protected. Verification usually takes less than 30 seconds.
+        </p>
+      </div>
+    </div>
+  )
+
+  const UpgradeButton = () => (
+    <Button 
+      className="h-14 text-lg font-bold w-full"
+      disabled={isSubmitting || (currentTier === 1 ? nin.length < 11 : bvn.length < 11)}
+      onClick={currentTier === 1 ? handleUpgradeTier2 : handleUpgradeTier3}
+    >
+      {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+      {isSubmitting ? "Verifying..." : "Verify & Upgrade"}
+    </Button>
+  )
+
+  // Removed UpgradeTrigger to inline it directly for better ref handling with asChild
+
 
   return (
     <SidebarProvider>
@@ -231,61 +298,89 @@ export default function AccountPage() {
 
               {/* Upgrade Action Section */}
               {currentTier < 3 && (
-                <section className="space-y-6">
-                  <div className="space-y-1">
-                    <h2 className="text-lg font-bold">Upgrade Your Account</h2>
-                    <p className="text-sm text-muted-foreground">Complete the verification below to unlock higher limits.</p>
-                  </div>
-
-                  <Card className="shadow-sm border-2 border-primary/10">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        {currentTier === 1 ? <Building2 className="h-5 w-5" /> : <Lock className="h-5 w-5" />}
-                        {currentTier === 1 ? "Upgrade to Tier 2 (NIN)" : "Upgrade to Tier 3 (BVN)"}
-                      </CardTitle>
-                      <CardDescription>
-                        {currentTier === 1 
-                          ? "Enter your National Identity Number to enable bank transfers and withdrawals." 
-                          : "Provide your Bank Verification Number for maximum account limits."
-                        }
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="flex flex-col md:flex-row gap-4">
-                        <div className="flex-1 space-y-2">
-                          <label className="text-xs font-bold uppercase text-muted-foreground tracking-tight">
-                            {currentTier === 1 ? "11-Digit NIN" : "11-Digit BVN"}
-                          </label>
-                          <Input 
-                            value={currentTier === 1 ? nin : bvn}
-                            onChange={(e) => {
-                              const val = e.target.value.replace(/\D/g, '').substring(0, 11)
-                              currentTier === 1 ? setNin(val) : setBvn(val)
-                            }}
-                            placeholder={currentTier === 1 ? "Enter NIN" : "Enter BVN"}
-                            className="h-12 bg-muted/30 border-0 focus-visible:ring-1 focus-visible:ring-primary"
-                          />
+                <section className="space-y-4">
+                  {isMobile ? (
+                    <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+                      <DrawerTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="w-full h-auto p-4 rounded-2xl flex items-center justify-between bg-card hover:bg-muted/30 transition-all active:scale-[0.98] group overflow-hidden border-border"
+                        >
+                          <div className="flex items-center gap-4 min-w-0 flex-1">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <BadgeCheck className="h-6 w-6 text-primary" />
+                            </div>
+                            <div className="text-left min-w-0 flex-1">
+                              <p className="font-bold text-base leading-tight truncate">Upgrade to Tier {currentTier + 1}</p>
+                              <p className="text-xs text-muted-foreground truncate">Unlock higher limits and more features</p>
+                            </div>
+                          </div>
+                          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0 ml-2" />
+                        </Button>
+                      </DrawerTrigger>
+                      <DrawerContent>
+                        <div className="mx-auto w-full max-w-lg">
+                          <DrawerHeader className="text-left px-6">
+                            <DrawerTitle className="text-xl font-bold flex items-center gap-2">
+                              {currentTier === 1 ? <Building2 className="h-5 w-5 text-primary" /> : <Lock className="h-5 w-5 text-primary" />}
+                              Verify Your Identity
+                            </DrawerTitle>
+                            <DrawerDescription>
+                              {currentTier === 1 
+                                ? "Enter your 11-digit NIN to upgrade to Tier 2." 
+                                : "Enter your 11-digit BVN to upgrade to Tier 3."
+                              }
+                            </DrawerDescription>
+                          </DrawerHeader>
+                          <UpgradeForm />
+                          <DrawerFooter className="px-6 pb-10">
+                            <UpgradeButton />
+                            <DrawerClose asChild>
+                              <Button variant="ghost" className="h-12">Cancel</Button>
+                            </DrawerClose>
+                          </DrawerFooter>
                         </div>
-                        <div className="flex items-end">
-                          <Button 
-                            className="h-12 px-8 font-bold min-w-[160px]"
-                            disabled={isSubmitting || (currentTier === 1 ? nin.length < 11 : bvn.length < 11)}
-                            onClick={currentTier === 1 ? handleUpgradeTier2 : handleUpgradeTier3}
-                          >
-                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                            Verify ID
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 text-xs text-muted-foreground leading-relaxed">
-                        <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
-                        <p>
-                          Your information is processed securely. We use banking-grade encryption and only use these details for one-time identity verification with government databases. By verifying, you agree to our <span className="text-primary font-bold cursor-pointer underline underline-offset-2">Terms of Service</span>.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </DrawerContent>
+                    </Drawer>
+                  ) : (
+                    <Dialog open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="w-full h-auto p-4 rounded-2xl flex items-center justify-between bg-card hover:bg-muted/30 transition-all active:scale-[0.98] group overflow-hidden border-border"
+                        >
+                          <div className="flex items-center gap-4 min-w-0 flex-1">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <BadgeCheck className="h-6 w-6 text-primary" />
+                            </div>
+                            <div className="text-left min-w-0 flex-1">
+                              <p className="font-bold text-base leading-tight truncate">Upgrade to Tier {currentTier + 1}</p>
+                              <p className="text-xs text-muted-foreground truncate">Unlock higher limits and more features</p>
+                            </div>
+                          </div>
+                          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0 ml-2" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md p-0 overflow-hidden">
+                        <DialogHeader className="px-6 pt-6 text-left">
+                          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                            {currentTier === 1 ? <Building2 className="h-5 w-5 text-primary" /> : <Lock className="h-5 w-5 text-primary" />}
+                            Verify Your Identity
+                          </DialogTitle>
+                          <DialogDescription>
+                            {currentTier === 1 
+                              ? "Enter your 11-digit NIN to upgrade to Tier 2." 
+                              : "Enter your 11-digit BVN to upgrade to Tier 3."
+                            }
+                          </DialogDescription>
+                        </DialogHeader>
+                        <UpgradeForm />
+                        <DialogFooter className="px-6 pb-6">
+                          <UpgradeButton />
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  )}
                 </section>
               )}
 
