@@ -88,6 +88,10 @@ const data = {
           url: "/marketplace",
         },
         {
+          title: "Vendors",
+          url: "/marketplace/vendors",
+        },
+        {
           title: "My Baskets",
           url: "/marketplace/baskets",
         },
