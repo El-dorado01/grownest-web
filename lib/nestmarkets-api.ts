@@ -5,6 +5,10 @@ import type {
   CheckoutRequest,
   CheckoutResponse,
   MyOrdersResponse,
+  StoresResponse,
+  StoreResponse,
+  FollowResponse,
+  StoreReviewsResponse,
 } from "@/types/nestmarkets";
 
 const BASE = "/api/nestmarkets";
@@ -36,4 +40,21 @@ export const nestMarketsApi = {
     api.post<{ success: boolean; message: string }>(`${BASE}/orders/${id}/accept`),
   rejectOrder: (id: string, reason: string) =>
     api.post<{ success: boolean; message: string }>(`${BASE}/orders/${id}/reject`, { reason }),
+
+  // Vendors / discovery
+  getStores: () => api.get<StoresResponse>(`${BASE}/stores`),
+  getStore: (id: string) => api.get<StoreResponse>(`${BASE}/stores/${id}`),
+  topRated: (limit = 10) => api.get<StoresResponse>(`${BASE}/recommendations/top-rated?limit=${limit}`),
+  nearby: (lat: number, lon: number, limit = 20) =>
+    api.get<StoresResponse>(`${BASE}/recommendations/nearby?lat=${lat}&lon=${lon}&limit=${limit}`),
+
+  // Follow
+  followStore: (id: string) => api.post<FollowResponse>(`${BASE}/stores/${id}/follow`),
+  getFollowedStores: () => api.get<StoresResponse>(`${BASE}/followed-stores`),
+
+  // Reviews / rating
+  getStoreReviews: (id: string, page = 1, limit = 10) =>
+    api.get<StoreReviewsResponse>(`${BASE}/stores/${id}/reviews?page=${page}&limit=${limit}`),
+  rateOrder: (id: string, rating: number, review?: string) =>
+    api.post<{ success: boolean; message: string }>(`${BASE}/orders/${id}/rate`, { rating, review }),
 };
