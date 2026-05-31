@@ -76,8 +76,8 @@ In `model Profile`, add (the name must match the relation label used above):
 
 - [ ] **Step 4: Create and apply the migration**
 
-Run: `npx prisma migrate dev --name add_market_cart`
-Expected: migration created under `prisma/migrations/`, applied cleanly, `prisma generate` runs.
+Run: `npx prisma db push`
+Expected: schema synced (adds `MarketCart` + `MarketCartItem`), `prisma generate` runs automatically. NOTE: this project uses the `prisma db push` workflow — it has NO `prisma/migrations/` history. Do NOT run `prisma migrate dev` (it reports drift and offers to reset/wipe the DB) and NEVER run `prisma migrate reset` (drops all data).
 
 - [ ] **Step 5: Verify the build**
 
@@ -344,8 +344,8 @@ In `model MarketOrder` add:
 
 - [ ] **Step 2: Migrate**
 
-Run: `npx prisma migrate dev --name add_order_delivery_fee`
-Expected: applied cleanly.
+Run: `npx prisma db push`
+Expected: schema synced (adds `MarketOrder.deliveryFee`), `prisma generate` runs. (This project uses `db push`, not `migrate` — see Task 1 note.)
 
 - [ ] **Step 3: Require `deliveryProfileId` in `CheckoutSchema`**
 
