@@ -9,9 +9,13 @@ import type {
   StoreResponse,
   FollowResponse,
   StoreReviewsResponse,
+  ChatThreadsResponse,
+  ChatThreadResponse,
+  SendMessageResponse,
 } from "@/types/nestmarkets";
 
 const BASE = "/api/nestmarkets";
+const CHAT = "/api/nestmarkets/chat";
 
 export const nestMarketsApi = {
   browse: (params: { search?: string; category?: string; page?: number; limit?: number }) => {
@@ -57,4 +61,12 @@ export const nestMarketsApi = {
     api.get<StoreReviewsResponse>(`${BASE}/stores/${id}/reviews?page=${page}&limit=${limit}`),
   rateOrder: (id: string, rating: number, review?: string) =>
     api.post<{ success: boolean; message: string }>(`${BASE}/orders/${id}/rate`, { rating, review }),
+
+  // Chat
+  getChatThreads: () => api.get<ChatThreadsResponse>(`${CHAT}/threads`),
+  getChatThread: (id: string) => api.get<ChatThreadResponse>(`${CHAT}/threads/${id}`),
+  sendChatMessage: (id: string, content: string) =>
+    api.post<SendMessageResponse>(`${CHAT}/threads/${id}/messages`, { content }),
+  markThreadRead: (id: string) =>
+    api.post<{ success: boolean }>(`${CHAT}/threads/${id}/read`),
 };
