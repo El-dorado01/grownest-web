@@ -92,6 +92,10 @@ const data = {
           url: "/marketplace/baskets",
         },
         {
+          title: "My Orders",
+          url: "/marketplace/orders",
+        },
+        {
           title: "Market Chat",
           url: "/marketplace/chat",
         },
