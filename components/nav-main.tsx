@@ -20,6 +20,12 @@ import { ChevronRightIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+type NavSubItem = {
+  title: string
+  url: string
+  badge?: React.ReactNode
+}
+
 export function NavMain({
   items,
 }: {
@@ -28,10 +34,7 @@ export function NavMain({
     url: string
     icon: React.ReactNode
     isActive?: boolean
-    items?: {
-      title: string
-      url: string
-    }[]
+    items?: NavSubItem[]
   }[]
 }) {
   const { setOpenMobile } = useSidebar()
@@ -78,6 +81,7 @@ export function NavMain({
                           <SidebarMenuSubButton asChild isActive={pathname === subItem.url} onClick={() => setOpenMobile(false)}>
                             <Link href={subItem.url}>
                               <span>{subItem.title}</span>
+                              {subItem.badge}
                             </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
