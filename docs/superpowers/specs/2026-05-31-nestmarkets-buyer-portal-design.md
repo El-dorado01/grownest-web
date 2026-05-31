@@ -184,9 +184,49 @@ Backend first so the frontend builds against real endpoints.
 
 ---
 
-## 7. Visual design pass
+## 7. Visual design
 
-After this spec is approved, generate visual mockups (Gemini) for: browse grid, product quick-view modal, cart (grouped by store), checkout sheet, and orders/tracking. Fold the resulting layouts into the §5.1 component sections before writing the implementation plan.
+Visual direction chosen: **"The Gallery"** — a visual, airy, image-forward layout (big square product photos, pill search, floating store badge, hover lift). Suited to a food/grocery marketplace and the premium brief. The denser "Hub" style is reserved for the future Seller dashboard.
+
+### 7.1 🔴 IMPORTANT — Brand tokens, not invented colors
+
+> The visual exploration was drafted in an "emerald & slate" palette. **That is NOT the GrowNest brand.** The real theme (`app/globals.css`) is **warm gold primary + brown secondary on warm-charcoal/warm-white surfaces**. All NestMarkets UI MUST use the existing **semantic Tailwind tokens** — never hardcoded `emerald-*` / `slate-*` / raw hex. This keeps light/dark theming automatic and on-brand.
+
+| Use | Token (Tailwind class) | Source var |
+|-----|------------------------|------------|
+| Primary accent (active chip, price, cart badge, primary button) | `bg-primary` / `text-primary` / `text-primary-foreground` | `--primary` (gold `oklch(0.72 0.16 84)`) |
+| Secondary | `bg-secondary` / `text-secondary` | `--secondary` (brown) |
+| Page background | `bg-background` | `--background` (warm) |
+| Cards / surfaces | `bg-card` `border-border` | `--card` / `--border` |
+| Muted fills / skeletons | `bg-muted` | `--muted` |
+| Secondary text (store name, rating, meta) | `text-muted-foreground` | `--muted-foreground` |
+| Errors (insufficient balance, PIN error, reject) | `text-destructive` / `bg-destructive` | `--destructive` |
+| Corner radius | `rounded-lg` / `rounded-xl` / `rounded-2xl` | scales off `--radius: 0.75rem` |
+
+Dark mode needs no special-casing — semantic tokens already invert via `.dark`.
+
+### 7.2 Screen layouts (bound to tokens)
+
+**Browse (`/marketplace`):**
+- Pill search input: `rounded-full bg-card border-border`, leading `Search` (Lucide) icon.
+- Category filter: horizontally-scrolling pill buttons; options **derived client-side** from results. Active = `bg-primary text-primary-foreground`; idle = `bg-muted text-muted-foreground`.
+- Product grid: responsive (`grid-cols-2 sm:grid-cols-3 lg:grid-cols-4`), card `rounded-2xl bg-card border-border overflow-hidden hover:-translate-y-1 transition-transform`.
+  - Image: `aspect-square bg-muted`.
+  - Store badge: floating bottom-left over image, `bg-card/90 backdrop-blur-sm rounded-full px-2 py-1 text-[10px]`, shows store logo + name + ★ rating.
+  - Body `p-3`: title `text-sm font-medium line-clamp-1`; price `text-base font-semibold text-primary`.
+- **Pagination: page-based** (`‹ Page X of N ›`) to match the paginated `/browse` endpoint (§4.3). Not "load more".
+- Cart badge: `ShoppingCart` icon in the top bar with `absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5` count.
+- States: skeleton grid (loading), `SearchX` empty state with "Clear filters" (empty).
+
+**Product quick-view (modal / shadcn `Dialog`):** large image, name, description, price (`text-primary`), stock line, store row (logo + name + rating in `text-muted-foreground`), quantity stepper (`− n +`), `Add to cart` primary button. Out-of-stock → disabled button + "Out of stock" label. After add → button confirms + cart badge increments (optimistic).
+
+**Cart (`/marketplace/baskets`):** grouped by store. Each `cart-store-block` = `rounded-2xl bg-card border-border` with a store header (logo + name), line items (thumb, name, qty stepper, line price, remove icon-button), a **store subtotal**, and a `Checkout this store` primary button. Empty-cart state with CTA back to browse.
+
+**Checkout (slide-over `Sheet`):** delivery-profile picker (saved addresses + "add new"), order summary rows — items subtotal, **Delivery fee** (flat `zone.baseFee`), **Total** — NestPurse balance line, 4-digit PIN entry, `Pay ₦X` primary button. Insufficient-balance state shows shortfall in `text-destructive` + "Top up" link (opens `AddMoneyDialog`). PIN-error state inline.
+
+**Orders + tracking (`/marketplace/orders`):** order cards (store, item summary, total, date, status pill). Tracking stepper `received → packaged → on_the_way → delivered` (read-only; completed steps in `text-primary`). On `delivered`: `Accept delivery` (primary) + `Reject` (outline → opens reason input, ≥5 chars, `text-destructive` validation). Empty state when no orders.
+
+Reflows: 2-up product grid on mobile (~375px); checkout `Sheet` becomes bottom sheet; cart blocks stack full-width.
 
 ---
 
