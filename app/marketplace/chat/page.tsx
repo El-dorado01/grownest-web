@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -20,14 +20,19 @@ function ChatPane() {
   const [selectedId, setSelectedId] = useState<string | null>(() => params.get("thread"));
 
   // Deep link via ?order=<id> needs the fetched threads to resolve, so it runs
-  // in an effect once the list arrives.
+  // in an effect once the list arrives. Latched so it applies only once —
+  // otherwise tapping mobile back (which nulls selectedId) would re-select it.
+  const appliedOrderDeepLink = useRef(false);
   useEffect(() => {
-    if (selectedId) return;
+    if (appliedOrderDeepLink.current || selectedId) return;
     const orderParam = params.get("order");
     if (!orderParam || !threads.length) return;
     const match = threads.find((t) => t.order?.id === orderParam);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (match) setSelectedId(match.id);
+    if (match) {
+      appliedOrderDeepLink.current = true;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedId(match.id);
+    }
   }, [params, threads, selectedId]);
 
   const selected = threads.find((t) => t.id === selectedId) ?? null;
