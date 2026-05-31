@@ -16,18 +16,18 @@ import { useChat } from "@/hooks/use-chat";
 function ChatPane() {
   const params = useSearchParams();
   const { threads, isLoading } = useChat();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Initialise directly from ?thread=<id> so we avoid a setState-in-effect.
+  const [selectedId, setSelectedId] = useState<string | null>(() => params.get("thread"));
 
-  // Deep link: ?thread=<id> or ?order=<id>
+  // Deep link via ?order=<id> needs the fetched threads to resolve, so it runs
+  // in an effect once the list arrives.
   useEffect(() => {
     if (selectedId) return;
-    const threadParam = params.get("thread");
     const orderParam = params.get("order");
-    if (threadParam) { setSelectedId(threadParam); return; }
-    if (orderParam && threads.length) {
-      const match = threads.find((t) => t.order?.id === orderParam);
-      if (match) setSelectedId(match.id);
-    }
+    if (!orderParam || !threads.length) return;
+    const match = threads.find((t) => t.order?.id === orderParam);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (match) setSelectedId(match.id);
   }, [params, threads, selectedId]);
 
   const selected = threads.find((t) => t.id === selectedId) ?? null;
