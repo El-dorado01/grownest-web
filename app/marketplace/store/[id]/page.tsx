@@ -20,7 +20,7 @@ import type { MarketProduct } from "@/types/nestmarkets";
 export default function StoreProfilePage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
-  const { store, products, isLoading, reviews, reviewsPagination, reviewsLoading, reviewsPage, setReviewsPage } = useVendor(id);
+  const { store, products, isLoading, reviews, reviewsPagination, reviewsLoading, setReviewsPage } = useVendor(id);
   const { followedIds } = useVendors();
   const [selected, setSelected] = useState<MarketProduct | null>(null);
   const [open, setOpen] = useState(false);
