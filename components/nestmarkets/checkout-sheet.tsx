@@ -51,6 +51,7 @@ export function CheckoutSheet({
     await nestMarketsApi.clearStoreFromCart(group.store.id);
     globalMutate("nestmarket-cart");
     globalMutate((key) => Array.isArray(key) && key[0] === "nestmarket-orders");
+    globalMutate("user-profile"); // refresh NestPurse balance after the debit
     toast.success("Order placed");
     onOpenChange(false);
     router.push("/marketplace/orders");
