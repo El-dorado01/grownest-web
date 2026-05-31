@@ -316,13 +316,13 @@ export function useChatThread(id: string | null) {
   const thread = res?.data?.data ?? null;
   const messages = thread?.messages ?? [];
 
-  const send = async (content: string, myId: string) => {
+  const send = async (content: string) => {
     if (!id) return { error: "No thread" };
-    // optimistic append
+    // optimistic append (isSender hardcoded true; server recomputes on revalidate)
     const optimistic: ChatMessage = {
       id: `tmp-${Date.now()}`,
       threadId: id,
-      senderId: myId,
+      senderId: "me",
       content,
       isRead: false,
       createdAt: new Date().toISOString(),
@@ -555,7 +555,6 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChatThread } from "@/hooks/use-chat-thread";
-import { useProfile } from "@/hooks/use-profile";
 import { ChatMessageBubble } from "./chat-message-bubble";
 import { ChatOrderContext } from "./chat-order-context";
 import { ChatComposer } from "./chat-composer";
@@ -564,8 +563,6 @@ export function ChatConversation({
   threadId, storeName, onBack,
 }: { threadId: string; storeName?: string; onBack?: () => void }) {
   const { thread, messages, isLoading, send, markRead } = useChatThread(threadId);
-  const { profile } = useProfile();
-  const myId = (profile as any)?.supabaseUserId ?? (profile as any)?.id ?? "";
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Mark read whenever a thread opens
@@ -580,7 +577,7 @@ export function ChatConversation({
   }, [messages.length]);
 
   const handleSend = async (text: string) => {
-    const r = await send(text, myId);
+    const r = await send(text);
     if (r.error) toast.error(r.error);
   };
 
@@ -609,7 +606,7 @@ export function ChatConversation({
 }
 ```
 
-> NOTE: `useProfile()` exposes `profile` (and `balance`). For `isSender` styling we rely on the API's `message.isSender` (already computed server-side), so `myId` is only used for the optimistic bubble. If `profile` lacks `supabaseUserId`/`id`, the optimistic bubble still renders (it sets `isSender:true` explicitly) — `myId` is non-critical. Confirm `useProfile` shape during the task; if neither field exists, pass `""` (optimistic bubble already hardcodes `isSender:true`).
+> NOTE: We deliberately do NOT use `useProfile` here. The optimistic bubble hardcodes `isSender: true` and the server recomputes `isSender` on the next revalidate, so the sender's id is never needed for correctness.
 
 - [ ] **Step 2: Typecheck + commit**
 
@@ -770,17 +767,26 @@ Then change the "Market Chat" item in the NestMarket `items` array to include a 
         },
 ```
 
-- [ ] **Step 3: Render `item.badge` in `NavMain`**
+- [ ] **Step 3: Render `subItem.badge` in `NavMain`**
 
-Open `components/nav-main.tsx`. Find where sub-items are rendered (the `.items?.map(...)` producing `SidebarMenuSubButton` with the item title). Add the badge after the title. Locate the sub-item link (it renders `<a>`/`<Link>` with `{subItem.title}` or `{item.title}`) and add, right after the title text node, inside the same anchor/button:
+Open `components/nav-main.tsx`. It has a local `type NavSubItem = { title: string; url: string }`. Make two edits:
 
+1. Add `badge` to the type:
 ```tsx
-                        {(subItem as { badge?: React.ReactNode }).badge}
+type NavSubItem = {
+  title: string
+  url: string
+  badge?: React.ReactNode
+}
 ```
 
-(Use the exact variable name the existing map uses — it may be `subItem` or `item`. Match it. The cast keeps TS happy since the base type has no `badge`.)
-
-If `nav-main.tsx`'s sub-item type is a local `interface`, instead add `badge?: React.ReactNode` to that interface and render `{subItem.badge}` without the cast. Pick whichever matches the file; verify with typecheck.
+2. In the sub-item map, the link currently renders `<span>{subItem.title}</span>`. Add the badge right after that span, inside the same `<Link>`:
+```tsx
+                            <Link href={subItem.url} onClick={handleNavClick}>
+                              <span>{subItem.title}</span>
+                              {subItem.badge}
+                            </Link>
+```
 
 - [ ] **Step 4: Add "Message seller" to the order card**
 
