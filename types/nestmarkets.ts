@@ -88,6 +88,7 @@ export interface MarketOrder {
   acceptedAt: string | null;
   items: MarketOrderItem[];
   store: MarketStoreLite;
+  rating?: { id: string; rating: number; review: string | null } | null;
 }
 
 export interface MyOrdersResponse {
@@ -102,4 +103,56 @@ export interface CheckoutResponse {
   data?: MarketOrder;
   shortfall?: number;
   requirePin?: boolean;
+}
+
+export interface MarketStore {
+  id: string;
+  ownerId?: string;
+  name: string;
+  description: string | null;
+  logoUrl: string | null;
+  bannerUrl: string | null;
+  averageRating: number;
+  ratingCount: number;
+  latitude: number | null;
+  longitude: number | null;
+  businessAddress: string | null;
+  isVerified: boolean;
+  status: string;
+  distance?: number;
+  _count?: { products: number; followers: number };
+  products?: MarketProduct[];
+}
+
+export interface StoresResponse {
+  success: boolean;
+  data: MarketStore[];
+  total?: number;
+}
+
+export interface StoreResponse {
+  success: boolean;
+  data: MarketStore;
+}
+
+export interface FollowResponse {
+  success: boolean;
+  message: string;
+  followed: boolean;
+}
+
+export interface MarketReview {
+  id: string;
+  orderId: string;
+  storeId: string;
+  rating: number;
+  review: string | null;
+  createdAt: string;
+  buyer: { fullName: string | null; profilePhoto: string | null };
+}
+
+export interface StoreReviewsResponse {
+  success: boolean;
+  data: MarketReview[];
+  pagination: { total: number; page: number; limit: number; pages: number };
 }
