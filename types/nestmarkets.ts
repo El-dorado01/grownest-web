@@ -156,3 +156,63 @@ export interface StoreReviewsResponse {
   data: MarketReview[];
   pagination: { total: number; page: number; limit: number; pages: number };
 }
+
+export interface ChatLastMessage {
+  id: string;
+  content: string;
+  senderId: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface ChatThreadSummary {
+  id: string;
+  orderId: string | null;
+  buyerId: string;
+  storeId: string;
+  updatedAt: string;
+  store: { name: string; logoUrl: string | null; ownerId: string };
+  buyer: { fullName: string | null; profilePhoto: string | null };
+  order: { id: string; status: string } | null;
+  messages: ChatLastMessage[]; // [lastMessage] or []
+  unreadCount: number;
+}
+
+export interface ChatThreadsResponse {
+  success: boolean;
+  data: ChatThreadSummary[];
+}
+
+export interface ChatMessage {
+  id: string;
+  threadId: string;
+  senderId: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+  sender: { fullName: string | null; profilePhoto: string | null };
+  isSender: boolean;
+}
+
+export interface ChatThreadDetail {
+  id: string;
+  orderId: string | null;
+  buyerId: string;
+  storeId: string;
+  updatedAt: string;
+  store?: { name?: string; logoUrl?: string | null; ownerId: string };
+  order?: { id: string; status: string } | null;
+  messages: ChatMessage[];
+}
+
+export interface ChatThreadResponse {
+  success: boolean;
+  data: ChatThreadDetail;
+}
+
+export interface SendMessageResponse {
+  success: boolean;
+  data?: ChatMessage;
+  message?: string;
+  moderated?: boolean;
+}

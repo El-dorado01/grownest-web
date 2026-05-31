@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,6 +56,12 @@ export function OrderCard({ order, onChanged }: { order: MarketOrder; onChanged:
         <span className="text-muted-foreground">Total (incl. ₦{order.deliveryFee.toLocaleString()} delivery)</span>
         <span className="font-semibold text-primary">₦{(order.totalAmount + order.deliveryFee).toLocaleString()}</span>
       </div>
+      <Link
+        href={`/marketplace/chat?order=${order.id}`}
+        className="inline-flex items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted transition-colors w-full"
+      >
+        Message seller
+      </Link>
       {order.status === "rejected" && order.rejectionReason && (
         <p className="text-xs text-destructive">Rejected: {order.rejectionReason}</p>
       )}

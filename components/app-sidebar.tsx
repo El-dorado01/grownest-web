@@ -36,6 +36,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { ChatNavBadge } from "@/components/nestmarkets/chat-nav-badge"
 
 const data = {
   navMain: [
@@ -102,6 +103,7 @@ const data = {
         {
           title: "Market Chat",
           url: "/marketplace/chat",
+          badge: <ChatNavBadge />,
         },
       ],
     },
