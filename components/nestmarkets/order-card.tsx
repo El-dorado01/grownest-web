@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { nestMarketsApi } from "@/lib/nestmarkets-api";
 import { OrderTracking } from "./order-tracking";
+import { RateOrderDialog } from "./rate-order-dialog";
 import type { MarketOrder } from "@/types/nestmarkets";
 
 export function OrderCard({ order, onChanged }: { order: MarketOrder; onChanged: () => void }) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [rating, setRating] = useState(false);
+  const canRate = (order.status === "accepted" || order.status === "delivered") && !order.rating;
   const delivered = order.status === "delivered";
 
   const accept = async () => {
@@ -70,6 +73,13 @@ export function OrderCard({ order, onChanged }: { order: MarketOrder; onChanged:
           </div>
         </div>
       )}
+      {canRate && (
+        <Button onClick={() => setRating(true)} variant="outline" className="w-full">Rate order</Button>
+      )}
+      {order.rating && (
+        <p className="text-xs text-muted-foreground">You rated this order {order.rating.rating}★</p>
+      )}
+      <RateOrderDialog orderId={order.id} open={rating} onOpenChange={setRating} onRated={onChanged} />
     </div>
   );
 }
