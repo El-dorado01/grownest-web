@@ -624,10 +624,13 @@ export default function VendorsPage() {
 
 - [ ] **Step 3: Add "Vendors" sidebar entry**
 
-In `components/app-sidebar.tsx`, in the NestMarket group's `items` array, add after the "Marketplace" item (so order is Marketplace, Vendors, My Baskets, My Orders):
+In `components/app-sidebar.tsx`, the NestMarket group's `items` array currently is: `Explore` (`/marketplace`), `My Baskets`, `My Orders`, `Market Chat`. Add a "Vendors" item after "Explore", matching the existing object style (multi-line `{ title, url }`):
 
 ```tsx
-        { title: "Vendors", url: "/marketplace/vendors" },
+        {
+          title: "Vendors",
+          url: "/marketplace/vendors",
+        },
 ```
 
 - [ ] **Step 4: Typecheck + commit**
@@ -882,7 +885,7 @@ Add the import at the top:
 import { RateOrderDialog } from "./rate-order-dialog";
 ```
 
-Add state inside the component (next to the existing `rejecting`/`reason`/`busy` state):
+Add state inside the component (next to the existing `rejecting`/`reason`/`busy` state — `useState` is already imported in this file):
 
 ```tsx
   const [rating, setRating] = useState(false);
