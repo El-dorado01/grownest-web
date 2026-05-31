@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { mutate as globalMutate } from "swr";
 import { Heart } from "lucide-react";
 import { toast } from "sonner";
@@ -13,6 +13,11 @@ export function FollowButton({
 }: { storeId: string; initialFollowing: boolean; onToggled?: (following: boolean) => void; className?: string }) {
   const [following, setFollowing] = useState(initialFollowing);
   const [busy, setBusy] = useState(false);
+
+  // followedIds loads async on the profile page; sync once it arrives
+  useEffect(() => {
+    setFollowing(initialFollowing);
+  }, [initialFollowing]);
 
   const toggle = async () => {
     const next = !following;
