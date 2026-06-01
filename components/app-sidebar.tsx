@@ -32,7 +32,8 @@ import {
   TrendingUpIcon,
   LifeBuoyIcon, 
   CogIcon,
-  TerminalIcon
+  TerminalIcon,
+  ShoppingBagIcon
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -80,6 +81,21 @@ const data = {
       ],
     },
     {
+      title: "NestBaskets",
+      url: "/nestbaskets/baskets",
+      icon: <ShoppingBagIcon />,
+      items: [
+        {
+          title: "Explore Baskets",
+          url: "/nestbaskets/baskets",
+        },
+        {
+          title: "Custom Builder",
+          url: "/nestbaskets/baskets/new",
+        },
+      ],
+    },
+    {
       title: "NestMarket",
       url: "/marketplace",
       icon: <StoreIcon />,
@@ -93,8 +109,8 @@ const data = {
           url: "/marketplace/vendors",
         },
         {
-          title: "My Baskets",
-          url: "/marketplace/baskets",
+          title: "My Cart",
+          url: "/marketplace/cart",
         },
         {
           title: "My Orders",
@@ -196,7 +212,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <React.Suspense fallback={<div className="h-10 px-4 flex items-center text-xs text-muted-foreground">Loading...</div>}>
+          <NavMain items={data.navMain} />
+        </React.Suspense>
         <NavProjects projects={projectsWithBadges} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>

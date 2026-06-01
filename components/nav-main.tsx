@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import {
   Collapsible,
   CollapsibleContent,
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/sidebar"
 import { ChevronRightIcon } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 
 type NavSubItem = {
   title: string
@@ -39,6 +40,49 @@ export function NavMain({
 }) {
   const { setOpenMobile } = useSidebar()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const currentTab = searchParams.get("tab")
+
+  const isSubItemActive = React.useCallback((subUrl: string) => {
+    // Exact match
+    if (pathname === subUrl) return true;
+
+    // Check with query parameters
+    const [subPath, subQuery] = subUrl.split("?")
+    if (subPath === pathname) {
+      if (!subQuery) {
+        return !currentTab || currentTab === "plans"
+      }
+      const subQueryObj = new URLSearchParams(subQuery)
+      const tabValue = subQueryObj.get("tab")
+      return currentTab === tabValue
+    }
+
+    // Check nested routes
+    if (subUrl.includes("tab=subscriptions") && pathname.startsWith("/nestbaskets/baskets/subscription")) {
+      return true;
+    }
+    if (subUrl.includes("tab=flexible") && pathname.startsWith("/nestbaskets/baskets/flexible")) {
+      return true;
+    }
+
+    return false;
+  }, [pathname, currentTab])
+
+  const [openItem, setOpenItem] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    const activeItem = items.find((item) => {
+      const matchParent = item.url === "/" ? pathname === "/" : pathname.startsWith(item.url)
+      const matchSub = item.items?.some((sub) => {
+        return isSubItemActive(sub.url)
+      })
+      return matchParent || matchSub
+    })
+    if (activeItem) {
+      setOpenItem(activeItem.title)
+    }
+  }, [pathname, items, isSubItemActive])
 
   return (
 
@@ -46,13 +90,23 @@ export function NavMain({
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu className="gap-1">
         {items.map((item) => {
-          const isItemActive = pathname === item.url || (item.items?.some(sub => pathname === sub.url))
+          const isItemActive =
+            (item.url === "/" ? pathname === "/" : pathname.startsWith(item.url)) ||
+            (item.items ? item.items.some((sub) => isSubItemActive(sub.url)) : false)
+          const isOpen = openItem === item.title
           
           return (
             <Collapsible
               key={item.title}
               asChild
-              defaultOpen={isItemActive}
+              open={isOpen}
+              onOpenChange={(open) => {
+                if (open) {
+                  setOpenItem(item.title)
+                } else if (isOpen) {
+                  setOpenItem(null)
+                }
+              }}
               className="group/collapsible"
             >
               <SidebarMenuItem className="group/collapsible">
@@ -78,7 +132,7 @@ export function NavMain({
                     <SidebarMenuSub>
                       {item.items?.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild isActive={pathname === subItem.url} onClick={() => setOpenMobile(false)}>
+                          <SidebarMenuSubButton asChild isActive={isSubItemActive(subItem.url)} onClick={() => setOpenMobile(false)}>
                             <Link href={subItem.url}>
                               <span>{subItem.title}</span>
                               {subItem.badge}
