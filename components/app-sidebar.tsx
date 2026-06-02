@@ -107,6 +107,25 @@ const data = {
         },
       ],
     },
+    {
+      title: "Sell on NestMarket",
+      url: "/seller",
+      icon: <StoreIcon />,
+      items: [
+        {
+          title: "Dashboard",
+          url: "/seller",
+        },
+        {
+          title: "My Store",
+          url: "/seller/store",
+        },
+        {
+          title: "Products",
+          url: "/seller/products",
+        },
+      ],
+    },
   ],
   projects: [
     {
