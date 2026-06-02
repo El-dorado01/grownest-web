@@ -33,6 +33,7 @@ export function CreateStoreWizard() {
     setBusy(false);
     if (r.error || !r.data?.success) {
       if (r.status === 400) { setLowBalance(true); return; }
+      if (r.status === 403) return toast.error("Incorrect PIN. Please try again.");
       return toast.error(r.error || "Could not create store");
     }
     toast.success("Store created — ₦1,000 debited");
