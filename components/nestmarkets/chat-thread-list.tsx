@@ -6,9 +6,10 @@ import { MessageSquare } from "lucide-react";
 import type { ChatThreadSummary } from "@/types/nestmarkets";
 
 export function ChatThreadList({
-  threads, isLoading, selectedId, onSelect,
+  threads, isLoading, selectedId, onSelect, perspective = "buyer",
 }: {
-  threads: ChatThreadSummary[]; isLoading: boolean; selectedId: string | null; onSelect: (id: string) => void;
+  threads: ChatThreadSummary[]; isLoading: boolean; selectedId: string | null;
+  onSelect: (id: string) => void; perspective?: "buyer" | "seller";
 }) {
   if (isLoading) {
     return <div className="space-y-2 p-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>;
@@ -25,6 +26,8 @@ export function ChatThreadList({
     <div className="divide-y divide-border">
       {threads.map((t) => {
         const last = t.messages[0];
+        const name = perspective === "seller" ? (t.buyer.fullName ?? "Buyer") : t.store.name;
+        const avatar = perspective === "seller" ? t.buyer.profilePhoto : t.store.logoUrl;
         return (
           <button
             key={t.id}
@@ -35,10 +38,10 @@ export function ChatThreadList({
             )}
           >
             <div className="size-10 rounded-full bg-muted overflow-hidden shrink-0">
-              {t.store.logoUrl && <img src={t.store.logoUrl} alt="" className="h-full w-full object-cover" />}
+              {avatar && <img src={avatar} alt="" className="h-full w-full object-cover" />}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium line-clamp-1">{t.store.name}</p>
+              <p className="text-sm font-medium line-clamp-1">{name}</p>
               <p className="text-xs text-muted-foreground line-clamp-1">{last?.content ?? "No messages yet"}</p>
             </div>
             {t.unreadCount > 0 && (

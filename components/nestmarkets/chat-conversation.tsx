@@ -10,8 +10,8 @@ import { ChatOrderContext } from "./chat-order-context";
 import { ChatComposer } from "./chat-composer";
 
 export function ChatConversation({
-  threadId, storeName, onBack,
-}: { threadId: string; storeName?: string; onBack?: () => void }) {
+  threadId, storeName, title, onBack,
+}: { threadId: string; storeName?: string; title?: string; onBack?: () => void }) {
   const { thread, messages, isLoading, send, markRead } = useChatThread(threadId);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -37,7 +37,7 @@ export function ChatConversation({
         {onBack && (
           <button onClick={onBack} className="md:hidden p-1"><ArrowLeft className="size-5" /></button>
         )}
-        <span className="font-medium">{thread?.store?.name ?? storeName ?? "Chat"}</span>
+        <span className="font-medium">{title ?? thread?.store?.name ?? storeName ?? "Chat"}</span>
       </div>
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {thread?.order && <ChatOrderContext order={thread.order} />}
