@@ -15,7 +15,8 @@ export function useSellerOrders(storeId: string | null, page = 1, limit = 50) {
   const pagination = res?.data?.pagination ?? { total: 0, page: 1, limit, pages: 1 };
 
   const advance = async (orderId: string, next: TrackingStatus) => {
-    // optimistic: update the order's trackingStatus (and status if delivered) in cache
+    // optimistic: only the seller-owned trackingStatus changes. `status` is a
+    // buyer-side state (paid -> delivered on buyer accept) — leave it to the server.
     await mutate(
       (cur) =>
         cur?.data?.data
@@ -24,9 +25,7 @@ export function useSellerOrders(storeId: string | null, page = 1, limit = 50) {
               data: {
                 ...cur.data,
                 data: cur.data.data.map((o) =>
-                  o.id === orderId
-                    ? { ...o, trackingStatus: next, status: next === "delivered" ? "delivered" : o.status }
-                    : o
+                  o.id === orderId ? { ...o, trackingStatus: next } : o
                 ),
               },
             }
