@@ -140,6 +140,8 @@ const data = {
           title: "Products",
           url: "/seller/products",
         },
+        { title: "Orders", url: "/seller/orders" },
+        { title: "Earnings", url: "/seller/earnings" },
       ],
     },
   ],
