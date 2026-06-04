@@ -17,7 +17,7 @@ const slides = [
     subtitle: "Take control of your food budget before month end.",
   },
   {
-    src: "/bg-image-3.jpeg",
+    src: "/bg-image-4.jpeg",
     title: "Smart food planning.",
     subtitle: "Save money and eat well every single month.",
   },
