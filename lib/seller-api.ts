@@ -4,6 +4,9 @@ import type {
   SellerProductsResponse,
   SellerProductResponse,
   RequestVerificationBody,
+  SellerTransactionsResponse,
+  UpdateTrackingResponse,
+  TrackingStatus,
 } from "@/types/seller";
 
 const BASE = "/api/nestmarkets";
@@ -21,4 +24,9 @@ export const sellerApi = {
     api.put<SellerProductResponse>(`${BASE}/products/${id}`, form),
   deleteProduct: (id: string) =>
     api.delete<{ success: boolean; message: string }>(`${BASE}/products/${id}`),
+
+  getStoreTransactions: (storeId: string, page = 1, limit = 20) =>
+    api.get<SellerTransactionsResponse>(`${BASE}/stores/${storeId}/transactions?page=${page}&limit=${limit}`),
+  updateTracking: (orderId: string, status: TrackingStatus) =>
+    api.patch<UpdateTrackingResponse>(`${BASE}/orders/${orderId}/tracking`, { status }),
 };
