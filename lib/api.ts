@@ -22,6 +22,8 @@ interface ApiResponse<T> {
  */
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
+  // DEV MOCK (disabled — see lib/dev-mock.ts; re-enable to demo UI without a backend):
+  // if (process.env.NEXT_PUBLIC_MOCK === "1") return localStorage.getItem("auth_token") || "mock-token";
   return localStorage.getItem("auth_token");
 }
 
@@ -73,6 +75,12 @@ export async function apiFetch<T>(
   options: FetchOptions = {}
 ): Promise<ApiResponse<T>> {
   const { method = "GET", body, headers = {}, cache, tags } = options;
+
+  // DEV MOCK (disabled — see lib/dev-mock.ts; re-enable to demo UI without a backend):
+  // if (process.env.NEXT_PUBLIC_MOCK === "1") {
+  //   const { mockFetch } = await import("./dev-mock");
+  //   return (await mockFetch(endpoint, method, body)) as ApiResponse<T>;
+  // }
 
   const token = getAuthToken();
   const tempToken = getTempToken();

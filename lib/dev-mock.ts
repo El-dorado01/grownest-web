@@ -14,7 +14,7 @@ const img = (seed: string, w = 400, h = 400) => `https://picsum.photos/seed/${se
 // ---- Stores ---------------------------------------------------------
 const stores = [
   { id: "st-1", ownerId: "owner-1", name: "Mama's Kitchen", description: "Home-cooked Nigerian meals & grains, freshly packed.", logoUrl: img("mama-logo", 100, 100), bannerUrl: img("mama-banner", 800, 240), averageRating: 4.8, ratingCount: 124, latitude: 6.45, longitude: 3.4, businessAddress: "12 Allen Ave, Ikeja", isVerified: true, status: "active", _count: { products: 6, followers: 312 } },
-  { id: "st-2", ownerId: "owner-2", name: "FreshCo Groceries", description: "Fresh produce, drinks and household essentials.", logoUrl: img("fresh-logo", 100, 100), bannerUrl: img("fresh-banner", 800, 240), averageRating: 4.9, ratingCount: 88, latitude: 6.5, longitude: 3.37, businessAddress: "5 Adeniran Ogunsanya, Surulere", isVerified: true, status: "active", _count: { products: 9, followers: 540 } },
+  { id: "st-2", ownerId: "owner-2", name: "FreshCo Groceries", description: "Fresh produce, drinks and household essentials.", logoUrl: img("fresh-logo", 100, 100), bannerUrl: img("fresh-banner", 800, 240), averageRating: 4.9, ratingCount: 88, latitude: 6.5, longitude: 3.37, businessAddress: "5 Adeniran Ogunsanya, Surulere", isVerified: true, status: "active", _count: { products: 6, followers: 540 } },
   { id: "st-3", ownerId: "owner-3", name: "Zobo Express", description: "Chilled zobo, smoothies and small chops.", logoUrl: img("zobo-logo", 100, 100), bannerUrl: img("zobo-banner", 800, 240), averageRating: 4.6, ratingCount: 41, latitude: 6.6, longitude: 3.35, businessAddress: "Lekki Phase 1", isVerified: true, status: "active", _count: { products: 4, followers: 96 } },
   { id: "st-4", ownerId: "owner-4", name: "Naija Snacks Hub", description: "Chin chin, plantain chips & more.", logoUrl: img("snack-logo", 100, 100), bannerUrl: img("snack-banner", 800, 240), averageRating: 4.4, ratingCount: 23, latitude: 6.43, longitude: 3.42, businessAddress: "Yaba", isVerified: true, status: "active", _count: { products: 5, followers: 60 } },
 ];
@@ -23,14 +23,35 @@ const lite = (s: any) => ({ id: s.id, name: s.name, logoUrl: s.logoUrl, averageR
 
 // ---- Products -------------------------------------------------------
 const products = [
-  { id: "p-1", storeId: "st-1", name: "Party Jollof Combo", description: "Smoky party jollof with chicken & plantain. Serves 2.", price: 4500, imageUrl: img("jollof"), category: "Rice", stockLevel: 25, isActive: true, createdAt: "2026-05-20T10:00:00Z", store: lite(stores[0]) },
+  // Mama's Kitchen (st-1) — prepared meals, rice, spices
+  { id: "p-1", storeId: "st-1", name: "Party Jollof Combo", description: "Smoky party jollof with chicken & plantain. Serves 2.", price: 4500, imageUrl: img("jollof"), category: "Prepared Meals", stockLevel: 25, isActive: true, createdAt: "2026-05-20T10:00:00Z", store: lite(stores[0]) },
   { id: "p-2", storeId: "st-1", name: "Bag of Ofada Rice (5kg)", description: "Locally grown ofada rice.", price: 9000, imageUrl: img("ofada"), category: "Rice", stockLevel: 12, isActive: true, createdAt: "2026-05-19T10:00:00Z", store: lite(stores[0]) },
+  { id: "p-8", storeId: "st-1", name: "Pepper Soup Spice Pack", description: "Ready-mix pepper soup seasoning.", price: 2000, imageUrl: img("spice"), category: "Spices", stockLevel: 50, isActive: true, createdAt: "2026-05-16T10:00:00Z", store: lite(stores[0]) },
+  { id: "p-9", storeId: "st-1", name: "Egusi Soup (1L)", description: "Rich melon-seed soup with assorted meat.", price: 5500, imageUrl: img("egusi"), category: "Prepared Meals", stockLevel: 15, isActive: true, createdAt: "2026-05-15T10:00:00Z", store: lite(stores[0]) },
+  { id: "p-10", storeId: "st-1", name: "Moi Moi (Pack of 4)", description: "Steamed bean pudding, freshly made.", price: 2400, imageUrl: img("moimoi"), category: "Prepared Meals", stockLevel: 30, isActive: true, createdAt: "2026-05-14T10:00:00Z", store: lite(stores[0]) },
+  { id: "p-11", storeId: "st-1", name: "Honey Beans (2kg)", description: "Premium oloyin honey beans.", price: 3800, imageUrl: img("beans"), category: "Grains", stockLevel: 22, isActive: true, createdAt: "2026-05-13T10:00:00Z", store: lite(stores[0]) },
+
+  // FreshCo Groceries (st-2) — produce, drinks, household
   { id: "p-3", storeId: "st-2", name: "Plantain Chips (Pack of 12)", description: "Crispy, lightly salted plantain chips.", price: 1200, imageUrl: img("plantain"), category: "Snacks", stockLevel: 80, isActive: true, createdAt: "2026-05-21T10:00:00Z", store: lite(stores[1]) },
   { id: "p-4", storeId: "st-2", name: "Fresh Tomato Basket", description: "Ripe tomatoes, ~3kg basket.", price: 3500, imageUrl: img("tomato"), category: "Produce", stockLevel: 0, isActive: true, createdAt: "2026-05-18T10:00:00Z", store: lite(stores[1]) },
-  { id: "p-5", storeId: "st-3", name: "Chilled Zobo (1L)", description: "Hibiscus drink with pineapple & ginger.", price: 800, imageUrl: img("zobo"), category: "Drinks", stockLevel: 40, isActive: true, createdAt: "2026-05-22T10:00:00Z", store: lite(stores[2]) },
-  { id: "p-6", storeId: "st-4", name: "Chin Chin (500g)", description: "Crunchy sweet chin chin.", price: 1500, imageUrl: img("chinchin"), category: "Snacks", stockLevel: 33, isActive: true, createdAt: "2026-05-17T10:00:00Z", store: lite(stores[3]) },
   { id: "p-7", storeId: "st-2", name: "Carton of Eggs (30)", description: "Farm-fresh crate of eggs.", price: 5200, imageUrl: img("eggs"), category: "Produce", stockLevel: 18, isActive: true, createdAt: "2026-05-23T10:00:00Z", store: lite(stores[1]) },
-  { id: "p-8", storeId: "st-1", name: "Pepper Soup Spice Pack", description: "Ready-mix pepper soup seasoning.", price: 2000, imageUrl: img("spice"), category: "Spices", stockLevel: 50, isActive: true, createdAt: "2026-05-16T10:00:00Z", store: lite(stores[0]) },
+  { id: "p-12", storeId: "st-2", name: "Red Palm Oil (2L)", description: "Pure unadulterated palm oil.", price: 3200, imageUrl: img("palmoil"), category: "Produce", stockLevel: 40, isActive: true, createdAt: "2026-05-12T10:00:00Z", store: lite(stores[1]) },
+  { id: "p-13", storeId: "st-2", name: "Garri (4kg)", description: "Fine white garri, well processed.", price: 2800, imageUrl: img("garri"), category: "Grains", stockLevel: 60, isActive: true, createdAt: "2026-05-11T10:00:00Z", store: lite(stores[1]) },
+  { id: "p-14", storeId: "st-2", name: "Yam Tuber (Large)", description: "Fresh puna yam, large size.", price: 4000, imageUrl: img("yam"), category: "Produce", stockLevel: 25, isActive: true, createdAt: "2026-05-10T10:00:00Z", store: lite(stores[1]) },
+  { id: "p-15", storeId: "st-2", name: "Bottled Water (Pack of 12)", description: "Chilled table water.", price: 1500, imageUrl: img("water"), category: "Drinks", stockLevel: 100, isActive: true, createdAt: "2026-05-09T10:00:00Z", store: lite(stores[1]) },
+
+  // Zobo Express (st-3) — drinks & small chops
+  { id: "p-5", storeId: "st-3", name: "Chilled Zobo (1L)", description: "Hibiscus drink with pineapple & ginger.", price: 800, imageUrl: img("zobo"), category: "Drinks", stockLevel: 40, isActive: true, createdAt: "2026-05-22T10:00:00Z", store: lite(stores[2]) },
+  { id: "p-16", storeId: "st-3", name: "Tigernut Drink (75cl)", description: "Creamy kunu aya, no preservatives.", price: 1000, imageUrl: img("tigernut"), category: "Drinks", stockLevel: 35, isActive: true, createdAt: "2026-05-08T10:00:00Z", store: lite(stores[2]) },
+  { id: "p-17", storeId: "st-3", name: "Small Chops Platter", description: "Puff-puff, spring rolls & samosa. Serves 4.", price: 3500, imageUrl: img("smallchops"), category: "Snacks", stockLevel: 20, isActive: true, createdAt: "2026-05-07T10:00:00Z", store: lite(stores[2]) },
+  { id: "p-18", storeId: "st-3", name: "Smoothie Pack (3x)", description: "Mixed fruit smoothies.", price: 2400, imageUrl: img("smoothie"), category: "Drinks", stockLevel: 18, isActive: true, createdAt: "2026-05-06T10:00:00Z", store: lite(stores[2]) },
+
+  // Naija Snacks Hub (st-4) — snacks
+  { id: "p-6", storeId: "st-4", name: "Chin Chin (500g)", description: "Crunchy sweet chin chin.", price: 1500, imageUrl: img("chinchin"), category: "Snacks", stockLevel: 33, isActive: true, createdAt: "2026-05-17T10:00:00Z", store: lite(stores[3]) },
+  { id: "p-19", storeId: "st-4", name: "Kuli Kuli (300g)", description: "Spicy groundnut snack.", price: 900, imageUrl: img("kulikuli"), category: "Snacks", stockLevel: 45, isActive: true, createdAt: "2026-05-05T10:00:00Z", store: lite(stores[3]) },
+  { id: "p-20", storeId: "st-4", name: "Coconut Candy (250g)", description: "Sweet toasted coconut bites.", price: 700, imageUrl: img("coconut"), category: "Snacks", stockLevel: 50, isActive: true, createdAt: "2026-05-04T10:00:00Z", store: lite(stores[3]) },
+  { id: "p-21", storeId: "st-4", name: "Peanut Brittle (200g)", description: "Crunchy caramelised peanut bars.", price: 1100, imageUrl: img("peanut"), category: "Snacks", stockLevel: 0, isActive: true, createdAt: "2026-05-03T10:00:00Z", store: lite(stores[3]) },
+  { id: "p-22", storeId: "st-4", name: "Dried Plantain (400g)", description: "Naturally sweet dried plantain.", price: 1300, imageUrl: img("driedplantain"), category: "Snacks", stockLevel: 28, isActive: true, createdAt: "2026-05-02T10:00:00Z", store: lite(stores[3]) },
 ];
 
 const productById = (id: string) => products.find((p) => p.id === id);
@@ -43,11 +64,16 @@ let cartItems: any[] = [
 ];
 const cart = () => ({ id: "cart-1", buyerId: ME, items: cartItems });
 
-// ---- Reviews --------------------------------------------------------
+// ---- Reviews (across multiple stores) -------------------------------
 const reviews = [
   { id: "rv-1", orderId: "o-9", storeId: "st-1", rating: 5, review: "Best jollof in Lagos, delivery was fast!", createdAt: "2026-05-28T12:00:00Z", buyer: { fullName: "Ada O.", profilePhoto: img("ada", 80, 80) } },
   { id: "rv-2", orderId: "o-8", storeId: "st-1", rating: 4, review: "Tasty, portion could be bigger.", createdAt: "2026-05-26T09:00:00Z", buyer: { fullName: "Tunde B.", profilePhoto: null } },
   { id: "rv-3", orderId: "o-7", storeId: "st-1", rating: 5, review: null, createdAt: "2026-05-24T18:00:00Z", buyer: { fullName: "Ngozi", profilePhoto: img("ngozi", 80, 80) } },
+  { id: "rv-4", orderId: "o-6", storeId: "st-2", rating: 5, review: "Fresh produce, exactly as pictured. Will reorder.", createdAt: "2026-05-27T11:00:00Z", buyer: { fullName: "Chidi N.", profilePhoto: img("chidi", 80, 80) } },
+  { id: "rv-5", orderId: "o-5", storeId: "st-2", rating: 4, review: "Eggs arrived intact, good packaging.", createdAt: "2026-05-25T15:00:00Z", buyer: { fullName: "Funke A.", profilePhoto: null } },
+  { id: "rv-6", orderId: "o-4", storeId: "st-3", rating: 5, review: "The zobo is so refreshing 🔥", createdAt: "2026-05-23T13:00:00Z", buyer: { fullName: "Emeka", profilePhoto: img("emeka", 80, 80) } },
+  { id: "rv-7", orderId: "o-3", storeId: "st-3", rating: 4, review: "Small chops were a hit at my party.", createdAt: "2026-05-21T19:00:00Z", buyer: { fullName: "Lola", profilePhoto: null } },
+  { id: "rv-8", orderId: "o-2", storeId: "st-4", rating: 4, review: "Chin chin is crunchy and not too sweet.", createdAt: "2026-05-20T09:00:00Z", buyer: { fullName: "Sola B.", profilePhoto: img("sola", 80, 80) } },
 ];
 
 // ---- Orders ---------------------------------------------------------
@@ -245,7 +271,11 @@ export async function mockFetch(endpoint: string, method: string, body?: any): P
   if (path.includes("/recommendations/nearby")) return ok({ success: true, data: stores.map((s, i) => ({ ...s, distance: 1.2 + i * 0.8 })) });
   if (path.endsWith("/followed-stores")) return ok({ success: true, data: [stores[0], stores[1]] });
   if (path.includes("/stores/") && path.endsWith("/follow") && m === "POST") return ok({ success: true, message: "Toggled", followed: true });
-  if (path.includes("/stores/") && path.endsWith("/reviews")) return ok({ success: true, data: reviews, pagination: { total: reviews.length, page: 1, limit: 10, pages: 1 } });
+  if (path.includes("/stores/") && path.endsWith("/reviews")) {
+    const sid = path.split("/stores/")[1].replace("/reviews", "");
+    const list = reviews.filter((r) => r.storeId === sid);
+    return ok({ success: true, data: list, pagination: { total: list.length, page: 1, limit: 10, pages: 1 } });
+  }
   if (path.endsWith("/nestmarkets/stores")) return ok({ success: true, data: stores, total: stores.length });
   if (path.includes("/nestmarkets/stores/")) {
     const id = path.split("/stores/")[1];
