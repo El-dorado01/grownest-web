@@ -51,7 +51,7 @@ export default function StoreProfilePage() {
                 {store.bannerUrl && <img src={store.bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />}
               </div>
               <div className="p-4 flex items-start gap-4 -mt-10">
-                <div className="size-20 rounded-2xl bg-muted ring-4 ring-card overflow-hidden shrink-0">
+                <div className="relative z-10 size-20 rounded-full bg-muted ring-4 ring-card overflow-hidden shrink-0">
                   {store.logoUrl && <img src={store.logoUrl} alt="" className="h-full w-full object-cover" />}
                 </div>
                 <div className="flex-1 min-w-0 pt-10">

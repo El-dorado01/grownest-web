@@ -11,7 +11,7 @@ export function VendorCard({ store }: { store: MarketStore }) {
         {store.bannerUrl && <img src={store.bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />}
       </div>
       <div className="p-3 -mt-8">
-        <div className="size-14 rounded-full bg-muted ring-4 ring-card overflow-hidden shadow-sm">
+        <div className="relative z-10 size-14 rounded-full bg-muted ring-4 ring-card overflow-hidden shadow-sm">
           {store.logoUrl && <img src={store.logoUrl} alt="" className="h-full w-full object-cover" />}
         </div>
         <p className="mt-2 font-medium line-clamp-1">{store.name}</p>

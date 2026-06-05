@@ -30,11 +30,11 @@ export function ProductQuickView({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden gap-0 sm:grid sm:grid-cols-2">
+      <DialogContent className="p-0 overflow-hidden gap-0 w-[calc(100%-2rem)] sm:max-w-2xl sm:grid sm:grid-cols-2">
         <div className="relative aspect-square sm:aspect-auto sm:h-full bg-muted min-h-48">
           {product.imageUrl && <img src={product.imageUrl} alt={product.name} className="absolute inset-0 h-full w-full object-cover" />}
         </div>
-        <div className="p-6 flex flex-col gap-3">
+        <div className="p-6 flex flex-col gap-3 min-w-0">
           <Link
             href={`/marketplace/store/${product.storeId}`}
             onClick={() => onOpenChange(false)}
