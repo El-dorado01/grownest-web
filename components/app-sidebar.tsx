@@ -39,6 +39,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { SellerChatNavBadge } from "@/components/seller/seller-chat-nav-badge"
 import { ChatNavBadge } from "@/components/nestmarkets/chat-nav-badge"
+import { useMyStore } from "@/hooks/use-my-store"
 
 const data = {
   navMain: [
@@ -134,10 +135,6 @@ const data = {
           url: "/seller",
         },
         {
-          title: "My Store",
-          url: "/seller/store",
-        },
-        {
           title: "Products",
           url: "/seller/products",
         },
@@ -179,6 +176,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user: authUser, isAuthenticated } = useAuth();
+  const { hasStore, isLoading: storeLoading } = useMyStore();
   const [profile, setProfile] = React.useState<any>(null);
 
   React.useEffect(() => {
@@ -221,6 +219,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     })
   }, [unreadCount])
 
+  const sellerFullItems = [
+    { title: "Dashboard", url: "/seller" },
+    { title: "Products", url: "/seller/products" },
+    { title: "Orders", url: "/seller/orders" },
+    { title: "Earnings", url: "/seller/earnings" },
+    { title: "Messages", url: "/seller/chat", badge: <SellerChatNavBadge /> },
+  ];
+  const navMainItems = data.navMain.map((group) =>
+    group.title === "Sell on NestMarket"
+      ? { ...group, items: (!storeLoading && !hasStore) ? [{ title: "Dashboard", url: "/seller" }] : sellerFullItems }
+      : group
+  );
+
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -240,7 +251,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <React.Suspense fallback={<div className="h-10 px-4 flex items-center text-xs text-muted-foreground">Loading...</div>}>
-          <NavMain items={data.navMain} />
+          <NavMain items={navMainItems} />
         </React.Suspense>
         <NavProjects projects={projectsWithBadges} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
