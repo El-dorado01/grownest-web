@@ -36,21 +36,21 @@ export function StoreEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Edit store</DialogTitle></DialogHeader>
-        <Tabs defaultValue={defaultTab} className="mt-2">
-          <TabsList>
+        <Tabs defaultValue={defaultTab} className="mt-2 flex-col!">
+          <TabsList className="w-full grid grid-cols-2">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="verification">Verification</TabsTrigger>
           </TabsList>
-          <TabsContent value="details" className="space-y-4 pt-4">
+          <TabsContent value="details" className="space-y-5 pt-5">
             <StoreForm initial={store} value={form} onChange={setForm} />
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>Cancel</Button>
               <Button onClick={save} disabled={busy}>
                 {busy && <Loader2 className="size-4 animate-spin" />} Save changes
               </Button>
             </div>
           </TabsContent>
-          <TabsContent value="verification" className="pt-4">
+          <TabsContent value="verification" className="pt-5">
             <VerificationPanel store={store} />
           </TabsContent>
         </Tabs>

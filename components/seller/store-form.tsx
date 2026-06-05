@@ -23,11 +23,21 @@ export function StoreForm({
   const set = (patch: Partial<StoreFormValue>) => onChange({ ...value, ...patch });
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <ImagePicker label="Logo" initialUrl={initial?.logoUrl} onChange={(f) => set({ logo: f })} aspect="square" />
-        <ImagePicker label="Banner" initialUrl={initial?.bannerUrl} onChange={(f) => set({ banner: f })} aspect="banner" />
+    <div className="space-y-5">
+      {/* Banner with overlapping logo avatar (Gemini layout) */}
+      <div>
+        <label className="text-sm font-medium">Store images</label>
+        <div className="relative mt-1.5">
+          <ImagePicker initialUrl={initial?.bannerUrl} onChange={(f) => set({ banner: f })} aspect="banner" />
+          <div className="absolute -bottom-6 left-4">
+            <div className="size-24 rounded-2xl ring-4 ring-card overflow-hidden shadow-md">
+              <ImagePicker initialUrl={initial?.logoUrl} onChange={(f) => set({ logo: f })} aspect="square" className="aspect-square size-24 rounded-2xl" />
+            </div>
+          </div>
+        </div>
+        <p className="mt-8 text-xs text-muted-foreground">Banner appears on your store page; the logo is your store avatar.</p>
       </div>
+
       <div className="space-y-1.5">
         <label className="text-sm font-medium">Store name</label>
         <Input value={value.name} onChange={(e) => set({ name: e.target.value })} placeholder="e.g. Mama's Kitchen" />
