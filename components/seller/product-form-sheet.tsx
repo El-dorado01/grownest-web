@@ -50,8 +50,13 @@ export function ProductFormSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader><SheetTitle>{editing ? "Edit product" : "Add product"}</SheetTitle></SheetHeader>
-        <div className="space-y-4 py-4">
-          <ImagePicker label="Product image" initialUrl={product?.imageUrl} onChange={setImage} aspect="square" />
+        <div className="space-y-4 px-4 pb-6">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Product image</label>
+            <div className="size-40">
+              <ImagePicker initialUrl={product?.imageUrl} onChange={setImage} aspect="square" />
+            </div>
+          </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Name</label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Party Jollof Combo" />
