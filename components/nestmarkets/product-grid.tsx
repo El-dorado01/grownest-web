@@ -1,6 +1,7 @@
 "use client";
 
 import { SearchX, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "./product-card";
@@ -14,7 +15,7 @@ export function ProductGrid({
 }) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="rounded-2xl overflow-hidden border border-border">
             <Skeleton className="aspect-square w-full" />
@@ -35,8 +36,17 @@ export function ProductGrid({
   }
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        {products.map((p) => <ProductCard key={p.id} product={p} onClick={() => onSelect(p)} />)}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+        {products.map((p, i) => (
+          <motion.div
+            key={p.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: Math.min(i, 8) * 0.04 }}
+          >
+            <ProductCard product={p} onClick={() => onSelect(p)} />
+          </motion.div>
+        ))}
       </div>
       {pages > 1 && (
         <div className="flex items-center justify-center gap-4 pt-6">

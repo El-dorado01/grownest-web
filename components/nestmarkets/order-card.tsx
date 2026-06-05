@@ -17,6 +17,12 @@ export function OrderCard({ order, onChanged }: { order: MarketOrder; onChanged:
   const [rating, setRating] = useState(false);
   const canRate = (order.status === "accepted" || order.status === "delivered") && !order.rating;
   const delivered = order.status === "delivered";
+  const statusPillClass =
+    order.status === "accepted"
+      ? "bg-primary/10 text-primary"
+      : order.status === "rejected"
+        ? "bg-destructive/10 text-destructive"
+        : "bg-muted text-muted-foreground";
 
   const accept = async () => {
     setBusy(true);
@@ -41,8 +47,8 @@ export function OrderCard({ order, onChanged }: { order: MarketOrder; onChanged:
     <div className="rounded-2xl bg-card border border-border p-4 space-y-4">
       <div className="flex items-center gap-2">
         {order.store.logoUrl && <img src={order.store.logoUrl} alt="" className="size-6 rounded-full object-cover" />}
-        <span className="font-medium">{order.store.name}</span>
-        <span className="ml-auto text-xs rounded-full bg-muted px-2 py-1 capitalize">{order.status}</span>
+        <span className="font-medium truncate">{order.store.name}</span>
+        <span className={`ml-auto text-[11px] font-medium rounded-full px-2 py-0.5 capitalize ${statusPillClass}`}>{order.status}</span>
       </div>
       <div className="flex gap-2 overflow-x-auto">
         {order.items.map((it) => (

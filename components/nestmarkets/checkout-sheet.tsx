@@ -1,13 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useSWR, { mutate as globalMutate } from "swr";
 import { toast } from "sonner";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MapPin, CheckCircle2, Wallet } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
+import { useProfile } from "@/hooks/use-profile";
 import { nestMarketsApi } from "@/lib/nestmarkets-api";
 import { nestBasketsApi } from "@/lib/nestbaskets-api";
 
@@ -16,6 +19,7 @@ export function CheckoutSheet({
 }: { storeId: string | null; open: boolean; onOpenChange: (o: boolean) => void }) {
   const router = useRouter();
   const { byStore } = useCart();
+  const { balance } = useProfile();
   const group = storeId ? byStore[storeId] : null;
   const { data: profilesRes } = useSWR("delivery-profiles", () => nestBasketsApi.getDeliveryProfiles());
   // NOTE: getDeliveryProfiles() returns DeliveryProfilesResponse ({ success, data: DeliveryProfile[], default, total }).
@@ -32,6 +36,7 @@ export function CheckoutSheet({
   // the zone (and baseFee) may need to be fetched separately via nestBasketsApi.getDeliveryZones().
   const deliveryFee = selected?.deliveryZone?.baseFee ?? 0;
   const total = subtotal + deliveryFee;
+  const insufficient = total > 0 && balance < total;
 
   const pay = async () => {
     if (!group || !selected) return toast.error("Select a delivery address");
@@ -58,44 +63,101 @@ export function CheckoutSheet({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
-        <SheetHeader><SheetTitle>Checkout {group ? `· ${group.store.name}` : ""}</SheetTitle></SheetHeader>
-        <div className="flex-1 overflow-y-auto space-y-4 py-4 px-4">
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Deliver to</p>
-            {profiles.length === 0 && <p className="text-sm text-muted-foreground">No saved address. Add one in Settings → Delivery.</p>}
-            {profiles.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setSelectedId(p.id)}
-                className={`w-full text-left rounded-xl border p-3 text-sm ${selected?.id === p.id ? "border-primary" : "border-border"}`}
-              >
-                <p className="font-medium">{p.fullName}</p>
-                <p className="text-muted-foreground">{p.address}, {p.city}, {p.state}</p>
-                <p className="text-xs text-muted-foreground">{p.deliveryZone?.name ?? "No zone"}</p>
-              </button>
-            ))}
-          </div>
-          <div className="rounded-xl border border-border p-4 space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Items</span><span>₦{subtotal.toLocaleString()}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>₦{deliveryFee.toLocaleString()}</span></div>
-            <div className="flex justify-between font-semibold border-t border-border pt-2"><span>Total</span><span className="text-primary">₦{total.toLocaleString()}</span></div>
-          </div>
-          {shortfall !== null && (
-            <p className="text-sm text-destructive">
-              Insufficient balance — you need ₦{shortfall.toLocaleString()} more. Top up your NestPurse and try again.
-            </p>
-          )}
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Transaction PIN</p>
-            <Input inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} placeholder="••••" className="tracking-[0.5em] text-center" />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden flex flex-col bg-background/95 backdrop-blur-md border-border/60 shadow-xl">
+        <DialogHeader className="p-6 pb-4 border-b border-border/50 bg-muted/20">
+          <DialogTitle className="text-xl font-semibold tracking-tight">
+            Checkout {group ? `· ${group.store.name}` : ""}
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="overflow-y-auto max-h-[70vh]">
+          <div className="p-6 space-y-8">
+            {/* Delivery Address */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                <MapPin className="size-4 text-primary" /> Delivery Address
+              </h3>
+              {profiles.length === 0 && <p className="text-sm text-muted-foreground">No saved address. Add one in Settings → Delivery.</p>}
+              <div className="grid gap-3">
+                {profiles.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => setSelectedId(p.id)}
+                    className={`w-full text-left relative flex items-start gap-3 rounded-xl border p-4 transition-all duration-200 ${
+                      selected?.id === p.id 
+                        ? "border-primary bg-primary/5 ring-1 ring-primary/20" 
+                        : "border-border hover:border-primary/30 hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="mt-0.5 shrink-0 text-primary">
+                      {selected?.id === p.id ? <CheckCircle2 className="size-5" /> : <div className="size-5 rounded-full border border-muted-foreground/30" />}
+                    </div>
+                    <div className="flex-1 space-y-1 min-w-0">
+                      <p className="font-medium text-sm text-foreground truncate">{p.fullName}</p>
+                      <p className="text-sm text-muted-foreground line-clamp-2">{p.address}, {p.city}, {p.state}</p>
+                      <p className="text-xs font-medium text-primary/80 mt-1">{p.deliveryZone?.name ?? "No zone"}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Order Summary */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-foreground">Order Summary</h3>
+              <div className="rounded-xl border border-border/60 bg-card p-5 space-y-3 text-sm shadow-sm">
+                <div className="flex justify-between items-center"><span className="text-muted-foreground">Items ({group?.items.length})</span><span className="font-medium">₦{subtotal.toLocaleString()}</span></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground">Delivery Fee</span><span className="font-medium">₦{deliveryFee.toLocaleString()}</span></div>
+                <div className="flex justify-between items-center pt-3 border-t border-border/60 text-base">
+                  <span className="font-semibold text-foreground">Total</span><span className="font-bold text-primary">₦{total.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* NestPurse balance */}
+              <div className="flex items-center justify-between rounded-xl bg-primary/10 p-4">
+                <div className="flex items-center gap-2.5 text-primary">
+                  <Wallet className="size-4" />
+                  <span className="text-sm font-medium">NestPurse balance</span>
+                </div>
+                <span className="text-sm font-semibold text-primary">₦{balance.toLocaleString()}</span>
+              </div>
+
+              {(insufficient || shortfall !== null) && (
+                <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-3.5 leading-relaxed space-y-2">
+                  <p className="text-sm font-medium text-destructive">
+                    {shortfall !== null
+                      ? `Insufficient balance. You need ₦${shortfall.toLocaleString()} more.`
+                      : `Insufficient balance. You need ₦${(total - balance).toLocaleString()} more.`}
+                  </p>
+                  <Button asChild variant="outline" size="sm" className="border-destructive/30 text-destructive hover:bg-destructive/10">
+                    <Link href="/nestpurse">Top up NestPurse</Link>
+                  </Button>
+                </div>
+              )}
+            </div>
+            
+            {/* Payment Authorization */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">Payment Authorization</h3>
+                <span className="text-xs text-muted-foreground font-medium">4-Digit PIN</span>
+              </div>
+              <Input 
+                inputMode="numeric" type="password" maxLength={4} 
+                value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} 
+                placeholder="••••" 
+                className="tracking-[1em] text-center text-lg h-14 bg-card shadow-sm border-border/60 focus-visible:ring-primary/30" 
+              />
+            </div>
           </div>
         </div>
-        <div className="p-4 border-t border-border">
-          <Button onClick={pay} disabled={busy || !group} className="w-full">Pay ₦{total.toLocaleString()}</Button>
+        <div className="p-6 border-t border-border/50 bg-muted/20">
+          <Button onClick={pay} disabled={busy || !group || insufficient} size="lg" className="w-full text-base font-semibold shadow-sm transition-all hover:scale-[1.02]">
+            {busy ? "Processing..." : insufficient ? "Insufficient balance" : `Pay ₦${total.toLocaleString()}`}
+          </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

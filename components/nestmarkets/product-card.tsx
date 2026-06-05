@@ -9,7 +9,8 @@ export function ProductCard({ product, onClick }: { product: MarketProduct; onCl
     <motion.button
       onClick={onClick}
       whileHover={{ y: -4 }}
-      className="text-left rounded-2xl bg-card border border-border overflow-hidden"
+      transition={{ type: "spring", stiffness: 300, damping: 22 }}
+      className="text-left rounded-2xl bg-card border border-border overflow-hidden transition-shadow hover:shadow-lg hover:border-primary/40"
     >
       <div className="relative aspect-square bg-muted">
         {product.imageUrl && (

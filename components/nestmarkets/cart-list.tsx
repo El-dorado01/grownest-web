@@ -14,8 +14,11 @@ export function CartList({ onCheckout }: { onCheckout: (storeId: string) => void
   if (count === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <ShoppingCart className="size-10 text-muted-foreground mb-3" />
+        <div className="size-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
+          <ShoppingCart className="size-6" />
+        </div>
         <p className="font-medium">Your basket is empty</p>
+        <p className="text-sm text-muted-foreground mt-1">Browse the marketplace to add items.</p>
         <Button asChild className="mt-4"><Link href="/marketplace">Browse products</Link></Button>
       </div>
     );

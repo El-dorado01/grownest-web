@@ -1,6 +1,7 @@
 "use client";
 
 import { Store } from "lucide-react";
+import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VendorCard } from "./vendor-card";
 import type { MarketStore } from "@/types/nestmarkets";
@@ -29,8 +30,17 @@ export function VendorGrid({
     );
   }
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-      {stores.map((s) => <VendorCard key={s.id} store={s} />)}
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+      {stores.map((s, i) => (
+        <motion.div
+          key={s.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: Math.min(i, 8) * 0.04 }}
+        >
+          <VendorCard store={s} />
+        </motion.div>
+      ))}
     </div>
   );
 }

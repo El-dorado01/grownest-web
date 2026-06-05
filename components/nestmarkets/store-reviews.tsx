@@ -1,6 +1,7 @@
 "use client";
 
 import { Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import type { MarketReview } from "@/types/nestmarkets";
@@ -15,17 +16,20 @@ export function StoreReviews({
   return (
     <div className="space-y-3">
       {reviews.map((r) => (
-        <div key={r.id} className="rounded-xl border border-border bg-card p-4">
+        <div key={r.id} className="rounded-2xl border border-border bg-card p-4">
           <div className="flex items-center gap-2">
-            <div className="size-7 rounded-full bg-muted overflow-hidden">
+            <div className="size-8 rounded-full bg-muted overflow-hidden shrink-0">
               {r.buyer.profilePhoto && <img src={r.buyer.profilePhoto} alt="" className="h-full w-full object-cover" />}
             </div>
-            <span className="text-sm font-medium">{r.buyer.fullName ?? "GrowNest user"}</span>
-            <span className="ml-auto flex items-center gap-1 text-sm">
-              <Star className="size-3.5 fill-primary text-primary" />{r.rating}
+            <div className="min-w-0">
+              <p className="text-sm font-medium truncate">{r.buyer.fullName ?? "GrowNest user"}</p>
+              {r.createdAt && <p className="text-[11px] text-muted-foreground">{format(new Date(r.createdAt), "d MMM yyyy")}</p>}
+            </div>
+            <span className="ml-auto flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs font-semibold">
+              <Star className="size-3 fill-primary text-primary" />{r.rating}
             </span>
           </div>
-          {r.review && <p className="text-sm text-muted-foreground mt-2">{r.review}</p>}
+          {r.review && <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{r.review}</p>}
         </div>
       ))}
       {pages > 1 && (
