@@ -1,38 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { mutate as globalMutate } from "swr";
-import { toast } from "sonner";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { CreateStoreWizard } from "@/components/seller/create-store-wizard";
-import { StoreForm, emptyStoreForm, storeFormToFormData, type StoreFormValue } from "@/components/seller/store-form";
-import { VerificationPanel } from "@/components/seller/verification-panel";
-import { StoreStatusBadge } from "@/components/seller/store-status-badge";
-import { useMyStore, SELLER_STORE_KEY } from "@/hooks/use-my-store";
-import { sellerApi } from "@/lib/seller-api";
+import { useMyStore } from "@/hooks/use-my-store";
 
 export default function SellerStorePage() {
-  const { store, hasStore, isLoading } = useMyStore();
-  const [form, setForm] = useState<StoreFormValue | null>(null);
-  const [busy, setBusy] = useState(false);
+  const { hasStore, isLoading } = useMyStore();
+  const router = useRouter();
 
-  // initialise edit form once store loads
-  const editForm = form ?? emptyStoreForm(store);
-
-  const saveEdit = async () => {
-    setBusy(true);
-    const r = await sellerApi.updateStore(storeFormToFormData(editForm));
-    setBusy(false);
-    if (r.error || !r.data?.success) return toast.error(r.error || "Could not update store");
-    toast.success("Store updated");
-    globalMutate([SELLER_STORE_KEY]);
-    setForm(null);
-  };
+  // Editing now lives in the dashboard dialog; this route only hosts the create flow.
+  useEffect(() => {
+    if (!isLoading && hasStore) router.replace("/seller");
+  }, [isLoading, hasStore, router]);
 
   return (
     <SidebarProvider>
@@ -45,29 +30,18 @@ export default function SellerStorePage() {
             <BreadcrumbList>
               <BreadcrumbItem><BreadcrumbLink href="/seller">Sell</BreadcrumbLink></BreadcrumbItem>
               <BreadcrumbSeparator />
-              <BreadcrumbItem><BreadcrumbPage>My Store</BreadcrumbPage></BreadcrumbItem>
+              <BreadcrumbItem><BreadcrumbPage>Create store</BreadcrumbPage></BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </header>
 
         <div className="p-4 md:p-6">
           {isLoading ? (
-            <Skeleton className="h-80 max-w-xl mx-auto rounded-2xl" />
-          ) : !hasStore || !store ? (
-            <CreateStoreWizard />
+            <Skeleton className="h-[500px] max-w-3xl mx-auto rounded-2xl" />
+          ) : hasStore ? (
+            <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">Redirecting…</div>
           ) : (
-            <div className="max-w-xl mx-auto space-y-6">
-              <div className="flex items-center gap-3">
-                <h1 className="text-xl font-semibold">{store.name}</h1>
-                <StoreStatusBadge store={store} />
-              </div>
-              <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
-                <h2 className="font-semibold">Store details</h2>
-                <StoreForm initial={store} value={editForm} onChange={setForm} />
-                <Button onClick={saveEdit} disabled={busy}>Save changes</Button>
-              </div>
-              <VerificationPanel store={store} />
-            </div>
+            <CreateStoreWizard />
           )}
         </div>
       </SidebarInset>
