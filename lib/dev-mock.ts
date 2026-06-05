@@ -71,6 +71,15 @@ const threadMsgs: Record<string, any[]> = {
     { id: "m-4", threadId: "th-2", senderId: ME, content: "Are the plantain chips fresh?", isRead: true, createdAt: "2026-05-31T13:50:00Z", sender: { fullName: "You", profilePhoto: null }, isSender: true },
     { id: "m-5", threadId: "th-2", senderId: "owner-2", content: "Yes, fried this morning! 😋", isRead: true, createdAt: "2026-05-31T13:55:00Z", sender: { fullName: "FreshCo Groceries", profilePhoto: stores[1].logoUrl }, isSender: false },
   ],
+  // Seller-side threads (C3) — for the seller inbox at /seller/chat (storeId "my-st").
+  // From the seller's perspective: the buyer's messages are inbound (isSender:false), mine outbound.
+  "sth-1": [
+    { id: "sm-1", threadId: "sth-1", senderId: "buyer-x", content: "Hi, is the jollof available for today?", isRead: false, createdAt: "2026-06-01T09:00:00Z", sender: { fullName: "Ada O.", profilePhoto: img("ada",80,80) }, isSender: false },
+    { id: "sm-2", threadId: "sth-1", senderId: ME, content: "Yes! I can have it ready in an hour.", isRead: true, createdAt: "2026-06-01T09:02:00Z", sender: { fullName: "You", profilePhoto: null }, isSender: true },
+  ],
+  "sth-2": [
+    { id: "sm-3", threadId: "sth-2", senderId: "buyer-y", content: "Please make the chips less salty 🙏", isRead: false, createdAt: "2026-05-31T15:00:00Z", sender: { fullName: "Tunde B.", profilePhoto: null }, isSender: false },
+  ],
 };
 const lastMsg = (tid: string) => {
   const arr = threadMsgs[tid] || [];
@@ -80,6 +89,9 @@ const lastMsg = (tid: string) => {
 const threadSummaries = () => [
   { id: "th-1", orderId: "o-1001", buyerId: ME, storeId: "st-1", updatedAt: "2026-06-01T08:07:00Z", store: { name: stores[0].name, logoUrl: stores[0].logoUrl, ownerId: "owner-1" }, buyer: { fullName: "You", profilePhoto: null }, order: { id: "o-1001", status: "paid" }, messages: lastMsg("th-1"), unreadCount: 2 },
   { id: "th-2", orderId: "o-1002", buyerId: ME, storeId: "st-2", updatedAt: "2026-05-31T13:55:00Z", store: { name: stores[1].name, logoUrl: stores[1].logoUrl, ownerId: "owner-2" }, buyer: { fullName: "You", profilePhoto: null }, order: { id: "o-1002", status: "paid" }, messages: lastMsg("th-2"), unreadCount: 0 },
+  // Seller-side threads for /seller/chat (storeId "my-st", owned by ME; buyer populated).
+  { id: "sth-1", orderId: "so-1001", buyerId: "buyer-x", storeId: "my-st", updatedAt: "2026-06-01T09:02:00Z", store: { name: "Demo Store", logoUrl: img("mystore-logo",100,100), ownerId: ME }, buyer: { fullName: "Ada O.", profilePhoto: img("ada",80,80) }, order: { id: "so-1001", status: "paid" }, messages: lastMsg("sth-1"), unreadCount: 1 },
+  { id: "sth-2", orderId: "so-1002", buyerId: "buyer-y", storeId: "my-st", updatedAt: "2026-05-31T15:00:00Z", store: { name: "Demo Store", logoUrl: img("mystore-logo",100,100), ownerId: ME }, buyer: { fullName: "Tunde B.", profilePhoto: null }, order: { id: "so-1002", status: "paid" }, messages: lastMsg("sth-2"), unreadCount: 1 },
 ];
 const threadDetail = (id: string) => {
   const s = stores.find((x) => threadSummaries().find((t) => t.id === id)?.storeId === x.id) || stores[0];

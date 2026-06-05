@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Store, Package, ShieldCheck } from "lucide-react";
+import { Store, Package, ShieldCheck, MessageSquare, ShoppingBag, Wallet } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -9,10 +9,13 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/co
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { StoreStatusBadge } from "@/components/seller/store-status-badge";
+import { DashboardStats } from "@/components/seller/dashboard-stats";
 import { useMyStore } from "@/hooks/use-my-store";
+import { useSellerOrders } from "@/hooks/use-seller-orders";
 
 export default function SellerDashboardPage() {
   const { store, hasStore, isLoading } = useMyStore();
+  const { orders, isLoading: ordersLoading } = useSellerOrders(store?.id ?? null);
 
   return (
     <SidebarProvider>
@@ -37,7 +40,7 @@ export default function SellerDashboardPage() {
               <Button asChild><Link href="/seller/store">Create your store</Link></Button>
             </div>
           ) : (
-            <div className="max-w-2xl space-y-4">
+            <div className="max-w-3xl space-y-4">
               <div className="rounded-2xl border border-border bg-card p-5">
                 <div className="flex items-center gap-3">
                   <div className="size-12 rounded-full bg-muted overflow-hidden">
@@ -52,16 +55,29 @@ export default function SellerDashboardPage() {
                   </div>
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Link href="/seller/store" className="rounded-2xl border border-border bg-card p-5 hover:border-primary/40 transition-colors">
-                  <ShieldCheck className="size-6 text-primary mb-2" />
-                  <p className="font-medium">Store & verification</p>
-                  <p className="text-sm text-muted-foreground">Edit details, manage verification.</p>
+
+              <DashboardStats store={store} orders={orders} ordersLoading={ordersLoading} />
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Link href="/seller/store" className="rounded-2xl border border-border bg-card p-4 hover:border-primary/40 transition-colors">
+                  <ShieldCheck className="size-5 text-primary mb-2" />
+                  <p className="font-medium text-sm">Store & verification</p>
                 </Link>
-                <Link href="/seller/products" className="rounded-2xl border border-border bg-card p-5 hover:border-primary/40 transition-colors">
-                  <Package className="size-6 text-primary mb-2" />
-                  <p className="font-medium">Products</p>
-                  <p className="text-sm text-muted-foreground">Add and manage your catalog.</p>
+                <Link href="/seller/products" className="rounded-2xl border border-border bg-card p-4 hover:border-primary/40 transition-colors">
+                  <Package className="size-5 text-primary mb-2" />
+                  <p className="font-medium text-sm">Products</p>
+                </Link>
+                <Link href="/seller/orders" className="rounded-2xl border border-border bg-card p-4 hover:border-primary/40 transition-colors">
+                  <ShoppingBag className="size-5 text-primary mb-2" />
+                  <p className="font-medium text-sm">Orders</p>
+                </Link>
+                <Link href="/seller/earnings" className="rounded-2xl border border-border bg-card p-4 hover:border-primary/40 transition-colors">
+                  <Wallet className="size-5 text-primary mb-2" />
+                  <p className="font-medium text-sm">Earnings</p>
+                </Link>
+                <Link href="/seller/chat" className="rounded-2xl border border-border bg-card p-4 hover:border-primary/40 transition-colors">
+                  <MessageSquare className="size-5 text-primary mb-2" />
+                  <p className="font-medium text-sm">Messages</p>
                 </Link>
               </div>
             </div>

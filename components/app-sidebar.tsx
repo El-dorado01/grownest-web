@@ -37,6 +37,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { SellerChatNavBadge } from "@/components/seller/seller-chat-nav-badge"
 import { ChatNavBadge } from "@/components/nestmarkets/chat-nav-badge"
 
 const data = {
@@ -142,6 +143,11 @@ const data = {
         },
         { title: "Orders", url: "/seller/orders" },
         { title: "Earnings", url: "/seller/earnings" },
+        {
+          title: "Messages",
+          url: "/seller/chat",
+          badge: <SellerChatNavBadge />,
+        },
       ],
     },
   ],
