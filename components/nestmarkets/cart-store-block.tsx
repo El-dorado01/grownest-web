@@ -3,6 +3,7 @@
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
+import { StoreSuggestions } from "./store-suggestions";
 import type { CartItem, MarketStoreLite } from "@/types/nestmarkets";
 
 export function CartStoreBlock({
@@ -36,6 +37,7 @@ export function CartStoreBlock({
           </div>
         ))}
       </div>
+      <StoreSuggestions storeId={store.id} excludeIds={items.map((i) => i.productId)} />
       <div className="flex items-center justify-between p-4 border-t border-border">
         <div className="text-sm text-muted-foreground">Subtotal <span className="font-semibold text-foreground">₦{subtotal.toLocaleString()}</span></div>
         <Button onClick={() => onCheckout(store.id)}>Checkout this store</Button>
