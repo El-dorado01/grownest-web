@@ -36,13 +36,14 @@ export function ProductGrid({
   }
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 items-stretch">
         {products.map((p, i) => (
           <motion.div
             key={p.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: Math.min(i, 8) * 0.04 }}
+            className="h-full"
           >
             <ProductCard product={p} onClick={() => onSelect(p)} />
           </motion.div>

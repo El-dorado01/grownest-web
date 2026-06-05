@@ -10,11 +10,19 @@ export function useMarketplace(search: string, category: string, page: number, l
     { revalidateOnFocus: true, revalidateIfStale: true, dedupingInterval: 2000 }
   );
 
+  // Stable category list: derived from an UNFILTERED browse so the chips never
+  // collapse when a category is active. Cached separately, fetched once.
+  const { data: catRes } = useSWR(
+    ["nestmarket-categories"],
+    () => nestMarketsApi.browse({ page: 1, limit: 100 }),
+    { revalidateOnFocus: false, dedupingInterval: 300000 }
+  );
+
   const products = res?.data?.data ?? [];
   const pagination = res?.data?.pagination ?? { total: 0, page: 1, limit, pages: 1 };
   const categories = Array.from(
-    new Set(products.map((p) => p.category).filter((c): c is string => !!c))
-  );
+    new Set((catRes?.data?.data ?? []).map((p) => p.category).filter((c): c is string => !!c))
+  ).sort();
 
   return {
     products,

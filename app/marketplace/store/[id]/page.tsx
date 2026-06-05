@@ -46,12 +46,12 @@ export default function StoreProfilePage() {
           {isLoading || !store ? (
             <Skeleton className="h-40 rounded-2xl" />
           ) : (
-            <div className="rounded-2xl border border-border bg-card overflow-hidden">
-              <div className="relative h-32 bg-muted">
+            <div className="rounded-2xl border border-border bg-card">
+              <div className="relative h-32 rounded-t-2xl bg-muted overflow-hidden">
                 {store.bannerUrl && <img src={store.bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />}
               </div>
               <div className="p-4 flex items-start gap-4 -mt-10">
-                <div className="size-16 rounded-full bg-muted border-2 border-card overflow-hidden shrink-0">
+                <div className="size-20 rounded-2xl bg-muted ring-4 ring-card overflow-hidden shrink-0">
                   {store.logoUrl && <img src={store.logoUrl} alt="" className="h-full w-full object-cover" />}
                 </div>
                 <div className="flex-1 min-w-0 pt-10">

@@ -10,7 +10,7 @@ export function ProductCard({ product, onClick }: { product: MarketProduct; onCl
       onClick={onClick}
       whileHover={{ y: -4 }}
       transition={{ type: "spring", stiffness: 300, damping: 22 }}
-      className="text-left rounded-2xl bg-card border border-border overflow-hidden transition-shadow hover:shadow-lg hover:border-primary/40"
+      className="flex h-full w-full flex-col text-left rounded-2xl bg-card border border-border overflow-hidden transition-shadow hover:shadow-lg hover:border-primary/40"
     >
       <div className="relative aspect-square bg-muted">
         {product.imageUrl && (
@@ -25,9 +25,9 @@ export function ProductCard({ product, onClick }: { product: MarketProduct; onCl
           <span>{product.store.averageRating?.toFixed(1) ?? "—"}</span>
         </div>
       </div>
-      <div className="p-3">
-        <p className="text-sm font-medium line-clamp-1">{product.name}</p>
-        <p className="text-base font-semibold text-primary">₦{product.price.toLocaleString()}</p>
+      <div className="p-3 flex flex-1 flex-col">
+        <p className="text-sm font-medium line-clamp-2">{product.name}</p>
+        <p className="mt-auto pt-1 text-base font-semibold text-primary">₦{product.price.toLocaleString()}</p>
       </div>
     </motion.button>
   );

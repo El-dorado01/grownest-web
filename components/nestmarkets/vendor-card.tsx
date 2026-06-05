@@ -6,12 +6,12 @@ import type { MarketStore } from "@/types/nestmarkets";
 
 export function VendorCard({ store }: { store: MarketStore }) {
   return (
-    <Link href={`/marketplace/store/${store.id}`} className="group block rounded-2xl bg-card border border-border overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all">
-      <div className="relative h-24 bg-muted">
+    <Link href={`/marketplace/store/${store.id}`} className="group block rounded-2xl bg-card border border-border hover:border-primary/40 hover:shadow-lg transition-all">
+      <div className="relative h-24 rounded-t-2xl bg-muted overflow-hidden">
         {store.bannerUrl && <img src={store.bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />}
       </div>
       <div className="p-3 -mt-8">
-        <div className="size-12 rounded-full bg-muted ring-2 ring-card overflow-hidden shadow-sm">
+        <div className="size-14 rounded-full bg-muted ring-4 ring-card overflow-hidden shadow-sm">
           {store.logoUrl && <img src={store.logoUrl} alt="" className="h-full w-full object-cover" />}
         </div>
         <p className="mt-2 font-medium line-clamp-1">{store.name}</p>
