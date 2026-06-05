@@ -1,6 +1,7 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { SellerProduct } from "@/types/seller";
 
 export function SellerProductCard({
@@ -15,12 +16,22 @@ export function SellerProductCard({
         )}
       </div>
       <div className="p-3 space-y-1">
-        <p className="text-sm font-medium line-clamp-1">{product.name}</p>
-        <p className="text-base font-semibold text-primary">₦{product.price.toLocaleString()}</p>
-        <p className="text-xs text-muted-foreground">{product.stockLevel} in stock{product.category ? ` · ${product.category}` : ""}</p>
-        <div className="flex gap-2 pt-2">
-          <button onClick={onEdit} className="flex-1 inline-flex items-center justify-center gap-1 rounded-md border border-border py-1.5 text-xs hover:bg-muted transition-colors"><Pencil className="size-3.5" /> Edit</button>
-          <button onClick={onDelete} className="inline-flex items-center justify-center rounded-md border border-border p-1.5 text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="size-3.5" /></button>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium line-clamp-1">{product.name}</p>
+            <p className="text-base font-semibold text-primary">₦{product.price.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground truncate">{product.stockLevel} in stock{product.category ? ` · ${product.category}` : ""}</p>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="shrink-0 inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+              <MoreHorizontal className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-36">
+              <DropdownMenuItem onClick={onEdit}><Pencil className="mr-2 size-3.5" /> Edit</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onDelete} className="text-destructive focus:bg-destructive/10 focus:text-destructive"><Trash2 className="mr-2 size-3.5" /> Delete</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>

@@ -32,7 +32,7 @@ export default function SellerOrdersPage() {
           </Breadcrumb>
         </header>
 
-        <div className="p-4 md:p-6 max-w-3xl mx-auto w-full">
+        <div className="p-4 md:p-6 max-w-3xl mx-auto w-full space-y-6">
           {storeLoading ? (
             <Skeleton className="h-64 rounded-2xl" />
           ) : !hasStore || !store ? (
@@ -43,7 +43,13 @@ export default function SellerOrdersPage() {
               <Button asChild><Link href="/seller/store">Create your store</Link></Button>
             </div>
           ) : (
-            <OrderBoard orders={orders} isLoading={ordersLoading} onAdvance={advance} />
+            <>
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight">Orders</h1>
+                <p className="text-sm text-muted-foreground">Track and fulfil orders as they move through each stage.</p>
+              </div>
+              <OrderBoard orders={orders} isLoading={ordersLoading} onAdvance={advance} />
+            </>
           )}
         </div>
       </SidebarInset>

@@ -13,13 +13,13 @@ const NEXT: Record<string, { next: TrackingStatus; label: string } | null> = {
 };
 
 export function AdvanceStatusButton({
-  order, onAdvance,
-}: { order: SellerOrder; onAdvance: (id: string, next: TrackingStatus) => Promise<{ error?: string }> }) {
+  order, onAdvance, fullWidth = false,
+}: { order: SellerOrder; onAdvance: (id: string, next: TrackingStatus) => Promise<{ error?: string }>; fullWidth?: boolean }) {
   const [busy, setBusy] = useState(false);
 
   // Terminal buyer-side states: nothing for the seller to do.
-  if (order.status === "accepted") return <span className="text-xs text-primary">Completed · paid out</span>;
-  if (order.status === "rejected") return <span className="text-xs text-destructive">Rejected by buyer</span>;
+  if (order.status === "accepted") return <span className="text-xs font-medium text-primary">Completed · paid out</span>;
+  if (order.status === "rejected") return <span className="text-xs font-medium text-destructive">Rejected by buyer</span>;
   if (order.trackingStatus === "delivered") return <span className="text-xs text-muted-foreground">Awaiting buyer confirmation</span>;
 
   const step = NEXT[order.trackingStatus];
@@ -33,5 +33,9 @@ export function AdvanceStatusButton({
     toast.success(step.label.replace("Mark", "Marked"));
   };
 
-  return <Button size="sm" onClick={go} disabled={busy}>{step.label}</Button>;
+  return (
+    <Button size="sm" onClick={go} disabled={busy} className={fullWidth ? "w-full" : undefined}>
+      {step.label}
+    </Button>
+  );
 }

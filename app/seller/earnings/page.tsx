@@ -43,6 +43,10 @@ export default function SellerEarningsPage() {
             </div>
           ) : (
             <>
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight">Earnings</h1>
+                <p className="text-sm text-muted-foreground">Your marketplace balance and payout history.</p>
+              </div>
               <EarningsCards store={store} />
               <div className="space-y-3">
                 <h2 className="font-semibold">Payout history</h2>

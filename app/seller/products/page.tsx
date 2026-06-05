@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { mutate as globalMutate } from "swr";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Plus, Store } from "lucide-react";
+import { Plus, Store, ShieldAlert } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -47,14 +48,19 @@ export default function SellerProductsPage() {
               <BreadcrumbItem><BreadcrumbPage>Products</BreadcrumbPage></BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          {hasStore && (
-            <div className="ml-auto">
-              <Button onClick={openAdd} size="sm"><Plus className="size-4" /> Add product</Button>
-            </div>
-          )}
         </header>
 
-        <div className="p-4 md:p-6 space-y-4">
+        <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto w-full">
+          {hasStore && !storeLoading && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
+                <p className="text-sm text-muted-foreground">Manage your store&apos;s inventory and pricing.</p>
+              </div>
+              <Button onClick={openAdd}><Plus className="size-4 mr-2" /> Add product</Button>
+            </div>
+          )}
+          
           {!storeLoading && !hasStore ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <Store className="size-10 text-muted-foreground mb-3" />
@@ -65,10 +71,18 @@ export default function SellerProductsPage() {
           ) : (
             <>
               {hasStore && store && !(store.isVerified && store.status === "active") && (
-                <div className="rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-                  Your products will go live in the marketplace once your store is verified.{" "}
-                  <Link href="/seller/store" className="underline font-medium text-foreground">Request verification</Link>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="rounded-xl border border-border bg-muted px-4 py-3 flex items-center gap-3"
+                >
+                  <ShieldAlert className="size-5 text-primary shrink-0" />
+                  <p className="text-sm text-muted-foreground flex-1">
+                    Your products will go live in the marketplace once your store is verified.
+                  </p>
+                  <Link href="/seller/store" className="text-sm font-medium text-primary shrink-0">Verify now</Link>
+                </motion.div>
               )}
               <SellerProductGrid
                 products={products}

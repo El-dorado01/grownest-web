@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { Inbox } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OrderStatusTabs, type OrderTabKey } from "./order-status-tabs";
@@ -38,13 +39,30 @@ export function OrderBoard({
       {isLoading ? (
         <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}</div>
       ) : visible.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Inbox className="size-8 text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">No orders here</p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card py-16 text-center"
+        >
+          <div className="mb-3 grid size-12 place-items-center rounded-2xl bg-muted">
+            <Inbox className="size-6 text-muted-foreground" />
+          </div>
+          <p className="font-medium">No orders here</p>
+          <p className="text-sm text-muted-foreground">Orders in this stage will show up here.</p>
+        </motion.div>
       ) : (
         <div className="space-y-3">
-          {visible.map((o) => <SellerOrderRow key={o.id} order={o} onAdvance={onAdvance} />)}
+          {visible.map((o, i) => (
+            <motion.div
+              key={o.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: i * 0.04 }}
+            >
+              <SellerOrderRow order={o} onAdvance={onAdvance} />
+            </motion.div>
+          ))}
         </div>
       )}
     </div>

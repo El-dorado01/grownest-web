@@ -33,16 +33,25 @@ function SellerChatPane({ storeId }: { storeId: string }) {
 
   return (
     <div className="flex h-[calc(100svh-4rem)]">
-      <div className={cn("w-full md:w-80 md:border-r border-border overflow-y-auto", selectedId && "hidden md:block")}>
-        <ChatThreadList threads={threads} isLoading={isLoading} selectedId={selectedId} onSelect={setSelectedId} perspective="seller" />
+      <div className={cn("w-full md:w-80 md:border-r border-border flex flex-col", selectedId && "hidden md:flex")}>
+        <div className="px-4 py-3 border-b border-border">
+          <h1 className="font-semibold">Messages</h1>
+          <p className="text-xs text-muted-foreground">Chat with buyers about their orders.</p>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <ChatThreadList threads={threads} isLoading={isLoading} selectedId={selectedId} onSelect={setSelectedId} perspective="seller" />
+        </div>
       </div>
       <div className={cn("flex-1 min-w-0", !selectedId && "hidden md:flex md:items-center md:justify-center")}>
         {selectedId ? (
           <ChatConversation threadId={selectedId} title={buyerName} onBack={() => setSelectedId(null)} />
         ) : (
-          <div className="text-center text-muted-foreground">
-            <MessageSquare className="size-10 mx-auto mb-2" />
-            <p className="text-sm">Select a conversation</p>
+          <div className="text-center">
+            <div className="mx-auto mb-3 grid size-14 place-items-center rounded-2xl bg-muted">
+              <MessageSquare className="size-7 text-muted-foreground" />
+            </div>
+            <p className="font-medium">Select a conversation</p>
+            <p className="text-sm text-muted-foreground">Pick a buyer from the list to start chatting.</p>
           </div>
         )}
       </div>
