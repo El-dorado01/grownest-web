@@ -7,6 +7,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbL
 import { VendorGrid } from "@/components/nestmarkets/vendor-grid";
 import { NearbySection } from "@/components/nestmarkets/nearby-section";
 import { CartBadge } from "@/components/nestmarkets/cart-badge";
+import { PageHeader } from "@/components/nestmarkets/page-header";
 import { useVendors } from "@/hooks/use-vendors";
 
 export default function VendorsPage() {
@@ -28,7 +29,8 @@ export default function VendorsPage() {
           </Breadcrumb>
           <div className="ml-auto"><CartBadge /></div>
         </header>
-        <div className="p-4 md:p-6 space-y-8">
+        <div className="p-4 md:p-6 space-y-6">
+          <PageHeader title="Stores & Vendors" subtitle="Support local businesses and discover top-rated sellers near you." />
           <section className="space-y-3">
             <h2 className="font-semibold">Top Rated</h2>
             <VendorGrid stores={v.topRated} isLoading={v.topRatedLoading} emptyText="No top-rated stores yet" />

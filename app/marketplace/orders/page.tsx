@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OrderCard } from "@/components/nestmarkets/order-card";
 import { CartBadge } from "@/components/nestmarkets/cart-badge";
+import { PageHeader } from "@/components/nestmarkets/page-header";
 import { useMyOrders } from "@/hooks/use-my-orders";
 
 export default function OrdersPage() {
@@ -33,7 +34,8 @@ export default function OrdersPage() {
           </Breadcrumb>
           <div className="ml-auto"><CartBadge /></div>
         </header>
-        <div className="p-4 md:p-6 max-w-5xl mx-auto w-full space-y-4">
+        <div className="p-4 md:p-6 max-w-5xl mx-auto w-full space-y-5">
+          <PageHeader title="Order History" subtitle="Track your current deliveries and review past purchases." />
           {isLoading ? (
             <div className="grid gap-4 lg:grid-cols-2">
               {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-2xl" />)}

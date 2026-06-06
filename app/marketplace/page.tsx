@@ -10,6 +10,7 @@ import { CategoryFilter } from "@/components/nestmarkets/category-filter";
 import { ProductGrid } from "@/components/nestmarkets/product-grid";
 import { ProductQuickView } from "@/components/nestmarkets/product-quick-view";
 import { CartBadge } from "@/components/nestmarkets/cart-badge";
+import { PageHeader } from "@/components/nestmarkets/page-header";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import type { MarketProduct } from "@/types/nestmarkets";
 
@@ -38,7 +39,8 @@ export default function MarketplacePage() {
           </Breadcrumb>
           <div className="ml-auto"><CartBadge /></div>
         </header>
-        <div className="p-4 md:p-6 space-y-4">
+        <div className="p-4 md:p-6 space-y-5">
+          <PageHeader title="Marketplace" subtitle="Discover fresh groceries, meals, and products from verified vendors." />
           <SearchBar value={search} onChange={onSearch} />
           <CategoryFilter categories={categories} active={category} onChange={onCategory} />
           <ProductGrid
