@@ -23,7 +23,7 @@ export function ChatComposer({ onSend, disabled }: { onSend: (text: string) => v
         onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
         placeholder="Type a message..."
         disabled={disabled}
-        className="rounded-full bg-card border-border"
+        className="rounded-full bg-card h-11 border-border"
       />
       <Button onClick={submit} disabled={disabled || !text.trim()} size="icon" className="rounded-full shrink-0">
         <Send className="size-4" />

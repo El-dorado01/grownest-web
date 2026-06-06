@@ -147,7 +147,7 @@ export function SupportSettings() {
               <Phone className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Phone</p>
-                <p className="text-xs font-semibold">+234 (0) 123 456 7890</p>
+                <p className="text-xs font-semibold">+234 (0) 705 329 0027</p>
               </div>
             </div>
           </div>

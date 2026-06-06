@@ -16,6 +16,7 @@ import { CartBadge } from "@/components/nestmarkets/cart-badge";
 import { useVendor } from "@/hooks/use-vendor";
 import { useVendors } from "@/hooks/use-vendors";
 import type { MarketProduct } from "@/types/nestmarkets";
+import Image from "next/image";
 
 export default function StoreProfilePage() {
   const params = useParams<{ id: string }>();
@@ -48,11 +49,11 @@ export default function StoreProfilePage() {
           ) : (
             <div className="rounded-2xl border border-border bg-card">
               <div className="relative h-32 rounded-t-2xl bg-muted overflow-hidden">
-                {store.bannerUrl && <img src={store.bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+                {store.bannerUrl && <Image src={store.bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />}
               </div>
               <div className="p-4 flex items-start gap-4 -mt-10">
                 <div className="relative z-10 size-20 rounded-full bg-muted ring-4 ring-card overflow-hidden shrink-0">
-                  {store.logoUrl && <img src={store.logoUrl} alt="" className="h-full w-full object-cover" />}
+                  {store.logoUrl && <Image src={store.logoUrl} alt="" className="h-full w-full object-cover" />}
                 </div>
                 <div className="flex-1 min-w-0 pt-10">
                   <h1 className="text-lg font-semibold">{store.name}</h1>

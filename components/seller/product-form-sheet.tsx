@@ -59,27 +59,27 @@ export function ProductFormSheet({
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Party Jollof Combo" />
+            <Input value={name} className="mt-1 h-11 bg-card" onChange={(e) => setName(e.target.value)} placeholder="e.g. Party Jollof Combo" />
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Description</label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={1000} />
+            <Textarea value={description} className="mt-1 h-11 bg-card" onChange={(e) => setDescription(e.target.value)} maxLength={1000} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Price (₦)</label>
-              <Input inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ""))} placeholder="0" />
+              <Input inputMode="numeric" value={price} className="mt-1 h-11 bg-card" onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ""))} placeholder="0" />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Stock</label>
-              <Input inputMode="numeric" value={stock} onChange={(e) => setStock(e.target.value.replace(/\D/g, ""))} placeholder="0" />
+              <Input inputMode="numeric" value={stock} className="mt-1 h-11 bg-card" onChange={(e) => setStock(e.target.value.replace(/\D/g, ""))} placeholder="0" />
             </div>
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Category</label>
-            <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Rice, Snacks, Drinks" />
+            <Input value={category} className="mt-1 h-11 bg-card" onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Rice, Snacks, Drinks" />
           </div>
-          <Button onClick={submit} disabled={busy} className="w-full">{editing ? "Save changes" : "Add product"}</Button>
+          <Button onClick={submit} disabled={busy} className="w-full h-11">{editing ? "Save changes" : "Add product"}</Button>
         </div>
       </SheetContent>
     </Sheet>
