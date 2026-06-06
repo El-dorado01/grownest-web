@@ -33,9 +33,11 @@ export default function OrdersPage() {
           </Breadcrumb>
           <div className="ml-auto"><CartBadge /></div>
         </header>
-        <div className="p-4 md:p-6 max-w-3xl mx-auto w-full space-y-4">
+        <div className="p-4 md:p-6 max-w-5xl mx-auto w-full space-y-4">
           {isLoading ? (
-            Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-2xl" />)
+            <div className="grid gap-4 lg:grid-cols-2">
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-2xl" />)}
+            </div>
           ) : orders.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <Package className="size-10 text-muted-foreground mb-3" />
@@ -44,7 +46,9 @@ export default function OrdersPage() {
             </div>
           ) : (
             <>
-              {orders.map((o) => <OrderCard key={o.id} order={o} onChanged={mutate} />)}
+              <div className="grid gap-4 lg:grid-cols-2 items-start">
+                {orders.map((o) => <OrderCard key={o.id} order={o} onChanged={mutate} />)}
+              </div>
               {pagination.pages > 1 && (
                 <div className="flex items-center justify-center gap-4 pt-2">
                   <Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>

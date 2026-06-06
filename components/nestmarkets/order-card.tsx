@@ -44,7 +44,7 @@ export function OrderCard({ order, onChanged }: { order: MarketOrder; onChanged:
   };
 
   return (
-    <div className="rounded-2xl bg-card border border-border p-4 space-y-4">
+    <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
       <div className="flex items-center gap-2">
         {order.store.logoUrl && <img src={order.store.logoUrl} alt="" className="size-6 rounded-full object-cover" />}
         <span className="font-medium truncate">{order.store.name}</span>
@@ -52,7 +52,7 @@ export function OrderCard({ order, onChanged }: { order: MarketOrder; onChanged:
       </div>
       <div className="flex gap-2 overflow-x-auto">
         {order.items.map((it) => (
-          <div key={it.id} className="relative size-12 rounded-lg overflow-hidden bg-muted shrink-0">
+          <div key={it.id} className="relative size-11 rounded-lg overflow-hidden bg-muted shrink-0">
             {it.product?.imageUrl && <img src={it.product.imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />}
           </div>
         ))}
