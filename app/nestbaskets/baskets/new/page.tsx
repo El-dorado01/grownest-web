@@ -19,24 +19,11 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
-  Plus,
-  Minus,
-  ShoppingCart,
-  Calendar,
-  MapPin,
-  ShieldCheck,
   ArrowLeft,
-  Search,
+  ShoppingCart,
   Loader2,
-  Info,
-  ChevronRight,
-  Check,
-  AlertCircle,
-  Scale,
-  Sparkles,
-  ShoppingBag
+  ShoppingBag,
 } from "lucide-react"
 import { nestBasketsApi } from "@/lib/nestbaskets-api"
 import { FoodItem } from "@/types/nestbaskets"
@@ -44,26 +31,26 @@ import useSWR from "swr"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { PinInput } from "@/components/ui/pin-input"
 import { toast } from "sonner"
 
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    maximumFractionDigits: 0,
-  }).format(amount)
+// Sub-components
+import { CatalogHeader } from "@/components/nestbaskets/catalog-header"
+import { FoodItemCard } from "@/components/nestbaskets/food-item-card"
+import { BasketSummary } from "@/components/nestbaskets/basket-summary"
+import { CheckoutDialog } from "@/components/nestbaskets/checkout-dialog"
+import { getCategoryForFoodItem, formatCurrency } from "@/components/nestbaskets/utils"
+
 
 function CustomBasketBuilderPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const cloneFrom = searchParams.get("cloneFrom")
 
-  // States
+  // Primary State
   const [quantities, setQuantities] = React.useState<Record<string, number>>({})
   const [searchQuery, setSearchQuery] = React.useState("")
   const [selectedBrand, setSelectedBrand] = React.useState<string>("all")
+  const [selectedCategory, setSelectedCategory] = React.useState<string>("all")
   const [isCheckoutOpen, setIsCheckoutOpen] = React.useState(false)
   const [basketTitle, setBasketTitle] = React.useState("")
   const [paymentType, setPaymentType] = React.useState<"subscription" | "flexible">("subscription")
@@ -80,6 +67,9 @@ function CustomBasketBuilderPageContent() {
   const [pinValue, setPinValue] = React.useState("")
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
+  // Infinite Scroll limit
+  const [visibleCount, setVisibleCount] = React.useState(12)
+
   // SWR for Inventory
   const { data: foodRes, isLoading: isInventoryLoading } = useSWR("food-items", () =>
     nestBasketsApi.getFoodItems()
@@ -92,13 +82,20 @@ function CustomBasketBuilderPageContent() {
   )
 
   // SWR for Delivery profiles
-  const { data: profilesRes, isLoading: isProfilesLoading } = useSWR(
+  const { data: profilesRes } = useSWR(
     "delivery-profiles",
     () => nestBasketsApi.getDeliveryProfiles()
   )
 
+  // SWR for Delivery zones
+  const { data: zonesRes } = useSWR(
+    "delivery-zones",
+    () => nestBasketsApi.getDeliveryZones()
+  )
+
   const foodItems = foodRes?.data?.data ?? []
   const profiles = profilesRes?.data?.data ?? []
+  const zones = zonesRes?.data?.data ?? []
   const defaultProfile = profilesRes?.data?.default ?? null
 
   // Seed quantities if cloning from predefined plan
@@ -156,7 +153,25 @@ function CustomBasketBuilderPageContent() {
   React.useEffect(() => {
     const fetchFee = async () => {
       const activeProfile = profiles.find((p) => p.id === selectedProfileId)
-      if (!activeProfile?.deliveryZoneId || selectedItemsList.length === 0) {
+      if (selectedItemsList.length === 0) {
+        setDeliveryFee(0)
+        return
+      }
+
+      let zoneId = activeProfile?.deliveryZoneId
+      if (!zoneId && zones.length > 0) {
+        const stateName = (activeProfile?.state || "").toLowerCase().trim()
+        const cityName = (activeProfile?.city || "").toLowerCase().trim()
+        const matchedZone = zones.find((z) => {
+          const zn = z.name.toLowerCase()
+          return (cityName && (zn.includes(cityName) || cityName.includes(zn))) ||
+                 (stateName && (zn.includes(stateName) || stateName.includes(zn)))
+        })
+        const otherStateZone = zones.find((z) => z.name.toLowerCase().includes("other"))
+        zoneId = matchedZone?.id || otherStateZone?.id || zones[0]?.id
+      }
+
+      if (!zoneId) {
         setDeliveryFee(0)
         return
       }
@@ -166,9 +181,10 @@ function CustomBasketBuilderPageContent() {
         const payload = selectedItemsList.map((i) => ({
           foodItemId: i.item.id,
           quantity: i.quantity,
+          weightPerUnit: i.item.weightPerUnit || 0,
         }))
         const res = await nestBasketsApi.calculateDeliveryFee({
-          deliveryZoneId: activeProfile.deliveryZoneId,
+          deliveryZoneId: zoneId,
           items: payload,
         })
         if (res.data?.success) {
@@ -182,7 +198,7 @@ function CustomBasketBuilderPageContent() {
     }
 
     fetchFee()
-  }, [selectedProfileId, selectedItemsList, profiles])
+  }, [selectedProfileId, selectedItemsList, profiles, zones])
 
   const totalCost = subtotal + deliveryFee
 
@@ -211,9 +227,43 @@ function CustomBasketBuilderPageContent() {
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.brand && item.brand.toLowerCase().includes(searchQuery.toLowerCase()))
       const matchesBrand = selectedBrand === "all" || item.brand === selectedBrand
-      return matchesSearch && matchesBrand && item.isActive
+      
+      const itemCategory = getCategoryForFoodItem(item)
+      const matchesCategory = selectedCategory === "all" || itemCategory === selectedCategory
+      
+      return matchesSearch && matchesBrand && matchesCategory && item.isActive
     })
-  }, [foodItems, searchQuery, selectedBrand])
+  }, [foodItems, searchQuery, selectedBrand, selectedCategory])
+
+  const visibleFoodItems = React.useMemo(() => {
+    return filteredFoodItems.slice(0, visibleCount)
+  }, [filteredFoodItems, visibleCount])
+
+  React.useEffect(() => {
+    setVisibleCount(12)
+  }, [searchQuery, selectedBrand, selectedCategory])
+
+  const observerRef = React.useRef<HTMLDivElement | null>(null)
+
+  React.useEffect(() => {
+    const currentTarget = observerRef.current
+    if (!currentTarget || visibleCount >= filteredFoodItems.length) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + 12, filteredFoodItems.length))
+        }
+      },
+      { threshold: 0.1, rootMargin: "100px" }
+    )
+
+    observer.observe(currentTarget)
+
+    return () => {
+      observer.unobserve(currentTarget)
+    }
+  }, [visibleCount, filteredFoodItems.length])
 
   // Checkout submission handler
   const handleCheckoutSubmit = async () => {
@@ -306,507 +356,175 @@ function CustomBasketBuilderPageContent() {
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-          <div className="flex items-center gap-2 px-4 w-full">
+          <div className="flex w-full items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
-            <Breadcrumb className="flex-1">
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+            <Breadcrumb className="flex-1 min-w-0">
+              <BreadcrumbList className="flex-nowrap whitespace-nowrap overflow-hidden">
+                <BreadcrumbItem className="min-w-0">
+                  <BreadcrumbLink href="/dashboard" className="truncate max-w-[80px] sm:max-w-[120px] md:max-w-none">Dashboard</BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/nestbaskets/baskets">Food Baskets</BreadcrumbLink>
+                <BreadcrumbSeparator className="shrink-0" />
+                <BreadcrumbItem className="min-w-0">
+                  <BreadcrumbLink href="/nestbaskets/baskets" className="truncate max-w-[90px] sm:max-w-[150px] md:max-w-none">
+                    Food Baskets
+                  </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Custom Builder</BreadcrumbPage>
+                <BreadcrumbSeparator className="shrink-0" />
+                <BreadcrumbItem className="min-w-0">
+                  <BreadcrumbPage className="truncate max-w-[100px] sm:max-w-[150px] md:max-w-none">Custom Builder</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <Button variant="ghost" size="sm" asChild className="gap-1 bg-muted/30 border">
-              <Link href="/nestbaskets/baskets">
-                <ArrowLeft className="w-4 h-4" /> Back
-              </Link>
-            </Button>
           </div>
         </header>
 
-        <div className="flex flex-col lg:flex-row flex-1 divide-y lg:divide-y-0 lg:divide-x">
+        {/* Two-column layout */}
+        <div className="flex w-full flex-col divide-y pb-20 lg:grid lg:grid-cols-[1fr_360px] lg:divide-y-0 lg:pb-0">
           {/* Main Catalog View */}
-          <div className="flex-1 p-4 md:p-6 space-y-6">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                  Custom Basket Builder
-                </h1>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Select your preferred groceries from our active farm inventory. Adjust quantities to build your personalized weekly or monthly food bundle.
-              </p>
-            </div>
+          <div className="min-w-0">
+            <CatalogHeader
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedBrand={selectedBrand}
+              setSelectedBrand={setSelectedBrand}
+              uniqueBrands={uniqueBrands}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+            />
 
-            {/* Catalog Filter Controls */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search food items or brands..."
-                  className="pl-9 rounded-xl h-10 border-muted"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 shrink-0">
-                {uniqueBrands.slice(0, 5).map((brand) => (
-                  <button
-                    key={brand}
-                    onClick={() => setSelectedBrand(brand)}
-                    className={cn(
-                      "px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all border",
-                      selectedBrand === brand
-                        ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/10"
-                        : "bg-card border-border hover:bg-muted text-muted-foreground hover:text-foreground"
-                    )}
+             {/* Scrolling item grid */}
+            <div className="space-y-6 p-5 md:p-6">
+              {isInventoryLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[...Array(6)].map((_, i) => (
+                    <Skeleton key={i} className="h-44 rounded-2xl" />
+                  ))}
+                </div>
+              ) : filteredFoodItems.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed bg-card/20 py-16 text-center">
+                  <ShoppingBag className="h-12 w-12 text-muted-foreground/45" />
+                  <p className="text-base font-bold">
+                    No active food items match filters
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Try clearing search terms or selected brands filter.
+                  </p>
+                  <Button
+                    onClick={() => {
+                      setSearchQuery("")
+                      setSelectedBrand("all")
+                    }}
+                    size="sm"
+                    variant="outline"
                   >
-                    {brand === "all" ? "All Brands" : brand}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Grid Catalog */}
-            {isInventoryLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} className="h-44 rounded-2xl" />
-                ))}
-              </div>
-            ) : filteredFoodItems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-3 text-center border rounded-2xl bg-card/20 border-dashed">
-                <ShoppingBag className="w-12 h-12 text-muted-foreground/45" />
-                <p className="text-base font-bold">No active food items match filters</p>
-                <p className="text-sm text-muted-foreground">Try clearing search terms or selected brands filter.</p>
-                <Button onClick={() => { setSearchQuery(""); setSelectedBrand("all"); }} size="sm" variant="outline">
-                  Reset Filter
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filteredFoodItems.map((item) => {
-                  const qty = quantities[item.id] || 0
-                  return (
-                    <div
-                      key={item.id}
-                      className={cn(
-                        "group relative flex flex-col p-4 rounded-2xl border transition-all duration-300 bg-card hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30",
-                        qty > 0 ? "border-primary/50 ring-1 ring-primary/10" : "border-border/60"
-                      )}
-                    >
-                      {/* Image / Thumbnail */}
-                      <div className="flex gap-4 items-start">
-                        <div className="flex items-center justify-center w-16 h-16 rounded-xl bg-linear-to-br from-primary/10 to-primary/5 text-3xl shrink-0 shadow-inner">
-                          {item.imageUrl ? (
-                            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover rounded-xl" />
-                          ) : (
-                            <span>🌾</span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[10px] font-black tracking-widest uppercase text-primary mb-1 block">
-                            {item.brand || "Fresh Farms"}
-                          </span>
-                          <h3 className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
-                            {item.name}
-                          </h3>
-                          <p className="text-[11px] text-muted-foreground truncate mb-1">
-                            {item.description || "Premium farm produce."}
-                          </p>
-                          <div className="flex items-baseline gap-2 mt-1">
-                            <span className="text-base font-black text-foreground">
-                              {formatCurrency(item.pricePerUnit)}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground uppercase font-semibold">
-                              / {item.unit} ({item.weightPerUnit}kg)
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between mt-5 pt-3 border-t border-border/40">
-                        <span className="text-[11px] font-medium text-muted-foreground">
-                          Weight: {((item.weightPerUnit || 0) * (qty || 1)).toFixed(1)} kg
-                        </span>
-                        {qty > 0 ? (
-                          <div className="flex items-center bg-muted/60 border rounded-xl p-1 gap-1">
-                            <button
-                              onClick={() => updateQuantity(item.id, qty - 1)}
-                              className="p-1.5 hover:bg-card rounded-lg transition-colors active:scale-90"
-                            >
-                              <Minus className="w-3.5 h-3.5" />
-                            </button>
-                            <span className="w-8 text-center text-xs font-black">{qty}</span>
-                            <button
-                              onClick={() => updateQuantity(item.id, qty + 1)}
-                              className="p-1.5 hover:bg-card rounded-lg transition-colors active:scale-90"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <Button
-                            onClick={() => updateQuantity(item.id, 1)}
-                            size="sm"
-                            variant="outline"
-                            className="h-8 rounded-xl px-3 text-xs font-bold border-muted-foreground/30 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all active:scale-95"
-                          >
-                            <Plus className="w-3 h-3 mr-1" /> Add
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Builder Sidebar Panel */}
-          <div className="w-full lg:w-96 p-4 md:p-6 shrink-0 bg-muted/10 lg:h-[calc(100vh-4rem)] lg:overflow-y-auto space-y-6 flex flex-col justify-between">
-            <div className="space-y-6">
-              <div className="flex flex-col gap-1">
-                <h2 className="text-lg font-bold tracking-tight">Basket Summary</h2>
-                <p className="text-xs text-muted-foreground">Review your customized ingredients, aggregate weights, and shipping fees below.</p>
-              </div>
-
-              {selectedItemsList.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-3 text-center border-2 border-dashed border-muted rounded-2xl p-6">
-                  <ShoppingCart className="w-10 h-10 text-muted-foreground/30" />
-                  <p className="text-sm font-bold text-muted-foreground">Your basket is empty</p>
-                  <p className="text-xs text-muted-foreground max-w-[200px]">Add fresh ingredients from the inventory catalog on the left to begin.</p>
+                    Reset Filter
+                  </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {/* Item Rows */}
-                  <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-1">
-                    {selectedItemsList.map(({ item, quantity }) => (
-                      <div key={item.id} className="flex justify-between items-center p-2.5 rounded-xl bg-card border border-border/50 shadow-sm text-xs font-medium">
-                        <div className="flex flex-col gap-0.5 min-w-0 pr-2">
-                          <span className="font-bold text-foreground truncate">{item.name}</span>
-                          <span className="text-[10px] text-muted-foreground truncate">{item.brand || "Fresh Store"} • {item.unit}</span>
-                        </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-muted-foreground font-black">×{quantity}</span>
-                          <span className="font-black text-foreground">{formatCurrency(item.pricePerUnit * quantity)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {visibleFoodItems.map((item) => {
+                    const qty = quantities[item.id] || 0
+                    return (
+                      <FoodItemCard
+                        key={item.id}
+                        item={item}
+                        qty={qty}
+                        updateQuantity={updateQuantity}
+                      />
+                    )
+                  })}
+                </div>
+              )}
 
-                  {/* Address Summary Block */}
-                  <div className="p-3.5 rounded-2xl bg-primary/5 border border-primary/20 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4 text-primary" />
-                        <span className="text-xs font-black text-foreground">Delivery Destination</span>
-                      </div>
-                      {profiles.length > 0 && (
-                        <select
-                          value={selectedProfileId}
-                          onChange={(e) => setSelectedProfileId(e.target.value)}
-                          className="bg-transparent text-[11px] font-bold text-primary underline focus:outline-none cursor-pointer max-w-[150px] text-right"
-                        >
-                          {profiles.map((p) => (
-                            <option key={p.id} value={p.id} className="text-foreground">
-                              {p.fullName} ({p.city})
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-                    {profiles.length === 0 ? (
-                      <div className="flex flex-col gap-1.5 pt-1">
-                        <p className="text-[11px] text-muted-foreground">
-                          No delivery addresses created. Create a default shipping address to calculate weight-based zones.
-                        </p>
-                        <Button size="xs" variant="outline" className="text-[10px] h-7 self-start" asChild>
-                          <Link href="?settings=true">Create Address</Link>
-                        </Button>
-                      </div>
-                    ) : (
-                      (() => {
-                        const activeProfile = profiles.find((p) => p.id === selectedProfileId)
-                        return (
-                          <div className="text-[11px] text-muted-foreground flex flex-col">
-                            <span className="font-bold text-foreground">{activeProfile?.fullName} ({activeProfile?.phone})</span>
-                            <span className="truncate">{activeProfile?.address}, {activeProfile?.city}, {activeProfile?.state}</span>
-                          </div>
-                        )
-                      })()
-                    )}
-                  </div>
-
-                  {/* Calculations breakdown */}
-                  <div className="space-y-2 border-t pt-4">
-                    <div className="flex justify-between text-xs text-muted-foreground font-semibold">
-                      <span className="flex items-center gap-1"><Scale className="w-3.5 h-3.5" /> Aggregate Weight</span>
-                      <span className="text-foreground font-bold">{totalWeight.toFixed(2)} kg</span>
-                    </div>
-                    <div className="flex justify-between text-xs text-muted-foreground font-semibold">
-                      <span>Items Subtotal</span>
-                      <span className="text-foreground font-bold">{formatCurrency(subtotal)}</span>
-                    </div>
-                    <div className="flex justify-between text-xs text-muted-foreground font-semibold">
-                      <span>Progressive Delivery Fee</span>
-                      {isFeeLoading ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                      ) : (
-                        <span className="text-foreground font-bold">{formatCurrency(deliveryFee)}</span>
-                      )}
-                    </div>
-                    <div className="flex justify-between text-sm font-black border-t pt-3">
-                      <span>Aggregated Cost</span>
-                      <span className="text-primary text-base font-black">{formatCurrency(totalCost)}</span>
-                    </div>
-                  </div>
+              {/* Infinite Scroll Trigger */}
+              {visibleCount < filteredFoodItems.length && (
+                <div
+                  ref={observerRef}
+                  className="flex w-full justify-center py-6"
+                >
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
                 </div>
               )}
             </div>
-
-            {selectedItemsList.length > 0 && (
-              <Button
-                onClick={() => setIsCheckoutOpen(true)}
-                className="w-full mt-6 h-12 rounded-xl text-foreground font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/10 transition-transform active:scale-95"
-              >
-                <ShoppingCart className="w-4 h-4" />
-                Proceed to Checkout
-              </Button>
-            )}
           </div>
+
+          {/* Builder Sidebar Panel (Desktop version) */}
+          <BasketSummary
+            selectedItemsList={selectedItemsList}
+            subtotal={subtotal}
+            totalWeight={totalWeight}
+            deliveryFee={deliveryFee}
+            isFeeLoading={isFeeLoading}
+            totalCost={totalCost}
+            profiles={profiles}
+            selectedProfileId={selectedProfileId}
+            setSelectedProfileId={setSelectedProfileId}
+            updateQuantity={updateQuantity}
+            onProceedToCheckout={() => setIsCheckoutOpen(true)}
+          />
+
+
         </div>
 
-        {/* Dynamic checkout custom sheet dialog */}
-        <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
-          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-2xl p-6">
-            <DialogHeader className="mb-4">
-              <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
-                <Sparkles className="w-5 h-5 text-primary" /> Create Food Basket
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground">
-                Finalize your savings plan format, title, and wallet credentials.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 text-xs font-medium">
-              {/* Basket Title input */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Basket Title</label>
-                <Input
-                  placeholder="e.g. My Mama Monthly Pack"
-                  className="rounded-xl h-10 border-muted font-bold"
-                  value={basketTitle}
-                  onChange={(e) => setBasketTitle(e.target.value)}
-                />
-              </div>
-
-              {/* Payment Type Selection Cards */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Savings Plan Format</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Recurring Subscription */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentType("subscription")}
-                    className={cn(
-                      "flex flex-col p-3 rounded-xl border text-left gap-1.5 transition-all",
-                      paymentType === "subscription"
-                        ? "border-primary bg-primary/5 ring-1 ring-primary/10"
-                        : "border-border bg-card hover:bg-muted"
-                    )}
-                  >
-                    <div className="flex justify-between items-center w-full">
-                      <span className="font-bold text-foreground">Subscription</span>
-                      {paymentType === "subscription" && <Check className="w-4 h-4 text-primary shrink-0" />}
-                    </div>
-                    <span className="text-[10px] text-muted-foreground leading-relaxed">
-                      Continuous delivery debited automatically from wallet at set cycles.
-                    </span>
-                  </button>
-
-                  {/* Flexible Savings Target */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentType("flexible")}
-                    className={cn(
-                      "flex flex-col p-3 rounded-xl border text-left gap-1.5 transition-all",
-                      paymentType === "flexible"
-                        ? "border-primary bg-primary/5 ring-1 ring-primary/10"
-                        : "border-border bg-card hover:bg-muted"
-                    )}
-                  >
-                    <div className="flex justify-between items-center w-full">
-                      <span className="font-bold text-foreground">Flexible Target</span>
-                      {paymentType === "flexible" && <Check className="w-4 h-4 text-primary shrink-0" />}
-                    </div>
-                    <span className="text-[10px] text-muted-foreground leading-relaxed">
-                      Save towards groceries at your own pace. Delivered once 100% saved.
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Dynamic configs based on savings payment type */}
-              {paymentType === "subscription" ? (
-                <div className="space-y-1.5 p-3.5 rounded-xl border bg-muted/20">
-                  <div className="flex items-center gap-1 text-primary">
-                    <Calendar className="w-4 h-4" />
-                    <span className="font-black">Subscription Cycle</span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground leading-relaxed mb-2">
-                    Select the interval for recurring balance debits and home food deliveries.
-                  </p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {(["weekly", "monthly", "quarterly", "yearly"] as const).map((freq) => (
-                      <button
-                        key={freq}
-                        type="button"
-                        onClick={() => setSubFreq(freq)}
-                        className={cn(
-                          "py-1.5 rounded-lg border text-center text-[10px] font-black capitalize transition-all",
-                          subFreq === freq
-                            ? "bg-primary border-primary text-primary-foreground font-black"
-                            : "bg-card border-border hover:bg-muted text-muted-foreground"
-                        )}
-                      >
-                        {freq}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3 p-3.5 rounded-xl border bg-muted/20">
-                  {/* Saving duration selection */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-1 text-primary">
-                      <Calendar className="w-4 h-4" />
-                      <span className="font-black">Target Savings Window</span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed mb-2">
-                      When would you like to complete this goal? Your basket remains locked until fully funded.
-                    </p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {[1, 3, 6, 12].map((m) => (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => setFlexibleMonths(m)}
-                          className={cn(
-                            "py-1.5 rounded-lg border text-center text-[10px] font-black transition-all",
-                            flexibleMonths === m
-                              ? "bg-primary border-primary text-primary-foreground font-black"
-                              : "bg-card border-border hover:bg-muted text-muted-foreground"
-                          )}
-                        >
-                          {m} {m === 1 ? "Month" : "Months"}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Auto-pay setup */}
-                  <div className="border-t pt-3 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="font-bold text-foreground">Auto-Pay Automated Transfers</span>
-                      <input
-                        type="checkbox"
-                        checked={enableAutoPay}
-                        onChange={(e) => setEnableAutoPay(e.target.checked)}
-                        className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
-                      />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed">
-                      Enable to automatically debit set amounts from your digital NestPurse into this food goal periodically.
-                    </p>
-                    {enableAutoPay && (
-                      <div className="space-y-2 pt-1 animate-in fade-in duration-300">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-black uppercase text-muted-foreground">Frequency</label>
-                            <select
-                              value={autoPayFreq}
-                              onChange={(e) => setAutoPayFreq(e.target.value as any)}
-                              className="w-full bg-card border rounded-lg h-8 px-2 text-[11px] font-bold"
-                            >
-                              <option value="daily">Daily</option>
-                              <option value="weekly">Weekly</option>
-                              <option value="biweekly">Bi-weekly</option>
-                              <option value="monthly">Monthly</option>
-                            </select>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-black uppercase text-muted-foreground">Amount (₦)</label>
-                            <Input
-                              type="number"
-                              placeholder="Min ₦500"
-                              className="h-8 rounded-lg text-[11px] border-muted font-bold"
-                              value={autoPayAmount}
-                              onChange={(e) => setAutoPayAmount(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Aggregated totals check */}
-              <div className="p-3.5 rounded-xl border border-dashed flex justify-between items-center bg-card">
-                <div className="flex flex-col">
-                  <span className="font-bold text-foreground">Total Checkout Cost</span>
-                  <span className="text-[10px] text-muted-foreground leading-none">Items subtotal + shipping zone fee</span>
-                </div>
-                <span className="text-primary text-lg font-black">{formatCurrency(totalCost)}</span>
-              </div>
-
-              {/* Security PIN code validation */}
-              <div className="space-y-2 border-t pt-4">
-                <div className="flex items-center gap-1 justify-center text-primary mb-1">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Confirm NestPurse PIN</span>
-                </div>
-                <PinInput
-                  value={pinValue}
-                  onChange={setPinValue}
-                  disabled={isSubmitting}
-                />
-                <p className="text-[10px] text-muted-foreground leading-relaxed text-center mt-1.5 flex items-center justify-center gap-1">
-                  <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-500" />
-                  Please enter your 4-digit transactions security code to authorize transaction.
-                </p>
-              </div>
-
-              {/* Submit CTA button */}
-              <Button
-                onClick={handleCheckoutSubmit}
-                disabled={isSubmitting || pinValue.length !== 4}
-                className="w-full h-11 mt-4 rounded-xl text-foreground font-black flex items-center justify-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin text-foreground" />
-                    Completing Transaction...
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="w-4 h-4" />
-                    Authorize & Create Plan
-                  </>
-                )}
-              </Button>
+        {/* Floating Mobile Checkout Bar */}
+        {selectedItemsList.length > 0 && (
+          <div className="fixed right-0 bottom-0 left-0 z-30 flex animate-in items-center justify-between border-t bg-background/90 p-4 shadow-2xl backdrop-blur-md duration-300 slide-in-from-bottom lg:hidden">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                {selectedItemsList.reduce(
+                  (acc, curr) => acc + curr.quantity,
+                  0
+                )}{" "}
+                items selected
+              </span>
+              <span className="text-lg font-black text-primary">
+                {formatCurrency(totalCost)}
+              </span>
             </div>
-          </DialogContent>
-        </Dialog>
+            <Button
+              onClick={() => setIsCheckoutOpen(true)}
+              className="flex h-10 items-center gap-2 rounded-xl px-5 font-bold text-foreground"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              Review & Checkout
+            </Button>
+          </div>
+        )}
+
+        {/* Checkout Modal / Drawer Config */}
+        <CheckoutDialog
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          basketTitle={basketTitle}
+          setBasketTitle={setBasketTitle}
+          paymentType={paymentType}
+          setPaymentType={setPaymentType}
+          subFreq={subFreq}
+          setSubFreq={setSubFreq}
+          flexibleMonths={flexibleMonths}
+          setFlexibleMonths={setFlexibleMonths}
+          enableAutoPay={enableAutoPay}
+          setEnableAutoPay={setEnableAutoPay}
+          autoPayFreq={autoPayFreq}
+          setAutoPayFreq={setAutoPayFreq}
+          autoPayAmount={autoPayAmount}
+          setAutoPayAmount={setAutoPayAmount}
+          pinValue={pinValue}
+          setPinValue={setPinValue}
+          isSubmitting={isSubmitting}
+          onSubmit={handleCheckoutSubmit}
+          totalCost={totalCost}
+          profiles={profiles}
+          selectedProfileId={selectedProfileId}
+          setSelectedProfileId={setSelectedProfileId}
+          isFeeLoading={isFeeLoading}
+          deliveryFee={deliveryFee}
+          subtotal={subtotal}
+          totalWeight={totalWeight}
+          selectedItemsList={selectedItemsList}
+          updateQuantity={updateQuantity}
+        />
       </SidebarInset>
     </SidebarProvider>
   )
