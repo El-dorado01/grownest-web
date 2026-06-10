@@ -34,7 +34,7 @@ import {
   RotateCcw,
   WalletIcon,
   ArrowUpRight,
-  Smartphone
+  Smartphone,
 } from "lucide-react"
 import {
   Card,

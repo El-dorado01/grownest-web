@@ -34,7 +34,8 @@ import {
   CogIcon,
   TerminalIcon,
   ShoppingBagIcon,
-  FeatherIcon
+  FeatherIcon,
+  Users2Icon
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -164,6 +165,11 @@ const data = {
       name: "Nest Feathers",
       url: "/nestfeathers",
       icon: <FeatherIcon />,
+    },
+    {
+      name: "NestCircle",
+      url: "/nestcircle",
+      icon: <Users2Icon />,
     },
   ],
   navSecondary: [

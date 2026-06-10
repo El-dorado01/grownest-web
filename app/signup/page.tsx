@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { SignupForm } from "@/components/signup-form"
 import Link from "next/link"
 import Image from "next/image"
@@ -99,7 +99,9 @@ export default function SignupPage() {
 
         {/* Form area */}
         <main className="flex-1 flex items-center justify-center px-6 py-10">
-          <SignupForm />
+          <Suspense fallback={null}>
+            <SignupForm />
+          </Suspense>
         </main>
 
         {/* Footer */}

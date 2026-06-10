@@ -40,8 +40,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public assets (d_icon.png, logo.png, social-preview.png, etc.)
+     * - public assets (logos, background images, etc.)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|d_icon.png|logo.png|social-preview.png).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|d_icon\\.png|logo\\.png|social-preview\\.png|bg-image-).*)',
   ],
 }
