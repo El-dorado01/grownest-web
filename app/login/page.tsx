@@ -6,7 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 
 const slides = [
-  "/bg-image-6.jpeg",
+  "/bg-image-6.png",
 ]
 
 export default function LoginPage() {
