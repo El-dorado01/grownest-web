@@ -1,6 +1,8 @@
 // app/savings/group/[id]/page.tsx
 "use client"
 
+import { DashboardHeader } from "@/components/dashboard-header"
+
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
@@ -99,12 +101,8 @@ export default function GroupDetailPage() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-            <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 data-vertical:h-4 data-vertical:self-auto" />
-            </div>
-          </header>
+          <DashboardHeader>
+            </DashboardHeader>
           <div className="flex flex-1 gap-6 p-4 md:p-6">
             <div className="flex-1 flex flex-col gap-6">
               <Skeleton className="h-64 rounded-2xl" />
@@ -138,10 +136,7 @@ const isActive = group.status === "active"
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 data-vertical:h-4 data-vertical:self-auto" />
+        <DashboardHeader>
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem><BreadcrumbLink href="/">Dashboard</BreadcrumbLink></BreadcrumbItem>
@@ -153,8 +148,7 @@ const isActive = group.status === "active"
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-          </div>
-        </header>
+          </DashboardHeader>
 
         <div className="flex flex-1 gap-6 p-4 md:p-6 overflow-y-auto">
 

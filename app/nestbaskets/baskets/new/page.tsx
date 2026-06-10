@@ -1,6 +1,8 @@
 // app/nestbaskets/baskets/new/page.tsx
 "use client"
 
+import { DashboardHeader } from "@/components/dashboard-header"
+
 import * as React from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
@@ -355,29 +357,25 @@ function CustomBasketBuilderPageContent() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-          <div className="flex w-full items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <Breadcrumb className="flex-1 min-w-0">
-              <BreadcrumbList className="flex-nowrap whitespace-nowrap overflow-hidden">
-                <BreadcrumbItem className="min-w-0">
-                  <BreadcrumbLink href="/dashboard" className="truncate max-w-[80px] sm:max-w-[120px] md:max-w-none">Dashboard</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="shrink-0" />
-                <BreadcrumbItem className="min-w-0">
-                  <BreadcrumbLink href="/nestbaskets/baskets" className="truncate max-w-[90px] sm:max-w-[150px] md:max-w-none">
-                    Food Baskets
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="shrink-0" />
-                <BreadcrumbItem className="min-w-0">
-                  <BreadcrumbPage className="truncate max-w-[100px] sm:max-w-[150px] md:max-w-none">Custom Builder</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        </header>
+        <DashboardHeader>
+          <Breadcrumb className="flex-1 min-w-0">
+            <BreadcrumbList className="flex-nowrap whitespace-nowrap overflow-hidden">
+              <BreadcrumbItem className="min-w-0">
+                <BreadcrumbLink href="/dashboard" className="truncate max-w-[80px] sm:max-w-[120px] md:max-w-none">Dashboard</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="shrink-0" />
+              <BreadcrumbItem className="min-w-0">
+                <BreadcrumbLink href="/nestbaskets/baskets" className="truncate max-w-[90px] sm:max-w-[150px] md:max-w-none">
+                  Food Baskets
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="shrink-0" />
+              <BreadcrumbItem className="min-w-0">
+                <BreadcrumbPage className="truncate max-w-[100px] sm:max-w-[150px] md:max-w-none">Custom Builder</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </DashboardHeader>
 
         {/* Two-column layout */}
         <div className="flex w-full flex-col divide-y pb-20 lg:grid lg:grid-cols-[1fr_360px] lg:divide-y-0 lg:pb-0">

@@ -18,6 +18,8 @@ import { useMyProducts, SELLER_PRODUCTS_KEY } from "@/hooks/use-my-products";
 import { sellerApi } from "@/lib/seller-api";
 import type { SellerProduct } from "@/types/seller";
 
+import { DashboardHeader } from "@/components/dashboard-header";
+
 export default function SellerProductsPage() {
   const { store, hasStore, isLoading: storeLoading } = useMyStore();
   const { products, isLoading: productsLoading } = useMyProducts(hasStore);
@@ -38,9 +40,7 @@ export default function SellerProductsPage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
+        <DashboardHeader>
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem><BreadcrumbLink href="/seller">Sell</BreadcrumbLink></BreadcrumbItem>
@@ -48,7 +48,7 @@ export default function SellerProductsPage() {
               <BreadcrumbItem><BreadcrumbPage>Products</BreadcrumbPage></BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-        </header>
+        </DashboardHeader>
 
         <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto w-full">
           {hasStore && !storeLoading && (

@@ -12,6 +12,8 @@ import { OrderBoard } from "@/components/seller/order-board";
 import { useMyStore } from "@/hooks/use-my-store";
 import { useSellerOrders } from "@/hooks/use-seller-orders";
 
+import { DashboardHeader } from "@/components/dashboard-header";
+
 export default function SellerOrdersPage() {
   const { store, hasStore, isLoading: storeLoading } = useMyStore();
   const { orders, isLoading: ordersLoading, advance } = useSellerOrders(store?.id ?? null);
@@ -20,9 +22,7 @@ export default function SellerOrdersPage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
+        <DashboardHeader>
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem><BreadcrumbLink href="/seller">Sell</BreadcrumbLink></BreadcrumbItem>
@@ -30,7 +30,7 @@ export default function SellerOrdersPage() {
               <BreadcrumbItem><BreadcrumbPage>Orders</BreadcrumbPage></BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-        </header>
+        </DashboardHeader>
 
         <div className="p-4 md:p-6 max-w-3xl mx-auto w-full space-y-6">
           {storeLoading ? (

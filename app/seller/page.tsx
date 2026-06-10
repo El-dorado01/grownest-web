@@ -22,6 +22,8 @@ import { useMyStore } from "@/hooks/use-my-store";
 import { useSellerOrders } from "@/hooks/use-seller-orders";
 import { useMyProducts } from "@/hooks/use-my-products";
 
+import { DashboardHeader } from "@/components/dashboard-header";
+
 export default function SellerDashboardPage() {
   const { store, hasStore, isLoading } = useMyStore();
   const { orders, isLoading: ordersLoading, advance } = useSellerOrders(store?.id ?? null);
@@ -35,13 +37,11 @@ export default function SellerDashboardPage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
+        <DashboardHeader>
           <Breadcrumb>
             <BreadcrumbList><BreadcrumbItem><BreadcrumbPage>Sell on NestMarket</BreadcrumbPage></BreadcrumbItem></BreadcrumbList>
           </Breadcrumb>
-        </header>
+        </DashboardHeader>
 
         <div className="p-4 md:p-6">
           {isLoading ? (

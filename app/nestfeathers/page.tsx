@@ -1,5 +1,7 @@
 "use client"
 
+import { DashboardHeader } from "@/components/dashboard-header"
+
 import * as React from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
@@ -252,7 +254,7 @@ function MilestoneCardStack({ type, currentLevel, milestones }: MilestoneCardSta
 
         {/* Counter Badge (+X remaining levels) */}
         {totalLevels - currentLevel > 0 && (
-          <span className="absolute bottom-1 right-1 text-[8px] font-black tracking-tighter px-0.5 rounded bg-muted text-muted-foreground">
+          <span className="absolute bottom-1 right-1 text-[10px] font-black tracking-tighter px-0.5 rounded bg-muted text-muted-foreground">
             +{totalLevels - currentLevel}
           </span>
         )}
@@ -279,7 +281,7 @@ function UserRankFeatherStack({ feathers }: { feathers: any[] }) {
       {/* Front card */}
       <div className="absolute inset-0 rounded-2xl border border-amber-500/30 bg-card shadow-md z-20 flex flex-col items-center justify-center overflow-hidden">
         <Award className="h-8 w-8 text-amber-500 animate-pulse" />
-        <span className="absolute bottom-1 right-2 text-[9px] font-black tracking-tighter px-1 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+        <span className="absolute bottom-1 right-2 text-[10px] font-black tracking-tighter px-1 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
           +{activeCount}
         </span>
       </div>
@@ -747,10 +749,7 @@ export function NestFeathersDashboard() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-            <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 h-4" />
+          <DashboardHeader>
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
@@ -758,8 +757,7 @@ export function NestFeathersDashboard() {
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
-            </div>
-          </header>
+            </DashboardHeader>
           <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 bg-muted/20">
             <div className="space-y-4">
               <div className="h-8 w-48 bg-muted rounded animate-pulse" />
@@ -781,10 +779,7 @@ export function NestFeathersDashboard() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
+        <DashboardHeader>
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
@@ -796,8 +791,7 @@ export function NestFeathersDashboard() {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-          </div>
-        </header>
+          </DashboardHeader>
 
         <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 bg-muted/20">
           
@@ -832,11 +826,19 @@ export function NestFeathersDashboard() {
             {/* 1. Comment Bubble */}
             <div className="relative bg-card border border-border rounded-3xl p-5 shadow-xs transition-all duration-300 hover:shadow-md">
               <div className="flex items-center gap-3 mb-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 border flex items-center justify-center text-primary font-bold text-sm">
-                  {profile?.fullName
-                    ? profile.fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase().substring(0, 2)
-                    : "GN"}
-                </div>
+                {profile?.profilePhoto ? (
+                  <img
+                    src={profile.profilePhoto}
+                    alt={profile.fullName || "User"}
+                    className="h-10 w-10 min-w-10 rounded-full object-cover border"
+                  />
+                ) : (
+                  <div className="h-10 w-10 min-w-10 rounded-full bg-primary/10 border flex items-center justify-center text-primary font-bold text-sm">
+                    {profile?.fullName
+                      ? profile.fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase().substring(0, 2)
+                      : "GN"}
+                  </div>
+                )}
                 <div>
                   <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-1.5">
                     <span className="font-bold text-sm text-foreground leading-none truncate max-w-[160px] sm:max-w-none">
@@ -846,7 +848,7 @@ export function NestFeathersDashboard() {
                       @{profile?.email?.split("@")[0] || "nester"}
                     </span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground font-medium block mt-0.5">
+                  <span className="text-xs text-muted-foreground font-medium block mt-0.5">
                     just now
                   </span>
                 </div>
@@ -865,7 +867,7 @@ export function NestFeathersDashboard() {
                 <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start text-center sm:text-left w-full">
                   <UserRankFeatherStack feathers={feathers} />
                   <div className="space-y-1.5 flex-1 min-w-0 w-full">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-black tracking-wide">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-black tracking-wide">
                       <Trophy className="h-3 w-3" />
                       Achievements Rank
                     </div>
@@ -955,7 +957,7 @@ export function NestFeathersDashboard() {
                         <h3 className="font-bold text-sm text-foreground truncate leading-tight group-hover:text-primary transition-colors">
                           {feather.label}
                         </h3>
-                        <span className={cn("text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider shrink-0", theme.badge)}>
+                        <span className={cn("text-xs font-black uppercase px-2 py-0.5 rounded-full tracking-wider shrink-0", theme.badge)}>
                           Lvl {currentLevel}
                         </span>
                       </div>
@@ -966,11 +968,11 @@ export function NestFeathersDashboard() {
                         }
                       </p>
                       {feather.nextMilestone ? (
-                        <p className="text-[10px] text-muted-foreground/80 font-semibold truncate leading-none pt-0.5">
+                        <p className="text-xs text-muted-foreground/80 font-semibold truncate leading-none pt-0.5">
                           Next target: <span className="font-bold text-foreground">{feather.nextMilestone.label}</span> ({feather.nextMilestone.threshold})
                         </p>
                       ) : (
-                        <p className="text-[10px] text-emerald-600 font-bold leading-none pt-0.5">
+                        <p className="text-xs text-emerald-600 font-bold leading-none pt-0.5">
                           🎉 Max level reached!
                         </p>
                       )}
@@ -979,7 +981,7 @@ export function NestFeathersDashboard() {
 
                   {/* Progress Line */}
                   <div className="space-y-1.5 mt-2">
-                    <div className="flex justify-between text-[10px] font-black tracking-tight text-muted-foreground">
+                    <div className="flex justify-between text-xs font-black tracking-tight text-muted-foreground">
                       <span>Progress</span>
                       <span>{feather.count} / {nextThreshold || "Max"}</span>
                     </div>
@@ -994,10 +996,10 @@ export function NestFeathersDashboard() {
                   {/* Bottom reaction bar & actions */}
                   <div className="flex items-center justify-between border-t border-muted/40 pt-3.5 mt-auto text-xs font-bold text-muted-foreground">
                     <div className="flex items-center gap-1.5">
-                      <div className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-muted/60 hover:bg-muted transition-colors text-[10px]">
+                      <div className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-muted/60 hover:bg-muted transition-colors text-xs">
                         🔥 <span className="text-foreground">{feather.count}</span>
                       </div>
-                      <div className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-muted/60 hover:bg-muted transition-colors text-[10px]">
+                      <div className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-muted/60 hover:bg-muted transition-colors text-xs">
                         👍 <span className="text-foreground">{currentLevel}/{maxLevel}</span>
                       </div>
                     </div>
@@ -1005,7 +1007,7 @@ export function NestFeathersDashboard() {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="h-7 px-2 text-[10px] font-extrabold group-hover:text-primary transition-colors hover:bg-transparent p-0"
+                      className="h-7 px-2 text-xs font-extrabold group-hover:text-primary transition-colors hover:bg-transparent p-0"
                       asChild
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -1033,7 +1035,7 @@ export function NestFeathersDashboard() {
                     <div className="space-y-1 w-full">
                       <div className="flex flex-col items-center gap-1.5">
                         <DrawerTitle className="text-xl font-black">{selectedFeather.label}</DrawerTitle>
-                        <span className={cn("text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider", getFeatherTheme(selectedFeather.type).badge)}>
+                        <span className={cn("text-xs font-black uppercase px-2 py-0.5 rounded-full tracking-wider", getFeatherTheme(selectedFeather.type).badge)}>
                           Level {selectedFeather.level || 0}
                         </span>
                       </div>
@@ -1104,7 +1106,7 @@ export function NestFeathersDashboard() {
                     <div className="space-y-1 w-full">
                       <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2 justify-center sm:justify-start">
                         <DialogTitle className="text-lg font-black">{selectedFeather.label}</DialogTitle>
-                        <span className={cn("text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider mt-1 sm:mt-0 self-center sm:self-auto", getFeatherTheme(selectedFeather.type).badge)}>
+                        <span className={cn("text-xs font-black uppercase px-2 py-0.5 rounded-full tracking-wider mt-1 sm:mt-0 self-center sm:self-auto", getFeatherTheme(selectedFeather.type).badge)}>
                           Level {selectedFeather.level || 0}
                         </span>
                       </div>
@@ -1231,7 +1233,7 @@ function FeatherMilestonesList({ feather }: { feather: any }) {
                     {m.label}
                   </h4>
                   <p className={cn(
-                    "text-[10px] font-semibold mt-1.5",
+                    "text-xs font-semibold mt-1.5",
                     (isUnlocked || isNext) ? "text-muted-foreground" : "text-muted-foreground/50"
                   )}>
                     Level {m.level} • Requires {m.threshold} actions
@@ -1242,7 +1244,7 @@ function FeatherMilestonesList({ feather }: { feather: any }) {
               {/* Status Badge */}
               <span 
                 className={cn(
-                  "text-[8px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider shrink-0",
+                  "text-xs font-black uppercase px-2 py-0.5 rounded-full tracking-wider shrink-0",
                   isUnlocked && "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
                   isNext && "bg-primary/10 text-primary",
                   !isUnlocked && !isNext && "bg-muted text-muted-foreground"
@@ -1255,7 +1257,7 @@ function FeatherMilestonesList({ feather }: { feather: any }) {
             {/* Next Milestone Progress bar */}
             {isNext && (
               <div className="pt-2.5 border-t border-primary/10 mt-0.5">
-                <div className="flex justify-between text-[9px] font-black tracking-tight text-muted-foreground mb-1.5">
+                <div className="flex justify-between text-xs font-black tracking-tight text-muted-foreground mb-1.5">
                   <span>Target Progress</span>
                   <span>{feather.count} / {m.threshold} actions</span>
                 </div>

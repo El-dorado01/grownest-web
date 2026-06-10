@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { AppSidebar } from "@/components/app-sidebar"
+import { DashboardHeader } from "@/components/dashboard-header"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -253,10 +254,7 @@ function NestCirclePage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        {/* Header */}
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
+        <DashboardHeader>
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
@@ -268,13 +266,13 @@ function NestCirclePage() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-        </header>
+        </DashboardHeader>
 
-        <main className="flex flex-col gap-6 p-4 md:p-6 max-w-4xl mx-auto w-full">
+        <main className="flex flex-col gap-3 p-3 md:p-5 mx-auto w-full">
           {/* Page title */}
           <div>
             <h1 className="text-2xl font-bold tracking-tight">NestCircle</h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <p className="text-muted-foreground text-sm mt-0.5">
               Invite friends, earn points, redeem as airtime — no limits.
             </p>
           </div>
@@ -297,30 +295,52 @@ function NestCirclePage() {
           {circleData && (
             <>
               {/* Referral Code Card */}
-              <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-primary via-primary/90 to-primary/70 p-6 text-primary-foreground shadow-lg">
-                <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/4" />
-                <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-white/5 translate-y-1/2 -translate-x-1/4" />
+              <div className="relative overflow-hidden rounded-2xl bg-card border border-border p-5 shadow-sm">
+                {/* Grid texture */}
+                <div
+                  className="absolute inset-0 opacity-[0.035]"
+                  style={{
+                    backgroundImage: `linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)`,
+                    backgroundSize: "32px 32px",
+                  }}
+                />
+                {/* Brand color glow orbs */}
+                <div className="absolute -top-10 -right-10 w-56 h-56 rounded-full bg-primary/15 blur-3xl" />
+                <div className="absolute -bottom-12 -left-8 w-48 h-48 rounded-full bg-primary/10 blur-3xl" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-20 rounded-full bg-primary/8 blur-2xl" />
 
                 <div className="relative">
-                  <p className="text-sm font-medium opacity-80 mb-1">Your referral code</p>
-                  <p className="text-4xl font-bold tracking-widest font-mono mb-4">
-                    {circleData.referralCode}
-                  </p>
-                  <p className="text-xs opacity-70 mb-4 break-all">{circleData.referralLink}</p>
-                  <div className="flex gap-3">
+                  {/* Label */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Your Referral Code</p>
+                  </div>
+
+                  {/* Code display pill */}
+                  <div className="inline-flex items-center gap-3 bg-muted/60 border border-border rounded-xl px-5 py-2.5 mb-3">
+                    <p className="text-3xl font-bold tracking-[0.25em] font-mono text-foreground">
+                      {circleData.referralCode}
+                    </p>
+                  </div>
+
+                  {/* Link */}
+                  <p className="text-xs text-muted-foreground mb-4 break-all font-mono">{circleData.referralLink}</p>
+
+                  {/* Actions */}
+                  <div className="flex gap-2.5">
                     <Button
                       size="sm"
-                      variant="secondary"
-                      className="bg-white/20 hover:bg-white/30 text-white border-0"
+                      variant="outline"
+                      className="transition-all"
                       onClick={handleCopy}
                     >
-                      {copied ? <CheckCircle2 className="w-4 h-4 mr-1.5" /> : <Copy className="w-4 h-4 mr-1.5" />}
+                      {copied ? <CheckCircle2 className="w-4 h-4 mr-1.5 text-primary" /> : <Copy className="w-4 h-4 mr-1.5" />}
                       {copied ? "Copied!" : "Copy Link"}
                     </Button>
                     <Button
                       size="sm"
-                      variant="secondary"
-                      className="bg-white/20 hover:bg-white/30 text-white border-0"
+                      variant="outline"
+                      className="transition-all"
                       onClick={handleShare}
                     >
                       <Share2 className="w-4 h-4 mr-1.5" /> Share
@@ -330,34 +350,34 @@ function NestCirclePage() {
               </div>
 
               {/* Stats Row */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2.5">
                 {[
                   {
-                    icon: <Users2 className="w-5 h-5 text-primary" />,
+                    icon: <Users2 className="w-4 h-4 text-primary" />,
                     label: "Circle Size",
                     value: circleData.stats.totalReferrals,
                     sub: `${circleData.stats.rewardedReferrals} rewarded`,
                   },
                   {
-                    icon: <Coins className="w-5 h-5 text-amber-500" />,
+                    icon: <Coins className="w-4 h-4 text-amber-500" />,
                     label: "Points Balance",
                     value: `${circleData.pointsBalance.toLocaleString()} pts`,
                     sub: `≈ ₦${circleData.pointsValueNaira.toLocaleString()}`,
                   },
                   {
-                    icon: <TrendingUp className="w-5 h-5 text-emerald-500" />,
+                    icon: <TrendingUp className="w-4 h-4 text-primary" />,
                     label: "Total Earned",
                     value: `${circleData.stats.totalPointsEarned.toLocaleString()} pts`,
                     sub: `₦${circleData.stats.totalValueNaira.toLocaleString()} value`,
                   },
                 ].map((stat) => (
                   <Card key={stat.label} className="border-border/60">
-                    <CardContent className="p-3 flex flex-col gap-1.5">
-                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                    <CardContent className="p-3 flex flex-col gap-1">
+                      <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
                         {stat.icon}
                       </div>
                       <p className="text-xs text-muted-foreground">{stat.label}</p>
-                      <p className="font-bold text-sm leading-tight">{stat.value}</p>
+                      <p className="font-bold text-base leading-tight">{stat.value}</p>
                       <p className="text-xs text-muted-foreground">{stat.sub}</p>
                     </CardContent>
                   </Card>
@@ -368,19 +388,18 @@ function NestCirclePage() {
               {circleData.pointsBalance >= circleData.minRedemptionPoints ? (
                 <Button
                   className="w-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30"
-                  size="lg"
                   onClick={() => setRedeemOpen(true)}
                 >
-                  <Zap className="w-5 h-5 mr-2" />
+                  <Zap className="w-4 h-4 mr-2" />
                   Redeem {circleData.pointsBalance} pts for ₦{circleData.pointsValueNaira} Airtime
                 </Button>
               ) : (
-                <div className="rounded-xl border border-dashed border-border p-4 text-center">
-                  <Zap className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
+                <div className="rounded-xl border border-dashed border-border p-3 text-center">
+                  <Zap className="w-5 h-5 text-muted-foreground mx-auto mb-1.5" />
                   <p className="text-sm font-medium">
                     {circleData.minRedemptionPoints - circleData.pointsBalance} more points needed to redeem
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Minimum: {circleData.minRedemptionPoints} pts = ₦{circleData.minRedemptionNaira} airtime
                   </p>
                 </div>
@@ -388,10 +407,10 @@ function NestCirclePage() {
 
               {/* How It Works */}
               <Card className="border-border/60">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">How NestCircle Works</CardTitle>
+                <CardHeader className="pb-2 pt-4 px-4">
+                  <CardTitle className="text-[15px]">How NestCircle Works</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3 px-4 pb-4">
                   {[
                     {
                       icon: <Share2 className="w-4 h-4 text-primary" />,
@@ -399,28 +418,28 @@ function NestCirclePage() {
                       desc: "Send your unique referral link to friends and family.",
                     },
                     {
-                      icon: <Users2 className="w-4 h-4 text-violet-500" />,
+                      icon: <Users2 className="w-4 h-4 text-primary" />,
                       title: "Friend joins & verifies",
                       desc: "They sign up and verify their email + phone number.",
                     },
                     {
-                      icon: <Gift className="w-4 h-4 text-emerald-500" />,
+                      icon: <Gift className="w-4 h-4 text-primary" />,
                       title: "Both earn 500 points",
                       desc: "You get 500 pts, they get 500 pts as a welcome bonus.",
                     },
                     {
-                      icon: <Smartphone className="w-4 h-4 text-amber-500" />,
+                      icon: <Smartphone className="w-4 h-4 text-primary" />,
                       title: "Redeem as airtime",
                       desc: "Convert points to airtime (2 pts = ₦1). No expiry, no cap.",
                     },
                   ].map((step, i) => (
                     <div key={i} className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                         {step.icon}
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{step.title}</p>
-                        <p className="text-xs text-muted-foreground">{step.desc}</p>
+                        <p className="text-sm font-semibold">{step.title}</p>
+                        <p className="text-sm text-muted-foreground">{step.desc}</p>
                       </div>
                     </div>
                   ))}
@@ -429,50 +448,50 @@ function NestCirclePage() {
 
               {/* Circle Members */}
               <Card className="border-border/60">
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-2 pt-4 px-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">Your Circle</CardTitle>
-                    <Badge variant="secondary" className="font-normal">
+                    <CardTitle className="text-[15px]">Your Circle</CardTitle>
+                    <Badge variant="secondary" className="font-normal text-xs">
                       {circleData.stats.totalReferrals} member{circleData.stats.totalReferrals !== 1 ? "s" : ""}
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-4 pb-4">
                   {circleData.circle.length === 0 ? (
-                    <div className="text-center py-8 space-y-2">
-                      <Users2 className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+                    <div className="text-center py-6 space-y-1.5">
+                      <Users2 className="w-8 h-8 text-muted-foreground/40 mx-auto" />
                       <p className="text-sm text-muted-foreground">Your circle is empty — share your link to get started!</p>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-0">
                       {circleData.circle.map((member) => (
                         <div
                           key={member.id}
                           className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
                               <span className="text-sm font-bold text-primary">
                                 {member.name.charAt(0).toUpperCase()}
                               </span>
                             </div>
                             <div>
-                              <p className="text-sm font-medium">{member.name.split(" ")[0]}</p>
+                              <p className="text-sm font-medium leading-tight">{member.name.split(" ")[0]}</p>
                               <p className="text-xs text-muted-foreground">
                                 Joined {new Date(member.joinedAt).toLocaleDateString("en-NG", { month: "short", day: "numeric", year: "numeric" })}
                               </p>
                             </div>
                           </div>
                           {member.rewardPaid ? (
-                            <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/20 dark:text-emerald-400 font-normal">
+                            <Badge className="bg-primary/10 text-primary border-primary/20 font-normal text-xs">
                               <CheckCircle2 className="w-3 h-3 mr-1" /> +{member.rewardPoints} pts
                             </Badge>
                           ) : member.isFullyVerified ? (
-                            <Badge className="bg-primary/10 text-primary border-primary/20 font-normal">
+                            <Badge className="bg-primary/10 text-primary border-primary/20 font-normal text-xs">
                               <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Processing
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="text-muted-foreground font-normal">
+                            <Badge variant="outline" className="text-muted-foreground font-normal text-xs">
                               <Clock className="w-3 h-3 mr-1" /> Pending
                             </Badge>
                           )}
@@ -486,17 +505,17 @@ function NestCirclePage() {
               {/* Recent Point Transactions */}
               {circleData.recentPointTransactions.length > 0 && (
                 <Card className="border-border/60">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Recent Points Activity</CardTitle>
+                  <CardHeader className="pb-2 pt-4 px-4">
+                    <CardTitle className="text-[15px]">Recent Points Activity</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
+                  <CardContent className="px-4 pb-4">
+                    <div className="space-y-0">
                       {circleData.recentPointTransactions.map((tx) => {
                         const { label, color, sign } = getTransactionLabel(tx.reason)
                         return (
                           <div
                             key={tx.id}
-                            className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0"
+                            className="flex items-center justify-between py-2 border-b border-border/40 last:border-0"
                           >
                             <div>
                               <p className="text-sm font-medium">{label}</p>

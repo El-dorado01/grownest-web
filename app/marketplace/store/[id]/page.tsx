@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { Star } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCard } from "@/components/nestmarkets/product-card";
@@ -17,6 +16,7 @@ import { useVendor } from "@/hooks/use-vendor";
 import { useVendors } from "@/hooks/use-vendors";
 import type { MarketProduct } from "@/types/nestmarkets";
 import Image from "next/image";
+import { DashboardHeader } from "@/components/dashboard-header";
 
 export default function StoreProfilePage() {
   const params = useParams<{ id: string }>();
@@ -30,9 +30,7 @@ export default function StoreProfilePage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
+        <DashboardHeader rightActions={<CartBadge />}>
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem><BreadcrumbLink href="/marketplace/vendors">Vendors</BreadcrumbLink></BreadcrumbItem>
@@ -40,8 +38,7 @@ export default function StoreProfilePage() {
               <BreadcrumbItem><BreadcrumbPage>{store?.name ?? "Store"}</BreadcrumbPage></BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <div className="ml-auto"><CartBadge /></div>
-        </header>
+        </DashboardHeader>
 
         <div className="p-4 md:p-6 space-y-6">
           {isLoading || !store ? (

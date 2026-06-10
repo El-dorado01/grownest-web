@@ -1,6 +1,8 @@
 // app/savings/eggs/[id]/page.tsx
 "use client"
 
+import { DashboardHeader } from "@/components/dashboard-header"
+
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
 import confetti from "canvas-confetti"
@@ -152,12 +154,8 @@ export default function GoalDetailPage() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-            <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 data-vertical:h-4 data-vertical:self-auto" />
-            </div>
-          </header>
+          <DashboardHeader>
+            </DashboardHeader>
           <div className="flex flex-1 gap-6 p-4 md:p-6">
             <div className="flex-1 flex flex-col gap-6">
               <Skeleton className="h-64 rounded-2xl" />
@@ -235,10 +233,7 @@ export default function GoalDetailPage() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-            <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 data-vertical:h-4 data-vertical:self-auto" />
+          <DashboardHeader>
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem><BreadcrumbLink href="/">Dashboard</BreadcrumbLink></BreadcrumbItem>
@@ -248,8 +243,7 @@ export default function GoalDetailPage() {
                   <BreadcrumbItem><BreadcrumbPage className="truncate max-w-40">{egg.title}</BreadcrumbPage></BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
-            </div>
-          </header>
+            </DashboardHeader>
           <div className="flex flex-1 items-center justify-center p-6">
             <div className="flex flex-col items-center gap-6 text-center max-w-sm">
               <div className="relative flex items-center justify-center">
@@ -283,10 +277,7 @@ export default function GoalDetailPage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 data-vertical:h-4 data-vertical:self-auto" />
+        <DashboardHeader>
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem><BreadcrumbLink href="/">Dashboard</BreadcrumbLink></BreadcrumbItem>
@@ -298,8 +289,7 @@ export default function GoalDetailPage() {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-          </div>
-        </header>
+          </DashboardHeader>
 
         {/* Two-column layout on lg+, single column on mobile */}
         <div className="flex flex-1 gap-6 p-4 md:p-6 overflow-y-auto">

@@ -1,6 +1,8 @@
 // app/nestbaskets/baskets/flexible/[id]/page.tsx
 "use client"
 
+import { DashboardHeader } from "@/components/dashboard-header"
+
 import * as React from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
@@ -302,32 +304,31 @@ export default function FlexibleSavingsGoalPage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-          <div className="flex items-center gap-2 px-4 w-full">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <Breadcrumb className="flex-1">
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/nestbaskets/baskets">Food Baskets</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Savings Goal hub</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
+        <DashboardHeader
+          rightActions={
             <Button variant="ghost" size="sm" asChild className="gap-1 bg-muted/30 border">
               <Link href="/nestbaskets/baskets">
                 <ArrowLeft className="w-4 h-4" /> Back
               </Link>
             </Button>
-          </div>
-        </header>
+          }
+        >
+          <Breadcrumb className="flex-1">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/nestbaskets/baskets">Food Baskets</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Savings Goal hub</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </DashboardHeader>
 
         <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto w-full">
           {/* Top Page Header Banner */}

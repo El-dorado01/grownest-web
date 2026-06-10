@@ -8,8 +8,6 @@ import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import { useAuth } from "@/context/auth-context"
 import { authApi } from "@/lib/auth-api"
-import useSWR from "swr"
-import { notificationsApi } from "@/lib/notifications-api"
 import {
   Sidebar,
   SidebarContent,
@@ -157,11 +155,6 @@ const data = {
       icon: <TruckIcon />,
     },
     {
-      name: "Notifications",
-      url: "/notifications",
-      icon: <BellIcon />,
-    },
-    {
       name: "Nest Feathers",
       url: "/nestfeathers",
       icon: <FeatherIcon />,
@@ -211,25 +204,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     avatar: "",
   };
 
-  const { data: notificationsData } = useSWR(
-    isAuthenticated ? "notifications_badge" : null,
-    async () => {
-      const res = await notificationsApi.getNotifications()
-      return res.data
-    },
-    { refreshInterval: 60000 }
-  );
-
-  const unreadCount = notificationsData?.unreadCount || 0;
-
-  const projectsWithBadges = React.useMemo(() => {
-    return data.projects.map(p => {
-      if (p.name === "Notifications") {
-        return { ...p, badge: unreadCount }
-      }
-      return p
-    })
-  }, [unreadCount])
+  const projectsWithBadges = data.projects;
 
   const sellerFullItems = [
     { title: "Dashboard", url: "/seller" },

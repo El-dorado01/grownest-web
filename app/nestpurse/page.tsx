@@ -1,5 +1,7 @@
 "use client"
 
+import { DashboardHeader } from "@/components/dashboard-header"
+
 import * as React from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { format } from "date-fns"
@@ -130,10 +132,7 @@ function NestPursePage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
+        <DashboardHeader>
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
@@ -145,8 +144,7 @@ function NestPursePage() {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-          </div>
-        </header>
+          </DashboardHeader>
 
         <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 md:p-6">
           {profileError ? (
