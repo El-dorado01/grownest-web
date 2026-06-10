@@ -33,17 +33,19 @@ export function DashboardHeader({ children, rightActions }: DashboardHeaderProps
   const isNotificationsPage = pathname === "/notifications"
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b px-4 w-full bg-background select-none">
-      <div className="flex items-center gap-2">
-        <SidebarTrigger className="-ml-1" />
+    <header className="flex h-16 shrink-0 items-center justify-between border-b px-4 w-full bg-background select-none gap-4">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        <SidebarTrigger className="-ml-1 shrink-0" />
         <Separator
           orientation="vertical"
-          className="mr-2 h-4"
+          className="mr-2 h-4 shrink-0"
         />
-        {children}
+        <div className="min-w-0 flex-1 overflow-x-auto scrollbar-none flex items-center pr-2 [&>nav>ol]:flex-nowrap [&>nav>ol]:whitespace-nowrap">
+          {children}
+        </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 shrink-0">
         {rightActions}
         <Link 
           href="/notifications" 
