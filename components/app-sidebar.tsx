@@ -241,8 +241,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const isNavigated = lastPathname.current !== pathname;
     if (isNavigated) {
       lastPathname.current = pathname;
-      const allGroups = [...navMainItems, ...navSecondaryItems];
-      const matchingGroup = allGroups.find(group => 
+      const matchingGroup = navSecondaryItems.find(group => 
+        group.title === "Sell on NestMarket" &&
         group.items?.some(subItem => 
           pathname === subItem.url || (subItem.url !== "/" && pathname.startsWith(subItem.url))
         )
@@ -331,10 +331,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ) : (
           <>
             <React.Suspense fallback={<div className="h-10 px-4 flex items-center text-xs text-muted-foreground">Loading...</div>}>
-              <NavMain 
-                items={navMainItems} 
-                onSelectSubmenu={(title, items, icon) => setActiveSubmenu({ title, items, icon })} 
-              />
+              <NavMain items={navMainItems} />
             </React.Suspense>
             <NavProjects projects={projectsWithBadges} />
             <NavSecondary 
