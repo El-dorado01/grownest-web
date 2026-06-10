@@ -23,6 +23,7 @@ import {
   CreditCardIcon,
   ArrowUpRight,
   Loader2,
+  Smartphone,
 } from "lucide-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
@@ -109,6 +110,8 @@ function NestPursePage() {
         activity.method === "send_money"
       )
         return <SendIcon className="text-blue-500" />
+      if (activity.method === "airtime")
+        return <Smartphone className="text-primary" />
       return <TrendingDownIcon className="text-red-500" />
     }
     return <ClockIcon className="text-muted-foreground" />

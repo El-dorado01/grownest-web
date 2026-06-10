@@ -53,7 +53,9 @@ import {
   HelpCircle,
   ArrowRight,
   RefreshCw,
-  Feather
+  Feather,
+  Smartphone,
+  PhoneCall
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -73,6 +75,8 @@ function getFeatherIcon(type: string, className?: string) {
       return <TrendingUp className={cn("text-rose-500", className)} />
     case "MARKET_FOLLOW":
       return <Compass className={cn("text-orange-500", className)} />
+    case "AIRTIME_PURCHASE":
+      return <Smartphone className={cn("text-sky-500", className)} />
     default:
       return <Feather className={cn("text-primary", className)} />
   }
@@ -141,6 +145,16 @@ function getFeatherTheme(type: string) {
         actionText: "Explore Vendors",
         btnColor: "bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-600 dark:hover:bg-orange-750",
       }
+    case "AIRTIME_PURCHASE":
+      return {
+        bg: "bg-sky-500/10 border-sky-500/20 hover:border-sky-500/40",
+        iconBg: "bg-sky-500/20",
+        progressColor: "bg-sky-500",
+        badge: "bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300",
+        route: "#",
+        actionText: "Buy Airtime",
+        btnColor: "bg-sky-600 hover:bg-sky-700 text-white dark:bg-sky-600 dark:hover:bg-sky-750",
+      }
     default:
       return {
         bg: "bg-primary/10 border-primary/20 hover:border-primary/40",
@@ -160,6 +174,30 @@ function getUserRank(totalScore: number) {
   if (totalScore >= 15) return { title: "Elite Nester 🌟", desc: "A seasoned saver and active community member." }
   if (totalScore >= 5) return { title: "Rising Star 📈", desc: "You are actively building your financial future." }
   return { title: "Nest Explorer 🌱", desc: "Begin your savings journey and earn your first feather!" }
+}
+
+// Smart network provider detection based on Nigerian phone prefixes
+function detectNetwork(phone: string): string | null {
+  const cleanPhone = phone.replace(/[\s\-\+]/g, "");
+  let localPhone = cleanPhone;
+  if (cleanPhone.startsWith("234")) {
+    localPhone = "0" + cleanPhone.slice(3);
+  }
+  
+  if (localPhone.length < 4) return null;
+  const prefix = localPhone.substring(0, 4);
+  
+  const mtnPrefixes = ["0803", "0806", "0810", "0813", "0814", "0816", "0903", "0906", "0913", "0916", "0703", "0706", "0704"];
+  const gloPrefixes = ["0805", "0807", "0811", "0815", "0905", "0915", "0705"];
+  const airtelPrefixes = ["0802", "0808", "0812", "0901", "0902", "0904", "0907", "0912", "0701", "0708"];
+  const nineMobilePrefixes = ["0809", "0817", "0818", "0908", "0909"];
+  
+  if (mtnPrefixes.includes(prefix)) return "MTN";
+  if (gloPrefixes.includes(prefix)) return "GLO";
+  if (airtelPrefixes.includes(prefix)) return "AIRTEL";
+  if (nineMobilePrefixes.includes(prefix)) return "9MOBILE";
+  
+  return null;
 }
 
 interface MilestoneCardStackProps {
@@ -282,10 +320,407 @@ function getMotivationMessage(feather: any) {
 export function NestFeathersDashboard() {
   const isMobile = useIsMobile()
   const { feathers, isLoading, error, mutate } = useNestFeathers()
-  const { profile } = useProfile()
+  const { profile, mutate: mutateProfile } = useProfile()
   const [selectedFeather, setSelectedFeather] = React.useState<any>(null)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
   const [quote, setQuote] = React.useState("")
+
+  // Airtime top-up form states
+  const [isAirtimeFlow, setIsAirtimeFlow] = React.useState(false)
+  const [airtimeStep, setAirtimeStep] = React.useState<number>(1)
+  const [isForSelf, setIsForSelf] = React.useState<boolean | null>(null)
+  const [phoneNumber, setPhoneNumber] = React.useState("")
+  const [network, setNetwork] = React.useState("MTN")
+  const [amount, setAmount] = React.useState("")
+  const [pin, setPin] = React.useState("")
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [airtimeError, setAirtimeError] = React.useState<string | null>(null)
+  const [airtimeSuccess, setAirtimeSuccess] = React.useState(false)
+
+  const pinInputRef = React.useRef<HTMLInputElement>(null)
+
+  React.useEffect(() => {
+    if (airtimeStep === 3) {
+      const timer = setTimeout(() => {
+        pinInputRef.current?.focus()
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [airtimeStep])
+
+  const handleCloseFeather = () => {
+    setSelectedFeather(null)
+    setIsAirtimeFlow(false)
+    setIsForSelf(null)
+    setPhoneNumber("")
+    setNetwork("MTN")
+    setAmount("")
+    setPin("")
+    setAirtimeStep(1)
+    setAirtimeError(null)
+    setAirtimeSuccess(false)
+  }
+
+  const isStep1Valid = phoneNumber.replace(/[\s\-\+]/g, "").length >= 10 && !!network
+  const isStep2Valid = Number(amount) >= 50
+  const isStep3Valid = pin.length === 4
+
+  const handleBuyAirtime = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (airtimeStep === 1) {
+      if (isStep1Valid) {
+        setAirtimeStep(2)
+      }
+      return
+    }
+    if (airtimeStep === 2) {
+      if (isStep2Valid) {
+        setAirtimeStep(3)
+      }
+      return
+    }
+    
+    if (!phoneNumber || !amount || !pin) {
+      setAirtimeError("Please fill in all fields.")
+      return
+    }
+
+    setIsSubmitting(true)
+    setAirtimeError(null)
+
+    try {
+      const { nestPurseApi } = await import("@/lib/nestpurse-api")
+      const res = await nestPurseApi.purchaseAirtime({
+        phoneNumber,
+        network,
+        amount: Number(amount),
+        pin,
+      })
+
+      if (res.error) {
+        setAirtimeError(res.error || "Failed to purchase airtime. Please try again.")
+      } else {
+        setAirtimeSuccess(true)
+        await Promise.all([mutate(), mutateProfile()])
+      }
+    } catch (err: any) {
+      const errMsg = err.response?.data?.error || err.message || "An error occurred."
+      setAirtimeError(errMsg)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const renderAirtimeForm = () => {
+    if (airtimeSuccess) {
+      return (
+        <div className="flex flex-col items-center justify-center py-8 px-4 text-center gap-4 animate-in fade-in zoom-in-95 duration-300">
+          <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
+            <CheckCircle2 className="h-10 w-10 fill-emerald-500 text-white dark:fill-transparent" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-black text-foreground">Top-up Successful!</h3>
+            <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
+              ₦{Number(amount).toLocaleString()} airtime has been sent to {phoneNumber}. Your wallet balance has been updated.
+            </p>
+          </div>
+          <Button 
+            className="mt-4 rounded-full px-8 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs h-10 cursor-pointer"
+            onClick={handleCloseFeather}
+          >
+            Done
+          </Button>
+        </div>
+      )
+    }
+
+    return (
+      <form onSubmit={handleBuyAirtime} className="flex-1 flex flex-col gap-4 py-2 select-none animate-in fade-in slide-in-from-bottom-4 duration-300">
+        {airtimeError && (
+          <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-xs font-bold text-destructive text-center">
+            {airtimeError}
+          </div>
+        )}
+
+        {/* Step Indicator */}
+        <div className="flex justify-between items-center px-1 border-b pb-2 mb-1">
+          <span className="text-xs font-black uppercase tracking-wider text-sky-600 dark:text-sky-400">
+            {airtimeStep === 1 && "Step 1: Recipient & Network"}
+            {airtimeStep === 2 && "Step 2: Enter Amount"}
+            {airtimeStep === 3 && "Step 3: Secure Transaction PIN"}
+          </span>
+          <div className="flex gap-1">
+            <div className={cn("h-1.5 rounded-full transition-all duration-300", airtimeStep === 1 ? "bg-sky-600 w-4.5" : "bg-muted w-1.5")} />
+            <div className={cn("h-1.5 rounded-full transition-all duration-300", airtimeStep === 2 ? "bg-sky-600 w-4.5" : "bg-muted w-1.5")} />
+            <div className={cn("h-1.5 rounded-full transition-all duration-300", airtimeStep === 3 ? "bg-sky-600 w-4.5" : "bg-muted w-1.5")} />
+          </div>
+        </div>
+
+        {/* STEP 1: RECIPIENT & NETWORK */}
+        {airtimeStep === 1 && (
+          <div className="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
+            {/* Recipient Selection (For Self / For Others) */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Recipient</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  key="self"
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    setIsForSelf(true)
+                    if (profile?.phone) {
+                      setPhoneNumber(profile.phone)
+                      const detected = detectNetwork(profile.phone)
+                      if (detected) setNetwork(detected)
+                    } else {
+                      setPhoneNumber("")
+                    }
+                  }}
+                  className={cn(
+                    "h-10 rounded-xl border font-black text-sm transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer",
+                    isForSelf === true
+                      ? "bg-sky-600 border-sky-600 text-white shadow-xs"
+                      : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
+                  )}
+                >
+                  For Self
+                </button>
+                <button
+                  key="others"
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    setIsForSelf(false)
+                    setPhoneNumber("")
+                  }}
+                  className={cn(
+                    "h-10 rounded-xl border font-black text-sm transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer",
+                    isForSelf === false
+                      ? "bg-sky-600 border-sky-600 text-white shadow-xs"
+                      : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
+                  )}
+                >
+                  For Others
+                </button>
+              </div>
+            </div>
+
+            {/* Hidden phone and network fields revealed after choice */}
+            {isForSelf !== null && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                {/* Phone Number Input */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Phone Number</label>
+                  <input
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPhoneNumber(val);
+                      const detected = detectNetwork(val);
+                      if (detected) {
+                        setNetwork(detected);
+                      }
+                    }}
+                    placeholder={isForSelf ? "No phone number set in profile" : "e.g. 08055441122"}
+                    disabled={isSubmitting || isForSelf}
+                    className={cn(
+                      "w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm font-semibold transition-all",
+                      isForSelf && "opacity-75 bg-muted/20 cursor-not-allowed"
+                    )}
+                  />
+                  {isForSelf && !profile?.phone && (
+                    <p className="text-xs text-destructive font-bold">
+                      No phone number set in your profile. Please choose "For Others" or update your profile.
+                    </p>
+                  )}
+                </div>
+
+                {/* Network Selection */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Network Provider</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { id: "MTN", label: "MTN", color: "bg-yellow-500 hover:bg-yellow-600 text-black border-yellow-500" },
+                      { id: "GLO", label: "Glo", color: "bg-green-600 hover:bg-green-700 text-white border-green-600" },
+                      { id: "AIRTEL", label: "Airtel", color: "bg-red-600 hover:bg-red-700 text-white border-red-600" },
+                      { id: "9MOBILE", label: "9Mobile", color: "bg-teal-800 hover:bg-teal-900 text-white border-teal-850" },
+                    ].map((net) => {
+                      const isSelected = network === net.id
+                      return (
+                        <button
+                          key={net.id}
+                          type="button"
+                          disabled={isSubmitting}
+                          onClick={() => setNetwork(net.id)}
+                          className={cn(
+                            "h-10 rounded-xl border font-black text-xs tracking-wide transition-all shadow-xs flex items-center justify-center cursor-pointer",
+                            isSelected 
+                              ? `${net.color} scale-105 ring-2 ring-offset-2 ring-sky-500/50 dark:ring-offset-card` 
+                              : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
+                          )}
+                        >
+                          {net.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 1 Footer */}
+            <div className="flex gap-2 border-t pt-4 mt-auto">
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isSubmitting}
+                onClick={() => setIsAirtimeFlow(false)}
+                className="flex-1 h-10 rounded-full font-bold text-sm cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                disabled={!isStep1Valid}
+                onClick={() => setAirtimeStep(2)}
+                className="flex-1 h-10 rounded-full font-bold gap-2 text-sm text-white bg-sky-600 hover:bg-sky-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 2: ENTER AMOUNT */}
+        {airtimeStep === 2 && (
+          <div className="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
+            {/* Amount Selection */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Amount (₦)</label>
+              <div className="grid grid-cols-5 gap-1.5">
+                {[50, 100, 200, 500, 1000].map((val) => (
+                  <button
+                    key={val}
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => setAmount(String(val))}
+                    className={cn(
+                      "h-8 rounded-lg border font-bold text-xs transition-all flex items-center justify-center cursor-pointer",
+                      amount === String(val)
+                        ? "bg-sky-600 text-white border-sky-600 scale-105"
+                        : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
+                    )}
+                  >
+                    ₦{val}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Custom Amount (Min ₦50)"
+                disabled={isSubmitting}
+                className="w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm font-semibold transition-all mt-2"
+              />
+            </div>
+
+            {/* Step 2 Footer */}
+            <div className="flex gap-2 border-t pt-4 mt-auto">
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isSubmitting}
+                onClick={() => setAirtimeStep(1)}
+                className="flex-1 h-10 rounded-full font-bold text-sm cursor-pointer"
+              >
+                Back
+              </Button>
+              <Button
+                type="button"
+                disabled={!isStep2Valid}
+                onClick={() => setAirtimeStep(3)}
+                className="flex-1 h-10 rounded-full font-bold gap-2 text-sm text-white bg-sky-600 hover:bg-sky-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: TRANSACTION PIN */}
+        {airtimeStep === 3 && (
+          <div className="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
+            {/* Transaction PIN */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Transaction PIN</label>
+              <input
+                ref={pinInputRef}
+                type="password"
+                maxLength={4}
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                placeholder="4-digit PIN"
+                disabled={isSubmitting}
+                className="w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm font-semibold tracking-widest text-center transition-all"
+              />
+            </div>
+
+            {/* Summary Details */}
+            <div className="p-3.5 rounded-2xl bg-muted/30 border border-muted/50 text-xs font-semibold text-muted-foreground space-y-1">
+              <div className="flex justify-between">
+                <span>Recipient:</span>
+                <span className="font-bold text-foreground">{isForSelf ? "Self" : "Others"} ({phoneNumber})</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Network:</span>
+                <span className="font-bold text-foreground">{network}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Amount:</span>
+                <span className="font-black text-foreground">₦{Number(amount).toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* Step 3 Footer */}
+            <div className="flex gap-2 border-t pt-4 mt-auto">
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isSubmitting}
+                onClick={() => setAirtimeStep(2)}
+                className="flex-1 h-10 rounded-full font-bold text-sm cursor-pointer"
+              >
+                Back
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting || !isStep3Valid}
+                className={cn("flex-1 h-10 rounded-full font-bold gap-2 text-sm text-white bg-sky-600 hover:bg-sky-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed")}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Purchasing...
+                  </>
+                ) : (
+                  <>
+                    Confirm Top-up
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+      </form>
+    )
+  }
 
   React.useEffect(() => {
     const randomIndex = Math.floor(Math.random() * QUOTES.length)
@@ -403,11 +838,11 @@ export function NestFeathersDashboard() {
                     : "GN"}
                 </div>
                 <div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-sm text-foreground leading-none">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-1.5">
+                    <span className="font-bold text-sm text-foreground leading-none truncate max-w-[160px] sm:max-w-none">
                       {profile?.fullName || "GrowNester"}
                     </span>
-                    <span className="text-xs text-muted-foreground font-normal">
+                    <span className="text-xs text-muted-foreground font-normal truncate max-w-[140px] sm:max-w-none">
                       @{profile?.email?.split("@")[0] || "nester"}
                     </span>
                   </div>
@@ -476,7 +911,7 @@ export function NestFeathersDashboard() {
                   onClick={() => document.getElementById('feathers-grid')?.scrollIntoView({ behavior: 'smooth' })}
                   className="flex items-center gap-1 hover:text-foreground transition-colors cursor-pointer text-xs self-start sm:self-auto"
                 >
-                  6 Categories <ChevronRight className="h-4 w-4 rotate-90" />
+                  {feathers.length} Categories <ChevronRight className="h-4 w-4 rotate-90" />
                 </button>
               </div>
             </div>
@@ -587,7 +1022,7 @@ export function NestFeathersDashboard() {
 
         {/* Milestone Detail Dialog/Drawer */}
         {isMobile ? (
-          <Drawer open={!!selectedFeather} onOpenChange={(open) => !open && setSelectedFeather(null)}>
+          <Drawer open={!!selectedFeather} onOpenChange={(open) => !open && handleCloseFeather()}>
             <DrawerContent className="max-h-[85vh]">
               {selectedFeather && (
                 <div className="mx-auto w-full max-w-lg flex flex-col h-[80vh] max-h-[85vh]">
@@ -609,7 +1044,7 @@ export function NestFeathersDashboard() {
                   </DrawerHeader>
 
                   {/* Motivation Banner */}
-                  {motivationMessage && (
+                  {motivationMessage && !isAirtimeFlow && (
                     <div className="px-6 pt-2 shrink-0">
                       <div className={cn(
                         "p-2 rounded-xl text-center text-xs font-bold border",
@@ -622,27 +1057,43 @@ export function NestFeathersDashboard() {
                     </div>
                   )}
                   
-                  <div className="px-6 py-4 flex-1 min-h-0 overflow-y-auto">
-                    <FeatherMilestonesList feather={selectedFeather} />
+                  <div className={cn("px-6 py-4 flex-1 min-h-0 overflow-y-auto", isAirtimeFlow && "flex flex-col")}>
+                    {isAirtimeFlow && selectedFeather.type === "AIRTIME_PURCHASE" ? (
+                      renderAirtimeForm()
+                    ) : (
+                      <FeatherMilestonesList feather={selectedFeather} />
+                    )}
                   </div>
 
-                  <DrawerFooter className="px-6 pb-6 gap-2 border-t pt-4 shrink-0">
-                    <Button className={cn("w-full h-10 rounded-full font-bold gap-2 text-xs", getFeatherTheme(selectedFeather.type).btnColor)} asChild>
-                      <Link href={getFeatherTheme(selectedFeather.type).route}>
-                        {getFeatherTheme(selectedFeather.type).actionText}
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                    <DrawerClose asChild>
-                      <Button variant="ghost" className="h-10 rounded-full font-semibold text-xs">Close</Button>
-                    </DrawerClose>
-                  </DrawerFooter>
+                  {!isAirtimeFlow && (
+                    <DrawerFooter className="px-6 pb-6 gap-2 border-t pt-4 shrink-0">
+                      {selectedFeather.type === "AIRTIME_PURCHASE" ? (
+                        <Button 
+                          className={cn("w-full h-10 rounded-full font-bold gap-2 text-xs cursor-pointer", getFeatherTheme(selectedFeather.type).btnColor)}
+                          onClick={() => setIsAirtimeFlow(true)}
+                        >
+                          Buy Airtime
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button className={cn("w-full h-10 rounded-full font-bold gap-2 text-xs", getFeatherTheme(selectedFeather.type).btnColor)} asChild>
+                          <Link href={getFeatherTheme(selectedFeather.type).route}>
+                            {getFeatherTheme(selectedFeather.type).actionText}
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      )}
+                      <DrawerClose asChild>
+                        <Button variant="ghost" className="h-10 rounded-full font-semibold text-xs cursor-pointer">Close</Button>
+                      </DrawerClose>
+                    </DrawerFooter>
+                  )}
                 </div>
               )}
             </DrawerContent>
           </Drawer>
         ) : (
-          <Dialog open={!!selectedFeather} onOpenChange={(open) => !open && setSelectedFeather(null)}>
+          <Dialog open={!!selectedFeather} onOpenChange={(open) => !open && handleCloseFeather()}>
             <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-3xl border h-[580px] max-h-[85vh] flex flex-col">
               {selectedFeather && (
                 <>
@@ -664,7 +1115,7 @@ export function NestFeathersDashboard() {
                   </DialogHeader>
 
                   {/* Motivation Banner */}
-                  {motivationMessage && (
+                  {motivationMessage && !isAirtimeFlow && (
                     <div className="px-6 pt-2 shrink-0">
                       <div className={cn(
                         "p-2 rounded-xl text-center text-xs font-bold border",
@@ -677,18 +1128,34 @@ export function NestFeathersDashboard() {
                     </div>
                   )}
 
-                  <div className="px-6 py-4 flex-1 min-h-0 overflow-y-auto bg-muted/10 relative">
-                    <FeatherMilestonesList feather={selectedFeather} />
+                  <div className={cn("px-6 py-4 flex-1 min-h-0 overflow-y-auto bg-muted/10 relative", isAirtimeFlow && "flex flex-col")}>
+                    {isAirtimeFlow && selectedFeather.type === "AIRTIME_PURCHASE" ? (
+                      renderAirtimeForm()
+                    ) : (
+                      <FeatherMilestonesList feather={selectedFeather} />
+                    )}
                   </div>
 
-                  <DialogFooter className="px-6 pb-6 pt-4 border-t shrink-0 flex items-center justify-center">
-                    <Button className={cn("w-full px-8 h-10 rounded-full font-bold gap-2 text-xs mx-auto", getFeatherTheme(selectedFeather.type).btnColor)} asChild>
-                      <Link href={getFeatherTheme(selectedFeather.type).route}>
-                        {getFeatherTheme(selectedFeather.type).actionText}
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </DialogFooter>
+                  {!isAirtimeFlow && (
+                    <DialogFooter className="px-6 pb-6 pt-4 border-t shrink-0 flex items-center justify-center">
+                      {selectedFeather.type === "AIRTIME_PURCHASE" ? (
+                        <Button 
+                          className={cn("w-full px-8 h-10 rounded-full font-bold gap-2 text-xs mx-auto cursor-pointer", getFeatherTheme(selectedFeather.type).btnColor)}
+                          onClick={() => setIsAirtimeFlow(true)}
+                        >
+                          Buy Airtime
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button className={cn("w-full px-8 h-10 rounded-full font-bold gap-2 text-xs mx-auto", getFeatherTheme(selectedFeather.type).btnColor)} asChild>
+                          <Link href={getFeatherTheme(selectedFeather.type).route}>
+                            {getFeatherTheme(selectedFeather.type).actionText}
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      )}
+                    </DialogFooter>
+                  )}
                 </>
               )}
             </DialogContent>

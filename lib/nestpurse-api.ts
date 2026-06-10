@@ -156,6 +156,14 @@ export const nestPurseApi = {
 
   setupPurse: (data: { linkedAccount?: { bankCode: string; accountNumber: string; label?: string } } = {}) =>
     api.post<{ message: string; accountRef: string; bankAccountNumber: string }>("/api/nestpurse/setup", data),
+  
+  purchaseAirtime: (data: {
+    phoneNumber: string;
+    network: string;
+    amount: number;
+    pin: string;
+  }) =>
+    api.post<{ message: string; reference: string }>("/api/nestpurse/airtime", data),
 
   getTransactions: (params: {
     limit?: number;

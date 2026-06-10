@@ -33,7 +33,8 @@ import {
   Loader2Icon,
   RotateCcw,
   WalletIcon,
-  ArrowUpRight
+  ArrowUpRight,
+  Smartphone
 } from "lucide-react"
 import {
   Card,
@@ -49,6 +50,7 @@ import { ErrorState } from "@/components/error-state"
 import { AddMoneyDialog } from "@/components/purse/add-money-dialog"
 import { SendMoneyDialog } from "@/components/purse/send-money-dialog"
 import { WithdrawDialog } from "@/components/purse/withdraw-dialog"
+import { AirtimeDialog } from "@/components/purse/airtime-dialog"
 
 import { useProfile } from "@/hooks/use-profile"
 import Link from "next/link"
@@ -73,6 +75,7 @@ export function Dashboard() {
   const [showAddMoney, setShowAddMoney] = React.useState(false)
   const [showSendMoney, setShowSendMoney] = React.useState(false)
   const [showWithdraw, setShowWithdraw] = React.useState(false)
+  const [showAirtime, setShowAirtime] = React.useState(false)
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -137,6 +140,8 @@ export function Dashboard() {
         activity.method === "send_money"
       )
         return <SendIcon className="text-blue-500" />
+      if (activity.method === "airtime")
+        return <Smartphone className="text-primary" />
       return <TrendingDownIcon className="text-red-500" />
     }
     return <ClockIcon className="text-muted-foreground" />
@@ -217,11 +222,10 @@ export function Dashboard() {
             </Card>
           )}
 
-          {/* Balance & Quick Actions Grid */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-4">
             {/* Balance Card */}
             {!needsSetup && (
-              <Card className="relative overflow-hidden lg:col-span-2">
+              <Card className="relative overflow-hidden lg:col-span-2 flex flex-col h-full">
               <div className="pointer-events-none absolute top-0 right-0 p-4 opacity-10">
                 <TrendingUpIcon size={120} />
               </div>
@@ -257,7 +261,7 @@ export function Dashboard() {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-1 flex flex-col justify-center">
                 {isLoading ? (
                   <div className="flex h-10 items-center">
                     <Skeleton className="h-10 w-48" />
@@ -283,43 +287,60 @@ export function Dashboard() {
 
             {/* Quick Actions */}
             {!needsSetup && (
-              <div className="flex flex-col gap-3">
+              <div className="lg:col-span-2 flex flex-col gap-3">
                 <h3 className="text-sm font-medium">Quick Actions</h3>
-              <Button
-                className="h-14 justify-start gap-3 rounded-xl text-base text-black dark:text-white"
-                size="lg"
-                onClick={() => setShowAddMoney(true)}
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
-                  <Plus size={18} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    className="h-14 justify-start gap-3 rounded-xl text-base text-black dark:text-white"
+                    size="lg"
+                    onClick={() => setShowAddMoney(true)}
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
+                      <Plus size={18} />
+                    </div>
+                    Add Money
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-14 justify-start gap-3 rounded-xl text-base"
+                    size="lg"
+                    onClick={() => setShowSendMoney(true)}
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+                      <SendIcon size={18} />
+                    </div>
+                    Send Money
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-14 justify-start gap-3 rounded-xl text-base"
+                    size="lg"
+                    onClick={() => setShowWithdraw(true)}
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10 text-red-500">
+                      <ArrowDownIcon size={18} />
+                    </div>
+                    Withdraw
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-14 justify-start gap-3 rounded-xl text-base"
+                    size="lg"
+                    onClick={() => setShowAirtime(true)}
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Smartphone size={18} />
+                    </div>
+                    Buy Airtime
+                  </Button>
                 </div>
-                Add Money
-              </Button>
-              <Button
-                variant="outline"
-                className="h-14 justify-start gap-3 rounded-xl text-base"
-                size="lg"
-                onClick={() => setShowSendMoney(true)}
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
-                  <SendIcon size={18} />
-                </div>
-                Send Money
-              </Button>
-              <Button
-                variant="outline"
-                className="h-14 justify-start gap-3 rounded-xl text-base"
-                size="lg"
-                onClick={() => setShowWithdraw(true)}
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10 text-red-500">
-                  <ArrowDownIcon size={18} />
-                </div>
-                Withdraw
-              </Button>
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
 
           {/* Recent Activity Section */}
           <section className="flex flex-col gap-4">
@@ -411,6 +432,10 @@ export function Dashboard() {
           onOpenChange={setShowWithdraw}
           profile={profile}
           balance={balance}
+        />
+        <AirtimeDialog
+          open={showAirtime}
+          onOpenChange={setShowAirtime}
         />
       </SidebarInset>
     </SidebarProvider>
