@@ -37,7 +37,9 @@ export function LoginForm({
         toast.info("Verification code sent. Please check your messages.")
       } else {
         toast.success("Login successful!")
-        window.location.href = "/"
+        const searchParams = new URLSearchParams(window.location.search)
+        const redirect = searchParams.get("redirect") || "/"
+        window.location.href = redirect
       }
     } catch (err) {
       toast.error("An unexpected error occurred. Please try again.")

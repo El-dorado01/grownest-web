@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,6 +16,8 @@ export function SignupForm({
 }: React.ComponentProps<"div">) {
   const { register, isLoading: isAuthLoading } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const referralCode = searchParams.get("ref") || undefined
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -42,7 +44,7 @@ export function SignupForm({
     setIsSubmitting(true)
 
     try {
-      const result = await register({ email, password, dataConsent })
+      const result = await register({ email, password, dataConsent, referralCode })
 
       if (!result.success) {
         toast.error(result.error || "Registration failed")

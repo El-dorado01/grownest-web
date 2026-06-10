@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CreateStoreWizard } from "@/components/seller/create-store-wizard";
 import { useMyStore } from "@/hooks/use-my-store";
 
+import { DashboardHeader } from "@/components/dashboard-header";
+
 export default function SellerStorePage() {
   const { hasStore, isLoading } = useMyStore();
   const router = useRouter();
@@ -23,9 +25,7 @@ export default function SellerStorePage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
+        <DashboardHeader>
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem><BreadcrumbLink href="/seller">Sell</BreadcrumbLink></BreadcrumbItem>
@@ -33,7 +33,7 @@ export default function SellerStorePage() {
               <BreadcrumbItem><BreadcrumbPage>Create store</BreadcrumbPage></BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-        </header>
+        </DashboardHeader>
 
         <div className="p-4 md:p-6">
           {isLoading ? (

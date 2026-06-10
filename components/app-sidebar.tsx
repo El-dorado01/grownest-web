@@ -8,8 +8,6 @@ import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import { useAuth } from "@/context/auth-context"
 import { authApi } from "@/lib/auth-api"
-import useSWR from "swr"
-import { notificationsApi } from "@/lib/notifications-api"
 import {
   Sidebar,
   SidebarContent,
@@ -18,34 +16,48 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarGroup,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { 
   LayoutDashboardIcon, 
   WalletIcon, 
   PiggyBankIcon, 
   StoreIcon, 
-  ShoppingCartIcon, 
-  MessageSquareIcon, 
   TruckIcon, 
-  BellIcon,
-  UsersIcon,
-  TrendingUpIcon,
   LifeBuoyIcon, 
   CogIcon,
-  TerminalIcon,
-  ShoppingBagIcon
+  ShoppingBagIcon,
+  ShoppingBasketIcon,
+  FeatherIcon,
+  Users2Icon,
+  ArrowLeftIcon,
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import Image from "next/image"
 import { SellerChatNavBadge } from "@/components/seller/seller-chat-nav-badge"
 import { ChatNavBadge } from "@/components/nestmarkets/chat-nav-badge"
 import { useMyStore } from "@/hooks/use-my-store"
+import { usePathname } from "next/navigation"
+
+interface NavSubItem {
+  title: string
+  url: string
+  badge?: React.ReactNode
+}
+
+interface UserProfile {
+  fullName: string | null
+  email: string | null
+  profilePhoto: string | null
+}
 
 const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "/dashboard",
+      url: "/",
       icon: <LayoutDashboardIcon />,
     },
     {
@@ -76,16 +88,12 @@ const data = {
           title: "Group Nest",
           url: "/savings/group",
         },
-        // {
-        //   title: "Locked Savings",
-        //   url: "/savings/locked",
-        // },
       ],
     },
     {
       title: "NestBaskets",
       url: "/nestbaskets/baskets",
-      icon: <ShoppingBagIcon />,
+      icon: <ShoppingBasketIcon />,
       items: [
         {
           title: "Explore Baskets",
@@ -100,7 +108,7 @@ const data = {
     {
       title: "NestMarket",
       url: "/marketplace",
-      icon: <StoreIcon />,
+      icon: <ShoppingBagIcon />,
       items: [
         {
           title: "Explore",
@@ -125,6 +133,25 @@ const data = {
         },
       ],
     },
+  ],
+  projects: [
+    {
+      name: "NestTrails",
+      url: "/deliveries",
+      icon: <TruckIcon />,
+    },
+    {
+      name: "Nest Feathers",
+      url: "/nestfeathers",
+      icon: <FeatherIcon />,
+    },
+    {
+      name: "NestCircle",
+      url: "/nestcircle",
+      icon: <Users2Icon />,
+    },
+  ],
+  navSecondary: [
     {
       title: "Sell on NestMarket",
       url: "/seller",
@@ -147,20 +174,6 @@ const data = {
         },
       ],
     },
-  ],
-  projects: [
-    {
-      name: "My Deliveries",
-      url: "/deliveries",
-      icon: <TruckIcon />,
-    },
-    {
-      name: "Notifications",
-      url: "/notifications",
-      icon: <BellIcon />,
-    },
-  ],
-  navSecondary: [
     {
       title: "Support",
       url: "/support",
@@ -174,10 +187,25 @@ const data = {
   ],
 }
 
+const sellerFullItems = [
+  { title: "Dashboard", url: "/seller" },
+  { title: "Products", url: "/seller/products" },
+  { title: "Orders", url: "/seller/orders" },
+  { title: "Earnings", url: "/seller/earnings" },
+  { title: "Messages", url: "/seller/chat", badge: <SellerChatNavBadge /> },
+];
+
+const navMainItems = data.navMain;
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user: authUser, isAuthenticated } = useAuth();
   const { hasStore, isLoading: storeLoading } = useMyStore();
-  const [profile, setProfile] = React.useState<any>(null);
+  const [profile, setProfile] = React.useState<UserProfile | null>(null);
+  const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
+
+  const [activeSubmenu, setActiveSubmenu] = React.useState<{ title: string; items: NavSubItem[]; icon?: React.ReactNode } | null>(null);
+  const lastPathname = React.useRef("");
 
   React.useEffect(() => {
     if (isAuthenticated) {
@@ -199,38 +227,41 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     avatar: "",
   };
 
-  const { data: notificationsData } = useSWR(
-    isAuthenticated ? "notifications_badge" : null,
-    async () => {
-      const res = await notificationsApi.getNotifications()
-      return res.data
-    },
-    { refreshInterval: 60000 }
-  );
+  const projectsWithBadges = data.projects;
 
-  const unreadCount = notificationsData?.unreadCount || 0;
+  const navSecondaryItems = React.useMemo(() => {
+    return data.navSecondary.map((group) =>
+      group.title === "Sell on NestMarket"
+        ? { ...group, items: (!storeLoading && !hasStore) ? [{ title: "Dashboard", url: "/seller" }] : sellerFullItems }
+        : group
+    );
+  }, [storeLoading, hasStore]);
 
-  const projectsWithBadges = React.useMemo(() => {
-    return data.projects.map(p => {
-      if (p.name === "Notifications") {
-        return { ...p, badge: unreadCount }
+  React.useEffect(() => {
+    const isNavigated = lastPathname.current !== pathname;
+    if (isNavigated) {
+      lastPathname.current = pathname;
+      const matchingGroup = navSecondaryItems.find(group => 
+        group.title === "Sell on NestMarket" &&
+        group.items?.some(subItem => 
+          pathname === subItem.url || (subItem.url !== "/" && pathname.startsWith(subItem.url))
+        )
+      );
+      if (matchingGroup && matchingGroup.items) {
+        setTimeout(() => {
+          setActiveSubmenu({
+            title: matchingGroup.title,
+            items: matchingGroup.items,
+            icon: matchingGroup.icon
+          });
+        }, 0);
+      } else {
+        setTimeout(() => {
+          setActiveSubmenu(null);
+        }, 0);
       }
-      return p
-    })
-  }, [unreadCount])
-
-  const sellerFullItems = [
-    { title: "Dashboard", url: "/seller" },
-    { title: "Products", url: "/seller/products" },
-    { title: "Orders", url: "/seller/orders" },
-    { title: "Earnings", url: "/seller/earnings" },
-    { title: "Messages", url: "/seller/chat", badge: <SellerChatNavBadge /> },
-  ];
-  const navMainItems = data.navMain.map((group) =>
-    group.title === "Sell on NestMarket"
-      ? { ...group, items: (!storeLoading && !hasStore) ? [{ title: "Dashboard", url: "/seller" }] : sellerFullItems }
-      : group
-  );
+    }
+  }, [pathname, navSecondaryItems]);
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -250,11 +281,66 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <React.Suspense fallback={<div className="h-10 px-4 flex items-center text-xs text-muted-foreground">Loading...</div>}>
-          <NavMain items={navMainItems} />
-        </React.Suspense>
-        <NavProjects projects={projectsWithBadges} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        {activeSubmenu ? (
+          <>
+            <SidebarGroup>
+              <div className="px-2 py-1.5 flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-foreground select-none [&_svg]:size-4 [&_svg]:shrink-0">
+                {activeSubmenu.icon}
+                <span className="truncate max-w-[170px]">{activeSubmenu.title}</span>
+              </div>
+              <SidebarMenu className="gap-1 mt-2.5">
+                {activeSubmenu.items.map((subItem) => {
+                  const isActive = pathname === subItem.url || (subItem.url !== "/" && pathname.startsWith(subItem.url))
+                  return (
+                    <SidebarMenuItem key={subItem.title}>
+                      <SidebarMenuButton 
+                        asChild 
+                        isActive={isActive} 
+                        onClick={() => setOpenMobile(false)}
+                      >
+                        <Link href={subItem.url} className="flex justify-between items-center w-full">
+                          <span>{subItem.title}</span>
+                          {subItem.badge}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
+              </SidebarMenu>
+            </SidebarGroup>
+            <NavSecondary 
+              items={activeSubmenu?.title === "Sell on NestMarket"
+                ? navSecondaryItems.filter(item => item.title !== "Sell on NestMarket")
+                : navSecondaryItems
+              } 
+              onSelectSubmenu={(title, items, icon) => setActiveSubmenu({ title, items, icon })}
+              className="mt-auto" 
+            />
+            <div className="px-3 pb-3 pt-0">
+              <Button 
+                onClick={() => setActiveSubmenu(null)}
+                variant="outline" 
+                size="sm"
+                className="w-full justify-center gap-1.5 font-medium text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <ArrowLeftIcon className="w-3.5 h-3.5" />
+                <span>Back to Main Menu</span>
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <React.Suspense fallback={<div className="h-10 px-4 flex items-center text-xs text-muted-foreground">Loading...</div>}>
+              <NavMain items={navMainItems} />
+            </React.Suspense>
+            <NavProjects projects={projectsWithBadges} />
+            <NavSecondary 
+              items={navSecondaryItems} 
+              onSelectSubmenu={(title, items, icon) => setActiveSubmenu({ title, items, icon })}
+              className="mt-auto" 
+            />
+          </>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />

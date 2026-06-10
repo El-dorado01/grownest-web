@@ -3,8 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,6 +11,7 @@ import { ChatThreadList } from "@/components/nestmarkets/chat-thread-list";
 import { ChatConversation } from "@/components/nestmarkets/chat-conversation";
 import { CartBadge } from "@/components/nestmarkets/cart-badge";
 import { useChat } from "@/hooks/use-chat";
+import { DashboardHeader } from "@/components/dashboard-header";
 
 function ChatPane() {
   const params = useSearchParams();
@@ -63,9 +63,7 @@ export default function ChatPage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
+        <DashboardHeader rightActions={<CartBadge />}>
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem><BreadcrumbLink href="/marketplace">Marketplace</BreadcrumbLink></BreadcrumbItem>
@@ -73,8 +71,7 @@ export default function ChatPage() {
               <BreadcrumbItem><BreadcrumbPage>Chat</BreadcrumbPage></BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <div className="ml-auto"><CartBadge /></div>
-        </header>
+        </DashboardHeader>
         <Suspense fallback={null}>
           <ChatPane />
         </Suspense>

@@ -1,5 +1,7 @@
 "use client"
 
+import { DashboardHeader } from "@/components/dashboard-header"
+
 import * as React from "react"
 import { format, startOfDay, endOfDay } from "date-fns"
 import {
@@ -293,10 +295,7 @@ export default function TransactionsPage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
+        <DashboardHeader>
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem><BreadcrumbLink href="/nestpurse">NestPurse</BreadcrumbLink></BreadcrumbItem>
@@ -304,8 +303,7 @@ export default function TransactionsPage() {
                 <BreadcrumbItem><BreadcrumbPage>Transactions</BreadcrumbPage></BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-          </div>
-        </header>
+          </DashboardHeader>
 
         <div className="flex flex-1 flex-col gap-4 p-4 md:p-6 max-w-6xl mx-auto w-full">
           {/* Header */}
