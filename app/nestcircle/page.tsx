@@ -66,6 +66,7 @@ import {
 import { toast } from "sonner"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { PinInput } from "@/components/ui/pin-input"
 
 const NETWORKS = ["MTN", "Airtel", "Glo", "9mobile"]
 
@@ -89,29 +90,40 @@ function RedeemPanel({
   const [phoneNumber, setPhoneNumber] = React.useState(profile?.phone || "")
   const [network, setNetwork] = React.useState("")
   const [pointsToRedeem, setPointsToRedeem] = React.useState(minPoints)
+  const [pin, setPin] = React.useState("")
   const [loading, setLoading] = React.useState(false)
+
+  React.useEffect(() => {
+    if (open) {
+      setPin("")
+    }
+  }, [open])
 
   const nairaValue = pointsToRedeem / 2
   const isValid =
     phoneNumber.length >= 10 &&
     network &&
     pointsToRedeem >= minPoints &&
-    pointsToRedeem <= pointsBalance
+    pointsToRedeem <= pointsBalance &&
+    pin.length === 4
 
   const handleRedeem = async () => {
-    if (!isValid) return
+    if (!isValid || pin.length !== 4) return
     setLoading(true)
     const { error } = await nestCircleApi.redeemPoints({
       phoneNumber,
       network,
       pointsToRedeem,
+      pin,
     })
     setLoading(false)
     if (error) {
       toast.error(error)
+      setPin("")
       return
     }
     toast.success(`₦${nairaValue} airtime sent to ${phoneNumber}!`)
+    setPin("")
     onOpenChange(false)
     onSuccess()
   }
@@ -165,6 +177,19 @@ function RedeemPanel({
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-2 border-t pt-4">
+        <div className="flex items-center gap-1 justify-center text-primary mb-1">
+          <span className="text-[10px] font-bold uppercase tracking-wider">Confirm NestPurse PIN</span>
+        </div>
+        <div className="flex justify-center">
+          <PinInput
+            value={pin}
+            onChange={setPin}
+            disabled={loading}
+          />
+        </div>
       </div>
 
       <Button
@@ -309,48 +334,84 @@ function NestCirclePage() {
                 <div className="absolute -bottom-12 -left-8 w-48 h-48 rounded-full bg-primary/10 blur-3xl" />
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-20 rounded-full bg-primary/8 blur-2xl" />
 
-                <div className="relative">
-                  {/* Label */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Your Referral Code</p>
+                <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                  <div className="flex-1">
+                    {/* Label */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Your Referral Code</p>
+                    </div>
+
+                    {/* Code display pill */}
+                    <div className="inline-flex items-center gap-3 bg-muted/60 border border-border rounded-xl px-5 py-2.5 mb-3">
+                      <p className="text-3xl font-bold tracking-[0.25em] font-mono text-foreground">
+                        {circleData.referralCode}
+                      </p>
+                    </div>
+
+                    {/* Link */}
+                    <p className="text-xs text-muted-foreground mb-4 break-all font-mono">{circleData.referralLink}</p>
+
+                    {/* Actions */}
+                    <div className="flex gap-2.5 w-full">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 transition-all"
+                        onClick={handleCopy}
+                      >
+                        {copied ? <CheckCircle2 className="w-4 h-4 mr-1.5 text-primary" /> : <Copy className="w-4 h-4 mr-1.5" />}
+                        {copied ? "Copied!" : "Copy Link"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 transition-all"
+                        onClick={handleShare}
+                      >
+                        <Share2 className="w-4 h-4 mr-1.5" /> Share
+                      </Button>
+                    </div>
                   </div>
 
-                  {/* Code display pill */}
-                  <div className="inline-flex items-center gap-3 bg-muted/60 border border-border rounded-xl px-5 py-2.5 mb-3">
-                    <p className="text-3xl font-bold tracking-[0.25em] font-mono text-foreground">
-                      {circleData.referralCode}
-                    </p>
-                  </div>
-
-                  {/* Link */}
-                  <p className="text-xs text-muted-foreground mb-4 break-all font-mono">{circleData.referralLink}</p>
-
-                  {/* Actions */}
-                  <div className="flex gap-2.5">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="transition-all"
-                      onClick={handleCopy}
-                    >
-                      {copied ? <CheckCircle2 className="w-4 h-4 mr-1.5 text-primary" /> : <Copy className="w-4 h-4 mr-1.5" />}
-                      {copied ? "Copied!" : "Copy Link"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="transition-all"
-                      onClick={handleShare}
-                    >
-                      <Share2 className="w-4 h-4 mr-1.5" /> Share
-                    </Button>
+                  {/* Redeem Action Panel */}
+                  <div className="flex flex-col justify-center shrink-0 w-full md:w-80 md:border-l md:pl-6 border-border/80">
+                    {circleData.pointsBalance >= circleData.minRedemptionPoints ? (
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs font-bold text-foreground">Points Balance Available</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            Redeem your hard-earned points for airtime.
+                          </p>
+                        </div>
+                        <Button
+                          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-xs cursor-pointer gap-2"
+                          onClick={() => setRedeemOpen(true)}
+                        >
+                          <Zap className="w-4 h-4" />
+                          Redeem {circleData.pointsBalance} pts
+                        </Button>
+                        <p className="text-[10px] text-muted-foreground text-center font-medium">
+                          Redemption Value: ₦{circleData.pointsValueNaira} Airtime
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-4 text-center">
+                        <Zap className="w-5 h-5 text-muted-foreground/60 mx-auto mb-2" />
+                        <p className="text-xs font-bold text-foreground">
+                          {circleData.minRedemptionPoints - circleData.pointsBalance} pts needed
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-1 leading-normal">
+                          Minimum points required to redeem is <strong>{circleData.minRedemptionPoints} pts</strong> (₦{circleData.minRedemptionNaira} airtime).
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Stats Row */}
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className=" grid grid-cols-1 md:grid-cols-3 gap-2.5">
                 {[
                   {
                     icon: <Users2 className="w-4 h-4 text-primary" />,
@@ -384,26 +445,7 @@ function NestCirclePage() {
                 ))}
               </div>
 
-              {/* Redeem Button */}
-              {circleData.pointsBalance >= circleData.minRedemptionPoints ? (
-                <Button
-                  className="w-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30"
-                  onClick={() => setRedeemOpen(true)}
-                >
-                  <Zap className="w-4 h-4 mr-2" />
-                  Redeem {circleData.pointsBalance} pts for ₦{circleData.pointsValueNaira} Airtime
-                </Button>
-              ) : (
-                <div className="rounded-xl border border-dashed border-border p-3 text-center">
-                  <Zap className="w-5 h-5 text-muted-foreground mx-auto mb-1.5" />
-                  <p className="text-sm font-medium">
-                    {circleData.minRedemptionPoints - circleData.pointsBalance} more points needed to redeem
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Minimum: {circleData.minRedemptionPoints} pts = ₦{circleData.minRedemptionNaira} airtime
-                  </p>
-                </div>
-              )}
+
 
               {/* How It Works */}
               <Card className="border-border/60">

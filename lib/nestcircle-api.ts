@@ -43,6 +43,7 @@ export interface RedeemPayload {
   phoneNumber: string
   network: string
   pointsToRedeem: number
+  pin: string
 }
 
 export const nestCircleApi = {
