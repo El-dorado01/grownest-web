@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import { AppSidebar } from "@/components/app-sidebar"
 import { DashboardHeader } from "@/components/dashboard-header"
 import {
@@ -589,10 +590,251 @@ function RedeemPanel({
   )
 }
 
+function InvitePanel({
+  referralCode,
+  referralLink,
+  copied,
+  onCopy,
+  onShare,
+  open,
+  onOpenChange,
+}: {
+  referralCode: string
+  referralLink: string
+  copied: boolean
+  onCopy: () => void
+  onShare: () => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const isMobile = useIsMobile()
+
+  const content = (
+    <div className="space-y-5 px-1 py-2">
+      <div className="text-center space-y-1">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Your unique referral code</p>
+        <div className="inline-flex items-center gap-3 bg-muted border border-border rounded-xl px-6 py-3 mt-1.5">
+          <p className="text-2xl font-bold tracking-[0.2em] font-mono text-foreground">
+            {referralCode}
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-xs font-bold text-muted-foreground">Referral Link</label>
+        <div className="bg-muted/50 border border-border rounded-xl p-3 break-all text-xs font-mono text-muted-foreground">
+          {referralLink}
+        </div>
+      </div>
+
+      <div className="flex gap-2.5 w-full pt-2">
+        <Button
+          className="flex-1 font-bold h-11 rounded-xl cursor-pointer"
+          onClick={onCopy}
+        >
+          {copied ? <CheckCircle2 className="w-4 h-4 mr-1.5 text-primary-foreground" /> : <Copy className="w-4 h-4 mr-1.5" />}
+          {copied ? "Copied!" : "Copy Link"}
+        </Button>
+        <Button
+          variant="outline"
+          className="flex-1 font-bold h-11 rounded-xl cursor-pointer"
+          onClick={onShare}
+        >
+          <Share2 className="w-4 h-4 mr-1.5" /> Share Link
+        </Button>
+      </div>
+    </div>
+  )
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="px-4 pb-8 flex flex-col">
+          <DrawerHeader className="text-left pb-2">
+            <DrawerTitle>Invite Friends</DrawerTitle>
+            <DrawerDescription>Share your link. You and your friend both earn 500 points on verification.</DrawerDescription>
+          </DrawerHeader>
+          {content}
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Invite Friends</DialogTitle>
+          <DialogDescription>Share your link. You and your friend both earn 500 points on verification.</DialogDescription>
+        </DialogHeader>
+        {content}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function ReferralHistoryPanel({
+  circleData,
+  getTransactionLabel,
+  open,
+  onOpenChange,
+}: {
+  circleData: any
+  getTransactionLabel: (reason: string) => { label: string; color: string; sign: string }
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const isMobile = useIsMobile()
+  const [activeTab, setActiveTab] = React.useState<"circle" | "ledger">("circle")
+
+  const content = (
+    <div className="flex-1 flex flex-col gap-4 overflow-hidden min-h-0 py-2">
+      {/* Stats Quick Cards */}
+      <div className="grid grid-cols-2 gap-2.5 shrink-0">
+        <div className="bg-muted/40 border border-border/80 rounded-xl p-3 text-center">
+          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Circle Size</p>
+          <p className="text-lg font-bold text-foreground mt-0.5">{circleData.stats.totalReferrals}</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">{circleData.stats.rewardedReferrals} rewarded</p>
+        </div>
+        <div className="bg-muted/40 border border-border/80 rounded-xl p-3 text-center">
+          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Total Earned</p>
+          <p className="text-lg font-bold text-primary mt-0.5">{circleData.stats.totalPointsEarned.toLocaleString()} pts</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">≈ ₦{circleData.stats.totalValueNaira.toLocaleString()}</p>
+        </div>
+      </div>
+
+      {/* Tabs selector */}
+      <div className="flex border-b border-border/60 shrink-0">
+        <button
+          className={cn(
+            "flex-1 pb-2.5 font-bold text-xs border-b-2 text-center transition-all cursor-pointer",
+            activeTab === "circle"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+          onClick={() => setActiveTab("circle")}
+        >
+          Your Circle ({circleData.circle.length})
+        </button>
+        <button
+          className={cn(
+            "flex-1 pb-2.5 font-bold text-xs border-b-2 text-center transition-all cursor-pointer",
+            activeTab === "ledger"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+          onClick={() => setActiveTab("ledger")}
+        >
+          Points Activity ({circleData.recentPointTransactions.length})
+        </button>
+      </div>
+
+      {/* Scrollable List Container */}
+      <div className="flex-1 overflow-y-auto max-h-[300px] pr-1">
+        {activeTab === "circle" ? (
+          circleData.circle.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground space-y-1.5">
+              <Users2 className="w-8 h-8 text-muted-foreground/30 mx-auto" />
+              <p className="text-xs">Your circle is empty. Invite friends to get started!</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border/40">
+              {circleData.circle.map((member: any) => (
+                <div key={member.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-primary">
+                        {member.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-foreground leading-tight">{member.name.split(" ")[0]}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Joined {new Date(member.joinedAt).toLocaleDateString("en-NG", { month: "short", day: "numeric", year: "numeric" })}
+                      </p>
+                    </div>
+                  </div>
+                  {member.rewardPaid ? (
+                    <Badge className="bg-primary/10 text-primary border-primary/20 font-normal text-[10px] px-2 py-0">
+                      <CheckCircle2 className="w-2.5 h-2.5 mr-1" /> +{member.rewardPoints} pts
+                    </Badge>
+                  ) : member.isFullyVerified ? (
+                    <Badge className="bg-primary/10 text-primary border-primary/20 font-normal text-[10px] px-2 py-0">
+                      <Loader2 className="w-2.5 h-2.5 mr-1 animate-spin" /> Processing
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground font-normal text-[10px] px-2 py-0">
+                      <Clock className="w-2.5 h-2.5 mr-1" /> Pending
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+          circleData.recentPointTransactions.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground space-y-1.5">
+              <Coins className="w-8 h-8 text-muted-foreground/30 mx-auto" />
+              <p className="text-xs">No recent points activity found.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border/40">
+              {circleData.recentPointTransactions.map((tx: any) => {
+                const { label, color, sign } = getTransactionLabel(tx.reason)
+                return (
+                  <div key={tx.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                    <div>
+                      <p className="text-xs font-bold text-foreground">{label}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {new Date(tx.createdAt).toLocaleDateString("en-NG", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                    <p className={cn("font-bold text-xs", color)}>
+                      {sign}{Math.abs(tx.points)} pts
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        )}
+      </div>
+    </div>
+  )
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="max-h-[85vh] px-4 pb-8 flex flex-col">
+          <DrawerHeader className="text-left pb-2">
+            <DrawerTitle>Referral History</DrawerTitle>
+            <DrawerDescription>Track your referral rewards and activity ledger.</DrawerDescription>
+          </DrawerHeader>
+          {content}
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md h-[550px] max-h-[85vh] flex flex-col">
+        <DialogHeader className="shrink-0">
+          <DialogTitle>Referral History</DialogTitle>
+          <DialogDescription>Track your referral rewards and activity ledger.</DialogDescription>
+        </DialogHeader>
+        {content}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function NestCirclePage() {
   const { circleData, isLoading, error, mutate } = useNestCircle()
   const [copied, setCopied] = React.useState(false)
   const [redeemOpen, setRedeemOpen] = React.useState(false)
+  const [inviteOpen, setInviteOpen] = React.useState(false)
+  const [historyOpen, setHistoryOpen] = React.useState(false)
 
   const handleCopy = () => {
     if (!circleData?.referralLink) return
@@ -646,7 +888,7 @@ function NestCirclePage() {
           </Breadcrumb>
         </DashboardHeader>
 
-        <main className="flex flex-col gap-3 p-3 md:p-5 mx-auto w-full">
+        <main className="flex flex-col gap-3 p-3 md:p-5 mx-auto w-full max-w-4xl">
           {/* Page title */}
           <div>
             <h1 className="text-2xl font-bold tracking-tight">NestCircle</h1>
@@ -672,136 +914,82 @@ function NestCirclePage() {
 
           {circleData && (
             <>
-              {/* Referral Code Card */}
-              <div className="relative overflow-hidden rounded-2xl bg-card border border-border p-5 shadow-sm">
-                {/* Grid texture */}
-                <div
-                  className="absolute inset-0 opacity-[0.035]"
-                  style={{
-                    backgroundImage: `linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)`,
-                    backgroundSize: "32px 32px",
-                  }}
-                />
-                {/* Brand color glow orbs */}
-                <div className="absolute -top-10 -right-10 w-56 h-56 rounded-full bg-primary/15 blur-3xl" />
-                <div className="absolute -bottom-12 -left-8 w-48 h-48 rounded-full bg-primary/10 blur-3xl" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-20 rounded-full bg-primary/8 blur-2xl" />
+              {/* Hero Section with unDraw Illustration */}
+              <div className="flex flex-col items-center text-center py-6 px-4">
+                <div className="relative w-64 h-64 md:w-72 md:h-72 mb-6 transition-transform hover:scale-102 duration-300">
+                  <Image
+                    src="/undraw_referral_ihsd.svg"
+                    alt="Referral Program"
+                    fill
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+                <h2 className="text-xl md:text-2xl font-black tracking-tight text-foreground">
+                  Grow Your Nest Circle
+                </h2>
+                <p className="text-muted-foreground text-xs md:text-sm mt-2 max-w-md leading-relaxed">
+                  Share the love! We&apos;ll give you and your friend <strong>500 points each</strong> when they verify their email & phone number.
+                </p>
+              </div>
 
-                <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                  <div className="flex-1">
-                    {/* Label */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Your Referral Code</p>
-                    </div>
-
-                    {/* Code display pill */}
-                    <div className="inline-flex items-center gap-3 bg-muted/60 border border-border rounded-xl px-5 py-2.5 mb-3">
-                      <p className="text-3xl font-bold tracking-[0.25em] font-mono text-foreground">
-                        {circleData.referralCode}
+              {/* Points Balance & Redeem Quick Bar */}
+              <div className="max-w-md mx-auto w-full mb-3">
+                <Card className="bg-card/50 backdrop-blur-md border border-border/80 shadow-xs relative overflow-hidden">
+                  {/* Subtle glow orb */}
+                  <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-primary/10 blur-xl" />
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground font-semibold">Your Points Balance</p>
+                      <p className="text-2xl font-black text-primary mt-0.5">
+                        {circleData.pointsBalance.toLocaleString()} pts
+                      </p>
+                      <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
+                        ≈ ₦{circleData.pointsValueNaira.toLocaleString()} Airtime Value
                       </p>
                     </div>
 
-                    {/* Link */}
-                    <p className="text-xs text-muted-foreground mb-4 break-all font-mono">{circleData.referralLink}</p>
-
-                    {/* Actions */}
-                    <div className="flex gap-2.5 w-full">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 transition-all"
-                        onClick={handleCopy}
-                      >
-                        {copied ? <CheckCircle2 className="w-4 h-4 mr-1.5 text-primary" /> : <Copy className="w-4 h-4 mr-1.5" />}
-                        {copied ? "Copied!" : "Copy Link"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 transition-all"
-                        onClick={handleShare}
-                      >
-                        <Share2 className="w-4 h-4 mr-1.5" /> Share
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Redeem Action Panel */}
-                  <div className="flex flex-col justify-center shrink-0 w-full md:w-80 md:border-l md:pl-6 border-border/80">
                     {circleData.pointsBalance >= circleData.minRedemptionPoints ? (
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-xs font-bold text-foreground">Points Balance Available</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
-                            Redeem your hard-earned points for airtime.
-                          </p>
-                        </div>
-                        <Button
-                          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-xs cursor-pointer gap-2"
-                          onClick={() => setRedeemOpen(true)}
-                        >
-                          <Zap className="w-4 h-4" />
-                          Redeem {circleData.pointsBalance} pts
-                        </Button>
-                        <p className="text-[10px] text-muted-foreground text-center font-medium">
-                          Redemption Value: ₦{circleData.pointsValueNaira} Airtime
-                        </p>
-                      </div>
+                      <Button
+                        size="sm"
+                        className="bg-primary hover:bg-primary/95 text-primary-foreground font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
+                        onClick={() => setRedeemOpen(true)}
+                      >
+                        <Zap className="w-3.5 h-3.5" />
+                        Redeem
+                      </Button>
                     ) : (
-                      <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-4 text-center">
-                        <Zap className="w-5 h-5 text-muted-foreground/60 mx-auto mb-2" />
-                        <p className="text-xs font-bold text-foreground">
-                          {circleData.minRedemptionPoints - circleData.pointsBalance} pts needed
-                        </p>
-                        <p className="text-[10px] text-muted-foreground mt-1 leading-normal">
-                          Minimum points required to redeem is <strong>{circleData.minRedemptionPoints} pts</strong> (₦{circleData.minRedemptionNaira} airtime).
-                        </p>
+                      <div className="text-right">
+                        <span className="inline-block text-[10px] bg-muted border border-border/40 text-muted-foreground px-2.5 py-1 rounded-full font-medium">
+                          {circleData.minRedemptionPoints - circleData.pointsBalance} pts to redeem
+                        </span>
                       </div>
                     )}
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               </div>
 
-              {/* Stats Row */}
-              <div className=" grid grid-cols-1 md:grid-cols-3 gap-2.5">
-                {[
-                  {
-                    icon: <Users2 className="w-4 h-4 text-primary" />,
-                    label: "Circle Size",
-                    value: circleData.stats.totalReferrals,
-                    sub: `${circleData.stats.rewardedReferrals} rewarded`,
-                  },
-                  {
-                    icon: <Coins className="w-4 h-4 text-amber-500" />,
-                    label: "Points Balance",
-                    value: `${circleData.pointsBalance.toLocaleString()} pts`,
-                    sub: `≈ ₦${circleData.pointsValueNaira.toLocaleString()}`,
-                  },
-                  {
-                    icon: <TrendingUp className="w-4 h-4 text-primary" />,
-                    label: "Total Earned",
-                    value: `${circleData.stats.totalPointsEarned.toLocaleString()} pts`,
-                    sub: `₦${circleData.stats.totalValueNaira.toLocaleString()} value`,
-                  },
-                ].map((stat) => (
-                  <Card key={stat.label} className="border-border/60">
-                    <CardContent className="p-3 flex flex-col gap-1">
-                      <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
-                        {stat.icon}
-                      </div>
-                      <p className="text-xs text-muted-foreground">{stat.label}</p>
-                      <p className="font-bold text-base leading-tight">{stat.value}</p>
-                      <p className="text-xs text-muted-foreground">{stat.sub}</p>
-                    </CardContent>
-                  </Card>
-                ))}
+              {/* Core Action Buttons */}
+              <div className="grid grid-cols-2 gap-3 max-w-md mx-auto w-full mb-6">
+                <Button
+                  size="lg"
+                  onClick={() => setInviteOpen(true)}
+                  className="w-full font-bold h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs gap-2 cursor-pointer"
+                >
+                  <Share2 className="w-4 h-4" /> Invite
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => setHistoryOpen(true)}
+                  className="w-full font-bold h-12 rounded-xl border border-border bg-card hover:bg-muted/50 gap-2 cursor-pointer"
+                >
+                  <Users2 className="w-4 h-4" /> Referral History
+                </Button>
               </div>
 
-
-
-              {/* How It Works */}
-              <Card className="border-border/60">
+              {/* How It Works Card */}
+              <Card className="border-border/60 max-w-md mx-auto w-full">
                 <CardHeader className="pb-2 pt-4 px-4">
                   <CardTitle className="text-[15px]">How NestCircle Works</CardTitle>
                 </CardHeader>
@@ -834,100 +1022,12 @@ function NestCirclePage() {
                       </div>
                       <div>
                         <p className="text-sm font-semibold">{step.title}</p>
-                        <p className="text-sm text-muted-foreground">{step.desc}</p>
+                        <p className="text-sm text-muted-foreground leading-normal">{step.desc}</p>
                       </div>
                     </div>
                   ))}
                 </CardContent>
               </Card>
-
-              {/* Circle Members */}
-              <Card className="border-border/60">
-                <CardHeader className="pb-2 pt-4 px-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-[15px]">Your Circle</CardTitle>
-                    <Badge variant="secondary" className="font-normal text-xs">
-                      {circleData.stats.totalReferrals} member{circleData.stats.totalReferrals !== 1 ? "s" : ""}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="px-4 pb-4">
-                  {circleData.circle.length === 0 ? (
-                    <div className="text-center py-6 space-y-1.5">
-                      <Users2 className="w-8 h-8 text-muted-foreground/40 mx-auto" />
-                      <p className="text-sm text-muted-foreground">Your circle is empty — share your link to get started!</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-0">
-                      {circleData.circle.map((member) => (
-                        <div
-                          key={member.id}
-                          className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                              <span className="text-sm font-bold text-primary">
-                                {member.name.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium leading-tight">{member.name.split(" ")[0]}</p>
-                              <p className="text-xs text-muted-foreground">
-                                Joined {new Date(member.joinedAt).toLocaleDateString("en-NG", { month: "short", day: "numeric", year: "numeric" })}
-                              </p>
-                            </div>
-                          </div>
-                          {member.rewardPaid ? (
-                            <Badge className="bg-primary/10 text-primary border-primary/20 font-normal text-xs">
-                              <CheckCircle2 className="w-3 h-3 mr-1" /> +{member.rewardPoints} pts
-                            </Badge>
-                          ) : member.isFullyVerified ? (
-                            <Badge className="bg-primary/10 text-primary border-primary/20 font-normal text-xs">
-                              <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Processing
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-muted-foreground font-normal text-xs">
-                              <Clock className="w-3 h-3 mr-1" /> Pending
-                            </Badge>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Recent Point Transactions */}
-              {circleData.recentPointTransactions.length > 0 && (
-                <Card className="border-border/60">
-                  <CardHeader className="pb-2 pt-4 px-4">
-                    <CardTitle className="text-[15px]">Recent Points Activity</CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-4 pb-4">
-                    <div className="space-y-0">
-                      {circleData.recentPointTransactions.map((tx) => {
-                        const { label, color, sign } = getTransactionLabel(tx.reason)
-                        return (
-                          <div
-                            key={tx.id}
-                            className="flex items-center justify-between py-2 border-b border-border/40 last:border-0"
-                          >
-                            <div>
-                              <p className="text-sm font-medium">{label}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {new Date(tx.createdAt).toLocaleDateString("en-NG", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                              </p>
-                            </div>
-                            <p className={cn("font-bold text-sm", color)}>
-                              {sign}{Math.abs(tx.points)} pts
-                            </p>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </>
           )}
         </main>
@@ -941,6 +1041,29 @@ function NestCirclePage() {
             onSuccess={() => mutate()}
             open={redeemOpen}
             onOpenChange={setRedeemOpen}
+          />
+        )}
+
+        {/* Invite Dialog/Drawer */}
+        {circleData && (
+          <InvitePanel
+            referralCode={circleData.referralCode}
+            referralLink={circleData.referralLink}
+            copied={copied}
+            onCopy={handleCopy}
+            onShare={handleShare}
+            open={inviteOpen}
+            onOpenChange={setInviteOpen}
+          />
+        )}
+
+        {/* Referral History Dialog/Drawer */}
+        {circleData && (
+          <ReferralHistoryPanel
+            circleData={circleData}
+            getTransactionLabel={getTransactionLabel}
+            open={historyOpen}
+            onOpenChange={setHistoryOpen}
           />
         )}
       </SidebarInset>
