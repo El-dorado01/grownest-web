@@ -37,6 +37,9 @@ import {
   WalletIcon,
   ArrowUpRight,
   Smartphone,
+  Wifi,
+  Tv,
+  Zap,
 } from "lucide-react"
 import {
   Card,
@@ -53,6 +56,10 @@ import { AddMoneyDialog } from "@/components/purse/add-money-dialog"
 import { SendMoneyDialog } from "@/components/purse/send-money-dialog"
 import { WithdrawDialog } from "@/components/purse/withdraw-dialog"
 import { AirtimeDialog } from "@/components/purse/airtime-dialog"
+import { DataDialog } from "@/components/purse/data-dialog"
+import { ElectricityDialog } from "@/components/purse/electricity-dialog"
+import { CableDialog } from "@/components/purse/cable-dialog"
+import { toast } from "sonner"
 
 import { useProfile } from "@/hooks/use-profile"
 import Link from "next/link"
@@ -78,6 +85,9 @@ export function Dashboard() {
   const [showSendMoney, setShowSendMoney] = React.useState(false)
   const [showWithdraw, setShowWithdraw] = React.useState(false)
   const [showAirtime, setShowAirtime] = React.useState(false)
+  const [showData, setShowData] = React.useState(false)
+  const [showElectricity, setShowElectricity] = React.useState(false)
+  const [showCable, setShowCable] = React.useState(false)
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -85,9 +95,11 @@ export function Dashboard() {
     setIsRefreshing(false)
   }
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   React.useEffect(() => {
     setIsInitialLoad(false)
   }, [])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const isLoading = isProfileLoading || (isAuthLoading && isInitialLoad)
 
@@ -131,7 +143,7 @@ export function Dashboard() {
     }).format(amount)
   }
 
-  const getTransactionIcon = (activity: any) => {
+  const getTransactionIcon = (activity: { type: string; method?: string }) => {
     if (activity.type === "credit")
       return <TrendingUpIcon className="text-green-500" />
     if (activity.type === "debit") {
@@ -189,7 +201,7 @@ export function Dashboard() {
               )}
             </h1>
             <p className="mt-1 text-muted-foreground">
-              Welcome back. Here's what's happening with your account today.
+              Welcome back. Here&apos;s what&apos;s happening with your account today.
             </p>
           </section>
 
@@ -217,10 +229,10 @@ export function Dashboard() {
             </Card>
           )}
 
-          <div className="grid gap-6 lg:grid-cols-4">
+          <div className="grid gap-6 lg:grid-cols-5">
             {/* Balance Card */}
             {!needsSetup && (
-              <Card className="relative overflow-hidden lg:col-span-2 flex flex-col h-full">
+              <Card className="relative overflow-hidden lg:col-span-3 flex flex-col h-full">
               <div className="pointer-events-none absolute top-0 right-0 p-4 opacity-10">
                 <TrendingUpIcon size={120} />
               </div>
@@ -262,20 +274,45 @@ export function Dashboard() {
                     <Skeleton className="h-10 w-48" />
                   </div>
                 ) : (
-                  <div className="text-4xl font-bold">
-                    <span
-                      key={showBalance ? "show" : "hide"}
-                      className="inline-block animate-in duration-300 fade-in slide-in-from-bottom-1"
-                    >
-                      {showBalance
-                        ? formatCurrency(dashboardData?.balance || 0)
-                        : "••••••••••"}
-                    </span>
+                  <div>
+                    <div className="text-4xl font-bold">
+                      <span
+                        key={showBalance ? "show" : "hide"}
+                        className="inline-block animate-in duration-300 fade-in slide-in-from-bottom-1"
+                      >
+                        {showBalance
+                          ? formatCurrency(dashboardData?.balance || 0)
+                          : "••••••••••"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Your current available funds in NestPurse
+                    </p>
+                    
+                    {!isLoading && dashboardData?.profile?.pointsBalance !== undefined && (
+                      <div className="mt-4 pt-3 border-t border-dashed border-border flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                            NestCircle Points
+                          </p>
+                          <p className="text-base font-bold text-primary mt-0.5">
+                            {showBalance 
+                              ? `${(dashboardData.profile.pointsBalance || 0).toLocaleString()} pts` 
+                              : "•••• pts"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground font-medium">Naira Value</p>
+                          <p className="text-sm font-semibold text-muted-foreground mt-0.5">
+                            {showBalance 
+                              ? `≈ ₦${((dashboardData.profile.pointsBalance || 0) / 2).toLocaleString()}` 
+                              : "≈ ₦••••"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Your current available funds in NestPurse
-                </p>
               </CardContent>
             </Card>
             )}
@@ -284,7 +321,7 @@ export function Dashboard() {
             {!needsSetup && (
               <div className="lg:col-span-2 flex flex-col gap-3">
                 <h3 className="text-sm font-medium">Quick Actions</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-3">
                   <Button
                     type="button"
                     className="h-14 justify-start gap-3 rounded-xl text-base text-black dark:text-white"
@@ -320,22 +357,82 @@ export function Dashboard() {
                     </div>
                     Withdraw
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-14 justify-start gap-3 rounded-xl text-base"
-                    size="lg"
-                    onClick={() => setShowAirtime(true)}
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <Smartphone size={18} />
-                    </div>
-                    Buy Airtime
-                  </Button>
                 </div>
               </div>
             )}
           </div>
+
+          {/* Bill Payments Section */}
+          {!needsSetup && (
+            <Card className="border-muted bg-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Bill Payments</CardTitle>
+                <CardDescription className="text-xs">
+                  Purchase airtime, data bundles, electricity bills and cable TV subscriptions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-2 sm:gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex flex-col sm:flex-row h-auto sm:h-14 py-3 sm:py-0 px-1 sm:px-4 items-center justify-center sm:justify-start gap-1.5 sm:gap-3 rounded-xl text-center sm:text-left"
+                    size="lg"
+                    onClick={() => setShowAirtime(true)}
+                  >
+                    <div className="flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+                      <Smartphone size={18} />
+                    </div>
+                    <span className="text-[10px] sm:text-base font-bold sm:font-medium tracking-tight sm:tracking-normal leading-tight">
+                      Airtime
+                    </span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex flex-col sm:flex-row h-auto sm:h-14 py-3 sm:py-0 px-1 sm:px-4 items-center justify-center sm:justify-start gap-1.5 sm:gap-3 rounded-xl text-center sm:text-left"
+                    size="lg"
+                    onClick={() => setShowData(true)}
+                  >
+                    <div className="flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-purple-500/10 text-purple-500 dark:text-purple-400 shrink-0">
+                      <Wifi size={18} />
+                    </div>
+                    <span className="text-[10px] sm:text-base font-bold sm:font-medium tracking-tight sm:tracking-normal leading-tight">
+                      Data
+                    </span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex flex-col sm:flex-row h-auto sm:h-14 py-3 sm:py-0 px-1 sm:px-4 items-center justify-center sm:justify-start gap-1.5 sm:gap-3 rounded-xl text-center sm:text-left cursor-pointer"
+                    size="lg"
+                    onClick={() => setShowCable(true)}
+                  >
+                    <div className="flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500 shrink-0">
+                      <Tv size={18} />
+                    </div>
+                    <span className="text-[10px] sm:text-base font-bold sm:font-medium tracking-tight sm:tracking-normal leading-tight">
+                      Cable TV
+                    </span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex flex-col sm:flex-row h-auto sm:h-14 py-3 sm:py-0 px-1 sm:px-4 items-center justify-center sm:justify-start gap-1.5 sm:gap-3 rounded-xl text-center sm:text-left"
+                    size="lg"
+                    onClick={() => setShowElectricity(true)}
+                  >
+                    <div className="flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 shrink-0">
+                      <Zap size={18} />
+                    </div>
+                    <span className="text-[10px] sm:text-base font-bold sm:font-medium tracking-tight sm:tracking-normal leading-tight">
+                      Electricity
+                    </span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Recent Activity Section */}
           <section className="flex flex-col gap-4">
@@ -431,6 +528,18 @@ export function Dashboard() {
         <AirtimeDialog
           open={showAirtime}
           onOpenChange={setShowAirtime}
+        />
+        <DataDialog
+          open={showData}
+          onOpenChange={setShowData}
+        />
+        <ElectricityDialog
+          open={showElectricity}
+          onOpenChange={setShowElectricity}
+        />
+        <CableDialog
+          open={showCable}
+          onOpenChange={setShowCable}
         />
       </SidebarInset>
     </SidebarProvider>
