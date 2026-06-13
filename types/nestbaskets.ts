@@ -125,6 +125,7 @@ export interface CustomPlan {
   savingExpiresAt: string | null;
   createdAt: string;
   updatedAt: string;
+  status: string;
   items: CustomPlanItem[];
   deliveryProfile?: DeliveryProfile | null;
   // Unified view enrichments

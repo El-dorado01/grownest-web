@@ -633,6 +633,7 @@ function BasketsPageContent() {
                   {flexiblePlans.map((plan: any) => {
                     const progress = plan.progress || 0;
                     const isFullyPaid = plan.isPaid;
+                    const isPendingSelection = plan.status === "pending_selection";
                     const autoPay = plan.autoPay;
 
                     return (
@@ -649,11 +650,13 @@ function BasketsPageContent() {
                             <Badge 
                               className={`font-semibold text-xs ${
                                 isFullyPaid
-                                  ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100" 
+                                  ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100"
+                                  : isPendingSelection
+                                  ? "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 hover:bg-amber-100 border border-amber-200"
                                   : "bg-secondary/10 text-secondary hover:bg-secondary/10 border border-secondary/20"
                               }`}
                             >
-                              {isFullyPaid ? "FULLY PAID" : `${progress}% SAVED`}
+                              {isFullyPaid ? "FULLY PAID" : isPendingSelection ? "PENDING SELECTION" : `${progress}% SAVED`}
                             </Badge>
                           </div>
                         </CardHeader>
@@ -668,7 +671,9 @@ function BasketsPageContent() {
                             {/* Custom beautiful gold/bronze progress bar */}
                             <div className="w-full bg-muted border border-border/40 rounded-full h-2.5 overflow-hidden">
                               <div 
-                                className="bg-primary h-full rounded-full transition-all duration-500 ease-out" 
+                                className={`h-full rounded-full transition-all duration-500 ease-out ${
+                                  isPendingSelection ? "bg-amber-500" : "bg-primary"
+                                }`} 
                                 style={{ width: `${Math.min(progress, 100)}%` }}
                               />
                             </div>
@@ -685,11 +690,15 @@ function BasketsPageContent() {
                         <CardFooter className="p-4 flex gap-3 bg-card mt-auto justify-end">
                           <Button 
                             size="sm"
-                            className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold"
+                            className={`font-semibold ${
+                              isPendingSelection
+                                ? "bg-amber-600 hover:bg-amber-700 text-white"
+                                : "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                            }`}
                             asChild
                           >
                             <Link href={`/nestbaskets/baskets/flexible/${plan.id}`}>
-                              Manage Goal
+                              {isPendingSelection ? "Resolve Expired Goal" : "Manage Goal"}
                             </Link>
                           </Button>
                         </CardFooter>
