@@ -40,10 +40,15 @@ export interface NestCircleData {
 }
 
 export interface RedeemPayload {
-  phoneNumber: string
-  network: string
+  redemptionType?: 'airtime' | 'data' | 'cabletv' | 'electricity'
   pointsToRedeem: number
   pin: string
+  phoneNumber?: string
+  network?: string
+  disco?: string
+  customerId?: string
+  meterType?: string
+  cableTvType?: string
 }
 
 export const nestCircleApi = {

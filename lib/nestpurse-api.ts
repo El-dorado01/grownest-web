@@ -162,8 +162,58 @@ export const nestPurseApi = {
     network: string;
     amount: number;
     pin: string;
+    usePoints?: boolean;
   }) =>
     api.post<{ message: string; reference: string }>("/api/nestpurse/airtime", data),
+
+  getDataPlans: (telco: string) =>
+    api.get<{ message: string; plans: Array<{ amount: number; plan: string }> }>(
+      `/api/nestpurse/data-plans/${telco.toLowerCase()}`
+    ),
+
+  purchaseData: (data: {
+    phoneNumber: string;
+    network: string;
+    amount: number;
+    pin: string;
+    plan?: string;
+    usePoints?: boolean;
+  }) =>
+    api.post<{ message: string; reference: string }>("/api/nestpurse/data", data),
+
+  getElectricityDiscos: () =>
+    api.get<{ message: string; discos: Array<{ id: string; name: string }> }>("/api/nestpurse/electricity/discos"),
+
+  lookupElectricity: (params: { disco: string; customerId: string }) =>
+    api.get<{ message: string; name?: string; customerName?: string; customerAddress?: string; customerId?: string }>(
+      `/api/nestpurse/electricity/lookup?disco=${encodeURIComponent(params.disco)}&customerId=${encodeURIComponent(params.customerId)}`
+    ),
+
+  purchaseElectricity: (data: {
+    disco: string;
+    amount: number;
+    customerId: string;
+    meterType: string;
+    pin: string;
+    payerName?: string;
+    usePoints?: boolean;
+  }) =>
+    api.post<{ message: string; reference: string }>("/api/nestpurse/electricity/vend", data),
+
+  lookupCable: (params: { cableTvType: string; customerId: string }) =>
+    api.get<{ message: string; name?: string; customerName?: string; customerId?: string }>(
+      `/api/nestpurse/cabletv/lookup?cableTvType=${encodeURIComponent(params.cableTvType)}&customerId=${encodeURIComponent(params.customerId)}`
+    ),
+
+  subscribeCableTv: (data: {
+    cableTvType: string;
+    amount: number;
+    customerId: string;
+    pin: string;
+    payerName?: string;
+    usePoints?: boolean;
+  }) =>
+    api.post<{ message: string; reference: string }>("/api/nestpurse/cabletv/subscribe", data),
 
   getTransactions: (params: {
     limit?: number;
@@ -193,6 +243,90 @@ export const nestPurseApi = {
       pagination: { hasMore: boolean; nextCursor?: string; limit: number };
       filters: { startDate?: string; endDate?: string };
     }>(`/api/nestpurse/transactions?${query.toString()}`);
+  },
+
+  getAirtimeTransactions: (params: { limit?: number; cursor?: string }) => {
+    const query = new URLSearchParams();
+    if (params.limit) query.set("limit", String(params.limit));
+    if (params.cursor) query.set("cursor", params.cursor);
+    return api.get<{
+      transactions: Array<{
+        id: string;
+        type: "credit" | "debit";
+        amount: number;
+        status: string;
+        method: string;
+        reference: string;
+        date: string;
+        narration?: string;
+        metadata?: any;
+      }>;
+      pagination: { hasMore: boolean; nextCursor?: string; limit: number };
+      filters: { startDate?: string; endDate?: string };
+    }>(`/api/nestpurse/transactions/airtime?${query.toString()}`);
+  },
+
+  getDataTransactions: (params: { limit?: number; cursor?: string }) => {
+    const query = new URLSearchParams();
+    if (params.limit) query.set("limit", String(params.limit));
+    if (params.cursor) query.set("cursor", params.cursor);
+    return api.get<{
+      transactions: Array<{
+        id: string;
+        type: "credit" | "debit";
+        amount: number;
+        status: string;
+        method: string;
+        reference: string;
+        date: string;
+        narration?: string;
+        metadata?: any;
+      }>;
+      pagination: { hasMore: boolean; nextCursor?: string; limit: number };
+      filters: { startDate?: string; endDate?: string };
+    }>(`/api/nestpurse/transactions/data?${query.toString()}`);
+  },
+
+  getElectricityTransactions: (params: { limit?: number; cursor?: string }) => {
+    const query = new URLSearchParams();
+    if (params.limit) query.set("limit", String(params.limit));
+    if (params.cursor) query.set("cursor", params.cursor);
+    return api.get<{
+      transactions: Array<{
+        id: string;
+        type: "credit" | "debit";
+        amount: number;
+        status: string;
+        method: string;
+        reference: string;
+        date: string;
+        narration?: string;
+        metadata?: any;
+      }>;
+      pagination: { hasMore: boolean; nextCursor?: string; limit: number };
+      filters: { startDate?: string; endDate?: string };
+    }>(`/api/nestpurse/transactions/electricity?${query.toString()}`);
+  },
+
+  getCableTvTransactions: (params: { limit?: number; cursor?: string }) => {
+    const query = new URLSearchParams();
+    if (params.limit) query.set("limit", String(params.limit));
+    if (params.cursor) query.set("cursor", params.cursor);
+    return api.get<{
+      transactions: Array<{
+        id: string;
+        type: "credit" | "debit";
+        amount: number;
+        status: string;
+        method: string;
+        reference: string;
+        date: string;
+        narration?: string;
+        metadata?: any;
+      }>;
+      pagination: { hasMore: boolean; nextCursor?: string; limit: number };
+      filters: { startDate?: string; endDate?: string };
+    }>(`/api/nestpurse/transactions/cabletv?${query.toString()}`);
   },
 };
 

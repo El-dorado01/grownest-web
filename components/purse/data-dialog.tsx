@@ -22,14 +22,18 @@ import { useProfile } from "@/hooks/use-profile"
 import { useNestFeathers } from "@/hooks/use-nestfeathers"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Loader2, CheckCircle2, Smartphone, ArrowLeft } from "lucide-react"
+import { ArrowRight, Loader2, CheckCircle2, Wifi, Search, ArrowLeft } from "lucide-react"
 import confetti from "canvas-confetti"
 import { motion, AnimatePresence } from "framer-motion"
 
-interface AirtimeDialogProps {
+interface DataDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  colorTheme?: "primary" | "sky"
+}
+
+interface DataPlan {
+  amount: number
+  plan: string
 }
 
 // Smart network provider detection based on Nigerian phone prefixes
@@ -56,45 +60,45 @@ function detectNetwork(phone: string): string | null {
   return null
 }
 
-export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: AirtimeDialogProps) {
+// Parse plan description e.g. "40GB -> 30Days (N15,000)"
+function parsePlanDetails(planStr: string) {
+  const parts = planStr.split("->")
+  if (parts.length === 2) {
+    const allowance = parts[0].trim()
+    const rest = parts[1].trim()
+    const validityMatch = rest.match(/^([^(]+)/)
+    const priceMatch = rest.match(/\(([^)]+)\)/)
+    
+    const validity = validityMatch ? validityMatch[1].trim() : ""
+    const price = priceMatch ? priceMatch[1].trim().replace(/N/gi, "₦") : ""
+    
+    return { allowance, validity, price }
+  }
+  return { allowance: planStr, validity: "", price: "" }
+}
+
+export function DataDialog({ open, onOpenChange }: DataDialogProps) {
   const isMobile = useIsMobile()
   const { profile, mutate: mutateProfile } = useProfile()
   const { mutate: mutateFeathers } = useNestFeathers()
 
-  const theme = {
-    primary: {
-      text: "text-primary",
-      bg: "bg-primary",
-      bgHover: "hover:bg-primary/90",
-      border: "border-primary",
-      textFlipped: "text-primary-foreground",
-      ring: "ring-primary/50",
-      focusBorder: "focus:border-primary",
-      focusRing: "focus:ring-primary",
-    },
-    sky: {
-      text: "text-sky-600 dark:text-sky-400",
-      bg: "bg-sky-600 dark:bg-sky-500",
-      bgHover: "hover:bg-sky-700 dark:hover:bg-sky-600",
-      border: "border-sky-600 dark:border-sky-500",
-      textFlipped: "text-white",
-      ring: "ring-sky-500/50",
-      focusBorder: "focus:border-sky-500",
-      focusRing: "focus:ring-sky-500",
-    }
-  }[colorTheme]
-
   // Wizard flow states
-  const [airtimeStep, setAirtimeStep] = React.useState<number>(1)
+  const [dataStep, setDataStep] = React.useState<number>(1)
   const [isForSelf, setIsForSelf] = React.useState<boolean | null>(null)
   const [phoneNumber, setPhoneNumber] = React.useState("")
   const [network, setNetwork] = React.useState("MTN")
-  const [amount, setAmount] = React.useState("")
+  
+  // Data plans states
+  const [plans, setPlans] = React.useState<DataPlan[]>([])
+  const [isLoadingPlans, setIsLoadingPlans] = React.useState(false)
+  const [selectedPlan, setSelectedPlan] = React.useState<DataPlan | null>(null)
+  const [searchQuery, setSearchQuery] = React.useState("")
+
   const [pin, setPin] = React.useState("")
   const [usePoints, setUsePoints] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
-  const [airtimeError, setAirtimeError] = React.useState<string | null>(null)
-  const [airtimeSuccess, setAirtimeSuccess] = React.useState(false)
+  const [dataError, setDataError] = React.useState<string | null>(null)
+  const [dataSuccess, setDataSuccess] = React.useState(false)
 
   // History view states
   const [showHistory, setShowHistory] = React.useState(false)
@@ -106,7 +110,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
   // Points values calculation
   const pointsBalance = profile?.pointsBalance || 0
   const pointsValueNaira = pointsBalance / 2
-  const numericAmount = Number(amount) || 0
+  const numericAmount = selectedPlan?.amount || 0
 
   let pointsToDeduct = 0
   let walletAmountToDeduct = numericAmount
@@ -121,15 +125,40 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
     }
   }
 
+  // Fetch data plans when step 2 is active or when network changes
+  React.useEffect(() => {
+    if (open && dataStep === 2 && network) {
+      const fetchPlans = async () => {
+        setIsLoadingPlans(true)
+        setDataError(null)
+        try {
+          const res = await nestPurseApi.getDataPlans(network)
+          if (res.error) {
+            setDataError(res.error || "Failed to load data plans.")
+          } else {
+            setPlans(res.data?.plans || [])
+          }
+        } catch (err: unknown) {
+          const errorResponse = err as { response?: { data?: { error?: string } } }
+          const errMsg = errorResponse?.response?.data?.error || (err instanceof Error ? err.message : "An error occurred while loading data plans.")
+          setDataError(errMsg)
+        } finally {
+          setIsLoadingPlans(false)
+        }
+      }
+      fetchPlans()
+    }
+  }, [open, dataStep, network])
+
   // Auto focus PIN field on step 3
   React.useEffect(() => {
-    if (airtimeStep === 3) {
+    if (dataStep === 3) {
       const timer = setTimeout(() => {
         pinInputRef.current?.focus()
       }, 50)
       return () => clearTimeout(timer)
     }
-  }, [airtimeStep])
+  }, [dataStep])
 
   // Reset form states on open/close
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -140,12 +169,14 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
       setPhoneNumber(phone)
       const detected = phone ? detectNetwork(phone) : null
       setNetwork(detected || "MTN")
-      setAmount("")
+      setPlans([])
+      setSelectedPlan(null)
+      setSearchQuery("")
       setPin("")
       setUsePoints(false)
-      setAirtimeStep(1)
-      setAirtimeError(null)
-      setAirtimeSuccess(false)
+      setDataStep(1)
+      setDataError(null)
+      setDataSuccess(false)
       setShowHistory(false)
       setHistory([])
       setIsLoadingHistory(false)
@@ -153,18 +184,18 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
   }, [open, profile?.phone])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Fetch airtime history when history panel is shown
+  // Fetch data history when history panel is shown
   React.useEffect(() => {
     if (showHistory && open) {
       const loadHistory = async () => {
         setIsLoadingHistory(true)
         try {
-          const res = await nestPurseApi.getAirtimeTransactions({ limit: 50 })
+          const res = await nestPurseApi.getDataTransactions({ limit: 50 })
           if (res.data?.transactions) {
             setHistory(res.data.transactions)
           }
         } catch (err) {
-          console.error("Failed to load airtime transactions:", err)
+          console.error("Failed to load data transactions:", err)
         } finally {
           setIsLoadingHistory(false)
         }
@@ -174,47 +205,48 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
   }, [showHistory, open])
 
   const isStep1Valid = phoneNumber.replace(/[\s\-\+]/g, "").length >= 10 && !!network
-  const isStep2Valid = Number(amount) >= 100
+  const isStep2Valid = !!selectedPlan
   const isStep3Valid = pin.length === 4
 
-  const handleBuyAirtime = async (e: React.FormEvent) => {
+  const handleBuyData = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (airtimeStep === 1) {
+    if (dataStep === 1) {
       if (isStep1Valid) {
-        setAirtimeStep(2)
+        setDataStep(2)
       }
       return
     }
-    if (airtimeStep === 2) {
+    if (dataStep === 2) {
       if (isStep2Valid) {
-        setAirtimeStep(3)
+        setDataStep(3)
       }
       return
     }
     
-    if (!phoneNumber || !amount || !pin) {
-      setAirtimeError("Please fill in all fields.")
+    if (!phoneNumber || !selectedPlan || !pin) {
+      setDataError("Please fill in all fields.")
       return
     }
 
     setIsSubmitting(true)
-    setAirtimeError(null)
+    setDataError(null)
 
     try {
-      const res = await nestPurseApi.purchaseAirtime({
+      const res = await nestPurseApi.purchaseData({
         phoneNumber,
         network,
-        amount: Number(amount),
+        amount: selectedPlan.amount,
+        plan: selectedPlan.plan,
         pin,
         usePoints,
       })
 
       if (res.error) {
-        setAirtimeError(res.error || "Failed to purchase airtime. Please try again.")
+        setDataError(res.error || "Failed to purchase data bundle. Please try again.")
       } else {
-        setAirtimeSuccess(true)
-        toast.success("Airtime purchased successfully!")
+        setDataSuccess(true)
+        toast.success("Data bundle purchased successfully!")
         confetti({
           particleCount: 100,
           spread: 60,
@@ -226,11 +258,18 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
     } catch (err: unknown) {
       const errorResponse = err as { response?: { data?: { error?: string } } }
       const errMsg = errorResponse?.response?.data?.error || (err instanceof Error ? err.message : "An error occurred.")
-      setAirtimeError(errMsg)
+      setDataError(errMsg)
     } finally {
       setIsSubmitting(false)
     }
   }
+
+  // Filter plans based on search query
+  const filteredPlans = React.useMemo(() => {
+    if (!searchQuery) return plans
+    const query = searchQuery.toLowerCase()
+    return plans.filter((p) => p.plan.toLowerCase().includes(query))
+  }, [plans, searchQuery])
 
   const renderHistory = () => {
     if (isLoadingHistory) {
@@ -256,12 +295,12 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
       return (
         <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3 animate-in fade-in duration-300">
           <div className="h-12 w-12 rounded-full bg-muted/30 flex items-center justify-center text-muted-foreground opacity-60">
-            <Smartphone className="h-6 w-6" />
+            <Wifi className="h-6 w-6" />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-bold text-foreground">No Payment History</p>
             <p className="text-xs text-muted-foreground max-w-[240px] leading-relaxed">
-              You haven't purchased any airtime yet. Your transaction history will appear here.
+              You haven't purchased any data bundles yet. Your transaction history will appear here.
             </p>
           </div>
         </div>
@@ -288,7 +327,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
               <div className="flex justify-between items-start">
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-bold text-foreground capitalize">
-                    {tx.method} Top-up
+                    Data Bundle
                   </span>
                   <span className="text-xxs text-muted-foreground font-semibold">
                     {dateStr}
@@ -319,30 +358,30 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
     )
   }
 
-  const renderAirtimeForm = () => {
-    if (airtimeSuccess) {
+  const renderDataForm = () => {
+    if (dataSuccess) {
       return (
         <div className="flex flex-col items-center justify-center py-8 px-4 text-center gap-4 animate-in fade-in zoom-in-95 duration-300">
           <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
             <CheckCircle2 className="h-10 w-10 fill-emerald-500 text-white dark:fill-transparent" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-black text-foreground">Top-up Successful!</h3>
+            <h3 className="text-lg font-black text-foreground">Bundle Vended Successfully!</h3>
             <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
               {usePoints && pointsToDeduct > 0 ? (
                 <>
-                  ₦{Number(amount).toLocaleString()} airtime has been sent to {phoneNumber}. Charged {pointsToDeduct.toLocaleString()} points
+                  {selectedPlan?.plan} has been vended to {phoneNumber}. Charged {pointsToDeduct.toLocaleString()} points
                   {walletAmountToDeduct > 0 ? ` and ₦${walletAmountToDeduct.toLocaleString()} from your wallet` : ""}.
                 </>
               ) : (
                 <>
-                  ₦{Number(amount).toLocaleString()} airtime has been sent to {phoneNumber}. Your wallet balance has been updated.
+                  {selectedPlan?.plan} has been vended to {phoneNumber}. Your wallet balance has been updated.
                 </>
               )}
             </p>
           </div>
           <Button 
-            className={cn("mt-4 rounded-full px-8 font-bold text-xs h-10 cursor-pointer", theme.bg, theme.bgHover, theme.textFlipped)}
+            className="mt-4 rounded-full px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs h-10 cursor-pointer"
             onClick={() => onOpenChange(false)}
           >
             Done
@@ -352,32 +391,32 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
     }
 
     return (
-      <form onSubmit={handleBuyAirtime} className="flex-1 flex flex-col gap-4 py-2 select-none animate-in fade-in slide-in-from-bottom-4 duration-300">
-        {airtimeError && (
-          <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-xs font-bold text-destructive text-center">
-            {airtimeError}
+      <form onSubmit={handleBuyData} className="flex-1 flex flex-col gap-4 py-2 select-none animate-in fade-in slide-in-from-bottom-4 duration-300 min-h-0">
+        {dataError && (
+          <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-xs font-bold text-destructive text-center shrink-0">
+            {dataError}
           </div>
         )}
 
         {/* Step Indicator */}
-        <div className="flex justify-between items-center px-1 border-b pb-2 mb-1">
-          <span className={cn("text-xs font-black uppercase tracking-wider", theme.text)}>
-            {airtimeStep === 1 && "Step 1: Recipient & Network"}
-            {airtimeStep === 2 && "Step 2: Enter Amount"}
-            {airtimeStep === 3 && "Step 3: Secure Transaction PIN"}
+        <div className="flex justify-between items-center px-1 border-b pb-2 mb-1 shrink-0">
+          <span className="text-xs font-black uppercase tracking-wider text-primary">
+            {dataStep === 1 && "Step 1: Recipient & Network"}
+            {dataStep === 2 && "Step 2: Choose Data Bundle"}
+            {dataStep === 3 && "Step 3: Secure Transaction PIN"}
           </span>
           <div className="flex gap-1">
-            <div className={cn("h-1.5 rounded-full transition-all duration-300", airtimeStep === 1 ? `${theme.bg} w-4.5` : "bg-muted w-1.5")} />
-            <div className={cn("h-1.5 rounded-full transition-all duration-300", airtimeStep === 2 ? `${theme.bg} w-4.5` : "bg-muted w-1.5")} />
-            <div className={cn("h-1.5 rounded-full transition-all duration-300", airtimeStep === 3 ? `${theme.bg} w-4.5` : "bg-muted w-1.5")} />
+            <div className={cn("h-1.5 rounded-full transition-all duration-300", dataStep === 1 ? "bg-primary w-4.5" : "bg-muted w-1.5")} />
+            <div className={cn("h-1.5 rounded-full transition-all duration-300", dataStep === 2 ? "bg-primary w-4.5" : "bg-muted w-1.5")} />
+            <div className={cn("h-1.5 rounded-full transition-all duration-300", dataStep === 3 ? "bg-primary w-4.5" : "bg-muted w-1.5")} />
           </div>
         </div>
 
         {/* STEP 1: RECIPIENT & NETWORK */}
-        {airtimeStep === 1 && (
+        {dataStep === 1 && (
           <div className="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
             {/* Recipient Selection (For Self / For Others) */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 shrink-0">
               <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Recipient</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -397,7 +436,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                   className={cn(
                     "h-10 rounded-xl border font-black text-sm transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer",
                     isForSelf === true
-                      ? cn(theme.bg, theme.border, theme.textFlipped, "shadow-xs")
+                      ? "bg-primary border-primary text-primary-foreground shadow-xs"
                       : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
                   )}
                 >
@@ -414,7 +453,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                   className={cn(
                     "h-10 rounded-xl border font-black text-sm transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer",
                     isForSelf === false
-                      ? cn(theme.bg, theme.border, theme.textFlipped, "shadow-xs")
+                      ? "bg-primary border-primary text-primary-foreground shadow-xs"
                       : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
                   )}
                 >
@@ -425,7 +464,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
 
             {/* Hidden phone and network fields revealed after choice */}
             {isForSelf !== null && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300 shrink-0">
                 {/* Phone Number Input */}
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Phone Number</label>
@@ -443,8 +482,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                     placeholder={isForSelf ? "No phone number set in profile" : "e.g. 08055441122"}
                     disabled={isSubmitting || isForSelf}
                     className={cn(
-                      "w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden text-sm font-semibold transition-all",
-                      theme.focusBorder, "focus:ring-1", theme.focusRing,
+                      "w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-primary focus:ring-1 focus:ring-primary text-sm font-semibold transition-all",
                       isForSelf && "opacity-75 bg-muted/20 cursor-not-allowed"
                     )}
                   />
@@ -475,7 +513,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                           className={cn(
                             "h-10 rounded-xl border font-black text-xs tracking-wide transition-all shadow-xs flex items-center justify-center cursor-pointer",
                             isSelected 
-                              ? `${net.color} scale-105 ring-2 ring-offset-2 dark:ring-offset-card ${theme.ring}` 
+                              ? `${net.color} scale-105 ring-2 ring-offset-2 ring-primary/50 dark:ring-offset-card` 
                               : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
                           )}
                         >
@@ -489,7 +527,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
             )}
 
             {/* Step 1 Footer */}
-            <div className="flex gap-2 border-t pt-4 mt-auto">
+            <div className="flex gap-2 border-t pt-4 mt-auto shrink-0">
               <Button
                 type="button"
                 variant="ghost"
@@ -502,8 +540,8 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
               <Button
                 type="button"
                 disabled={!isStep1Valid}
-                onClick={() => setAirtimeStep(2)}
-                className={cn("flex-1 h-10 rounded-full font-bold gap-2 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed", theme.textFlipped, theme.bg, theme.bgHover)}
+                onClick={() => setDataStep(2)}
+                className="flex-1 h-10 rounded-full font-bold gap-2 text-sm text-primary-foreground bg-primary hover:bg-primary/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
                 <ArrowRight className="h-4 w-4" />
@@ -512,42 +550,76 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
           </div>
         )}
 
-        {/* STEP 2: ENTER AMOUNT */}
-        {airtimeStep === 2 && (
-          <div className="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
-            {/* Amount Selection */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Amount (₦)</label>
-              <div className="grid grid-cols-5 gap-1.5">
-                {[100, 200, 500, 1000, 2000].map((val) => (
-                  <button
-                    key={val}
-                    type="button"
-                    disabled={isSubmitting}
-                    onClick={() => setAmount(String(val))}
-                    className={cn(
-                      "h-8 rounded-lg border font-bold text-xs transition-all flex items-center justify-center cursor-pointer",
-                      amount === String(val)
-                        ? cn(theme.bg, theme.textFlipped, theme.border, "scale-105")
-                        : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
-                    )}
-                  >
-                    ₦{val}
-                  </button>
-                ))}
-              </div>
+        {/* STEP 2: CHOOSE DATA BUNDLE */}
+        {dataStep === 2 && (
+          <div className="flex-1 flex flex-col gap-3 animate-in fade-in slide-in-from-right-4 duration-300 min-h-0">
+            {/* Search Input */}
+            <div className="relative shrink-0">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Custom Amount (Min ₦100)"
-                disabled={isSubmitting}
-                className={cn("w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden text-sm font-semibold transition-all mt-2", theme.focusBorder, "focus:ring-1", theme.focusRing)}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search plans (e.g. 10GB, 30 days)"
+                disabled={isLoadingPlans}
+                className="w-full h-10 pl-9 pr-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-primary focus:ring-1 focus:ring-primary text-sm font-semibold transition-all"
               />
             </div>
 
-            {pointsBalance > 0 && (
-              <div className="p-4 rounded-xl border border-muted bg-card flex flex-col gap-3">
+            {/* Plans List Container */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              {isLoadingPlans ? (
+                <div className="flex flex-col gap-2 py-1">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="h-14 w-full animate-pulse rounded-xl bg-muted/40 border border-muted/20" />
+                  ))}
+                </div>
+              ) : filteredPlans.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center gap-2 text-muted-foreground">
+                  <Wifi className="h-8 w-8 opacity-25" />
+                  <p className="text-xs font-semibold">No plans found matching that query.</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 py-1 pr-1">
+                  {filteredPlans.map((item, idx) => {
+                    const parsed = parsePlanDetails(item.plan)
+                    const isSelected = selectedPlan?.plan === item.plan
+                    return (
+                      <button
+                        key={`${item.plan}-${idx}`}
+                        type="button"
+                        onClick={() => setSelectedPlan(item)}
+                        className={cn(
+                          "w-full text-left p-3.5 rounded-xl border text-sm transition-all flex items-center justify-between gap-4 cursor-pointer",
+                          isSelected
+                            ? "bg-primary/10 border-primary text-primary-foreground font-black shadow-xs ring-1 ring-primary"
+                            : "bg-card border-muted text-foreground hover:bg-muted/20"
+                        )}
+                      >
+                        <div className="flex flex-col gap-0.5">
+                          <span className={cn("text-sm font-bold", isSelected ? "text-primary" : "text-foreground")}>
+                            {parsed.allowance}
+                          </span>
+                          {parsed.validity && (
+                            <span className="text-xxs text-muted-foreground font-medium uppercase tracking-wider">
+                              Validity: {parsed.validity}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-right flex flex-col items-end">
+                          <span className={cn("text-sm font-black", isSelected ? "text-primary" : "text-foreground")}>
+                            ₦{item.amount.toLocaleString()}
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {selectedPlan && pointsBalance > 0 && (
+              <div className="p-4 rounded-xl border border-muted bg-card flex flex-col gap-3 shrink-0">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-foreground">Pay with Points</span>
@@ -588,12 +660,12 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
             )}
 
             {/* Step 2 Footer */}
-            <div className="flex gap-2 border-t pt-4 mt-auto">
+            <div className="flex gap-2 border-t pt-4 mt-auto shrink-0">
               <Button
                 type="button"
                 variant="ghost"
                 disabled={isSubmitting}
-                onClick={() => setAirtimeStep(1)}
+                onClick={() => setDataStep(1)}
                 className="flex-1 h-10 rounded-full font-bold text-sm cursor-pointer"
               >
                 Back
@@ -601,8 +673,8 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
               <Button
                 type="button"
                 disabled={!isStep2Valid}
-                onClick={() => setAirtimeStep(3)}
-                className={cn("flex-1 h-10 rounded-full font-bold gap-2 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed", theme.textFlipped, theme.bg, theme.bgHover)}
+                onClick={() => setDataStep(3)}
+                className="flex-1 h-10 rounded-full font-bold gap-2 text-sm text-primary-foreground bg-primary hover:bg-primary/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
                 <ArrowRight className="h-4 w-4" />
@@ -612,7 +684,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
         )}
 
         {/* STEP 3: TRANSACTION PIN */}
-        {airtimeStep === 3 && (
+        {dataStep === 3 && (
           <div className="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
             {/* Transaction PIN */}
             <div className="flex flex-col gap-2">
@@ -625,12 +697,12 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
                 placeholder="4-digit PIN"
                 disabled={isSubmitting}
-                className={cn("w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden text-sm font-semibold tracking-widest text-center transition-all", theme.focusBorder, "focus:ring-1", theme.focusRing)}
+                className="w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-primary focus:ring-1 focus:ring-primary text-sm font-semibold tracking-widest text-center transition-all"
               />
             </div>
 
             {/* Summary Details */}
-            <div className="p-3.5 rounded-2xl bg-muted/30 border border-muted/50 text-xs font-semibold text-muted-foreground space-y-1">
+            <div className="p-3.5 rounded-2xl bg-muted/30 border border-muted/50 text-xs font-semibold text-muted-foreground space-y-1.5">
               <div className="flex justify-between">
                 <span>Recipient:</span>
                 <span className="font-bold text-foreground">{isForSelf ? "Self" : "Others"} ({phoneNumber})</span>
@@ -640,12 +712,16 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                 <span className="font-bold text-foreground">{network}</span>
               </div>
               <div className="flex justify-between">
+                <span>Plan:</span>
+                <span className="font-bold text-foreground text-right max-w-[70%] truncate">{selectedPlan?.plan}</span>
+              </div>
+              <div className="flex justify-between border-t pt-1.5 mt-1 border-muted/50">
                 <span>Total Amount:</span>
-                <span className="font-black text-foreground">₦{Number(amount).toLocaleString()}</span>
+                <span className="font-black text-foreground">₦{selectedPlan?.amount.toLocaleString()}</span>
               </div>
               {usePoints && (
                 <>
-                  <div className="flex justify-between border-t border-dashed border-muted/80 pt-1 mt-1">
+                  <div className="flex justify-between border-t border-dashed border-muted/80 pt-1.5 mt-1.5">
                     <span>Points to Use:</span>
                     <span className="font-bold text-emerald-600 dark:text-emerald-400">{pointsToDeduct.toLocaleString()} pts (≈ ₦{(pointsToDeduct / 2).toLocaleString()})</span>
                   </div>
@@ -663,7 +739,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                 type="button"
                 variant="ghost"
                 disabled={isSubmitting}
-                onClick={() => setAirtimeStep(2)}
+                onClick={() => setDataStep(2)}
                 className="flex-1 h-10 rounded-full font-bold text-sm cursor-pointer"
               >
                 Back
@@ -671,16 +747,16 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
               <Button
                 type="submit"
                 disabled={isSubmitting || !isStep3Valid}
-                className={cn("flex-1 h-10 rounded-full font-bold gap-2 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed", theme.textFlipped, theme.bg, theme.bgHover)}
+                className={cn("flex-1 h-10 rounded-full font-bold gap-2 text-sm text-primary-foreground bg-primary hover:bg-primary/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed")}
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Purchasing...
+                    Vending...
                   </>
                 ) : (
                   <>
-                    Confirm Top-up
+                    Confirm & Vend
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -693,16 +769,16 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
   }
 
   const title = {
-    1: "Buy Airtime",
-    2: "Select Amount",
+    1: "Buy Data Bundle",
+    2: "Select Plan",
     3: "Security Verification",
-  }[airtimeStep as 1 | 2 | 3] || "Buy Airtime"
+  }[dataStep as 1 | 2 | 3] || "Buy Data Bundle"
 
   const description = {
     1: "Configure recipient details and carrier network provider",
-    2: "Enter or select the top-up amount in Naira",
-    3: "Confirm details and authorize top-up with your transaction PIN",
-  }[airtimeStep as 1 | 2 | 3] || "Purchase mobile network airtime top-up"
+    2: `Choose from available data packages for ${network}`,
+    3: "Confirm details and authorize data vending with transaction PIN",
+  }[dataStep as 1 | 2 | 3] || "Purchase mobile network data bundle"
 
   if (isMobile) {
     return (
@@ -757,7 +833,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                       "transition-all duration-300 font-bold",
                       showHistory 
                         ? "text-foreground text-lg sm:text-xl" 
-                        : cn("text-xs uppercase tracking-wider cursor-pointer pr-3", theme.text)
+                        : "text-xs uppercase tracking-wider cursor-pointer text-primary pr-3"
                     )}
                     onClick={() => !showHistory && setShowHistory(true)}
                   >
@@ -781,8 +857,8 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
               </AnimatePresence>
             </DrawerDescription>
           </DrawerHeader>
-          <div className={cn("px-2 py-2 flex-1 min-h-0 overflow-y-auto", (!airtimeSuccess && !showHistory) && "flex flex-col")}>
-            {showHistory ? renderHistory() : renderAirtimeForm()}
+          <div className={cn("px-2 py-2 flex-1 min-h-0 overflow-y-auto", (!dataSuccess && !showHistory) && "flex flex-col")}>
+            {showHistory ? renderHistory() : renderDataForm()}
           </div>
         </DrawerContent>
       </Drawer>
@@ -841,7 +917,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                     "transition-all duration-300 font-bold",
                     showHistory 
                       ? "text-foreground text-xl sm:text-2xl" 
-                      : cn("text-xs uppercase tracking-wider cursor-pointer pr-3", theme.text)
+                      : "text-xs uppercase tracking-wider cursor-pointer text-primary pr-3"
                   )}
                   onClick={() => !showHistory && setShowHistory(true)}
                 >
@@ -865,8 +941,8 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
             </AnimatePresence>
           </DialogDescription>
         </DialogHeader>
-        <div className={cn("p-6 pt-2 flex-1 min-h-0 overflow-y-auto flex flex-col", (airtimeSuccess || (showHistory && history.length === 0)) && "justify-center")}>
-          {showHistory ? renderHistory() : renderAirtimeForm()}
+        <div className={cn("p-6 pt-2 flex-1 min-h-0 overflow-y-auto flex flex-col", (dataSuccess || (showHistory && history.length === 0)) && "justify-center")}>
+          {showHistory ? renderHistory() : renderDataForm()}
         </div>
       </DialogContent>
     </Dialog>

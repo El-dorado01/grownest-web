@@ -95,6 +95,9 @@ export const nestBasketsApi = {
 
   disableAutoPay: (customPlanId: string) =>
     api.post<{ success: boolean; message: string; data: { plan: CustomPlan } }>("/api/nestbaskets/auto-pay/disable", { customPlanId }),
+
+  procureFlexiblePlan: (id: string, selectedItems: { foodItemId: string; quantity: number }[]) =>
+    api.post<{ success: boolean; message: string; data: { delivery: any; refundAmount: number; newBalance: number } }>(`/api/nestbaskets/flexible-plan/${id}/procure`, { selectedItems }),
 };
 
 

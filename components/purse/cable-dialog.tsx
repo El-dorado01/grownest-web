@@ -15,6 +15,13 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from "@/components/ui/drawer"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { nestPurseApi } from "@/lib/nestpurse-api"
@@ -22,79 +29,74 @@ import { useProfile } from "@/hooks/use-profile"
 import { useNestFeathers } from "@/hooks/use-nestfeathers"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Loader2, CheckCircle2, Smartphone, ArrowLeft } from "lucide-react"
+import { ArrowRight, Loader2, CheckCircle2, Search, Tv, ArrowLeft } from "lucide-react"
 import confetti from "canvas-confetti"
 import { motion, AnimatePresence } from "framer-motion"
 
-interface AirtimeDialogProps {
+interface CableDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  colorTheme?: "primary" | "sky"
 }
 
-// Smart network provider detection based on Nigerian phone prefixes
-function detectNetwork(phone: string): string | null {
-  const cleanPhone = phone.replace(/[\s\-\+]/g, "")
-  let localPhone = cleanPhone
-  if (cleanPhone.startsWith("234")) {
-    localPhone = "0" + cleanPhone.slice(3)
-  }
-  
-  if (localPhone.length < 4) return null
-  const prefix = localPhone.substring(0, 4)
-  
-  const mtnPrefixes = ["0803", "0806", "0810", "0813", "0814", "0816", "0903", "0906", "0913", "0916", "0703", "0706", "0704"]
-  const gloPrefixes = ["0805", "0807", "0811", "0815", "0905", "0915", "0705"]
-  const airtelPrefixes = ["0802", "0808", "0812", "0901", "0902", "0904", "0907", "0912", "0701", "0708"]
-  const nineMobilePrefixes = ["0809", "0817", "0818", "0908", "0909"]
-  
-  if (mtnPrefixes.includes(prefix)) return "MTN"
-  if (gloPrefixes.includes(prefix)) return "GLO"
-  if (airtelPrefixes.includes(prefix)) return "AIRTEL"
-  if (nineMobilePrefixes.includes(prefix)) return "9MOBILE"
-  
-  return null
+interface CablePlan {
+  name: string
+  amount: number
 }
 
-export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: AirtimeDialogProps) {
+const CABLE_PLANS: Record<string, CablePlan[]> = {
+  dstv: [
+    { name: "DSTV Yanga (₦5,100)", amount: 5100 },
+    { name: "DSTV Confam (₦9,300)", amount: 9300 },
+    { name: "DSTV Compact (₦15,700)", amount: 15700 },
+    { name: "DSTV Compact Plus (₦25,000)", amount: 25000 },
+    { name: "DSTV Premium (₦37,000)", amount: 37000 },
+  ],
+  gotv: [
+    { name: "GOTV Lite (₦1,700)", amount: 1700 },
+    { name: "GOTV Jinja (₦3,300)", amount: 3300 },
+    { name: "GOTV Jolli (₦4,850)", amount: 4850 },
+    { name: "GOTV Max (₦7,200)", amount: 7200 },
+    { name: "GOTV Supa (₦9,600)", amount: 9600 },
+  ],
+  startimes: [
+    { name: "Nova (₦1,500)", amount: 1500 },
+    { name: "Basic (₦3,300)", amount: 3300 },
+    { name: "Smart (₦4,500)", amount: 4500 },
+    { name: "Classic (₦5,000)", amount: 5000 },
+    { name: "Super (₦9,000)", amount: 9000 },
+  ],
+}
+
+const PROVIDERS = [
+  { id: "dstv", name: "DStv" },
+  { id: "gotv", name: "GOtv" },
+  { id: "startimes", name: "StarTimes" },
+]
+
+export function CableDialog({ open, onOpenChange }: CableDialogProps) {
   const isMobile = useIsMobile()
   const { profile, mutate: mutateProfile } = useProfile()
   const { mutate: mutateFeathers } = useNestFeathers()
 
-  const theme = {
-    primary: {
-      text: "text-primary",
-      bg: "bg-primary",
-      bgHover: "hover:bg-primary/90",
-      border: "border-primary",
-      textFlipped: "text-primary-foreground",
-      ring: "ring-primary/50",
-      focusBorder: "focus:border-primary",
-      focusRing: "focus:ring-primary",
-    },
-    sky: {
-      text: "text-sky-600 dark:text-sky-400",
-      bg: "bg-sky-600 dark:bg-sky-500",
-      bgHover: "hover:bg-sky-700 dark:hover:bg-sky-600",
-      border: "border-sky-600 dark:border-sky-500",
-      textFlipped: "text-white",
-      ring: "ring-sky-500/50",
-      focusBorder: "focus:border-sky-500",
-      focusRing: "focus:ring-sky-500",
-    }
-  }[colorTheme]
+  // Step state
+  const [step, setStep] = React.useState<number>(1)
 
-  // Wizard flow states
-  const [airtimeStep, setAirtimeStep] = React.useState<number>(1)
-  const [isForSelf, setIsForSelf] = React.useState<boolean | null>(null)
-  const [phoneNumber, setPhoneNumber] = React.useState("")
-  const [network, setNetwork] = React.useState("MTN")
-  const [amount, setAmount] = React.useState("")
-  const [pin, setPin] = React.useState("")
+  // Step 1: Provider & Smartcard Details
+  const [provider, setProvider] = React.useState("dstv")
+  const [smartcardNo, setSmartcardNo] = React.useState("")
+  const [isVerifying, setIsVerifying] = React.useState(false)
+  const [verifiedName, setVerifiedName] = React.useState<string | null>(null)
+  const [verifyError, setVerifyError] = React.useState<string | null>(null)
+
+  // Step 2: Package Selection & Points
+  const [selectedPlan, setSelectedPlan] = React.useState<CablePlan | null>(null)
   const [usePoints, setUsePoints] = React.useState(false)
+
+  // Step 3: PIN
+  const [pin, setPin] = React.useState("")
   const [isSubmitting, setIsSubmitting] = React.useState(false)
-  const [airtimeError, setAirtimeError] = React.useState<string | null>(null)
-  const [airtimeSuccess, setAirtimeSuccess] = React.useState(false)
+  const [submitError, setSubmitError] = React.useState<string | null>(null)
+  const [success, setSuccess] = React.useState(false)
 
   // History view states
   const [showHistory, setShowHistory] = React.useState(false)
@@ -103,10 +105,10 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
 
   const pinInputRef = React.useRef<HTMLInputElement>(null)
 
-  // Points values calculation
+  // Points calculation
   const pointsBalance = profile?.pointsBalance || 0
   const pointsValueNaira = pointsBalance / 2
-  const numericAmount = Number(amount) || 0
+  const numericAmount = selectedPlan?.amount || 0
 
   let pointsToDeduct = 0
   let walletAmountToDeduct = numericAmount
@@ -121,50 +123,47 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
     }
   }
 
-  // Auto focus PIN field on step 3
+  // Auto-focus PIN on step 3
   React.useEffect(() => {
-    if (airtimeStep === 3) {
-      const timer = setTimeout(() => {
-        pinInputRef.current?.focus()
-      }, 50)
-      return () => clearTimeout(timer)
+    if (step === 3) {
+      const t = setTimeout(() => pinInputRef.current?.focus(), 50)
+      return () => clearTimeout(t)
     }
-  }, [airtimeStep])
+  }, [step])
 
-  // Reset form states on open/close
+  // Reset on open/close
   /* eslint-disable react-hooks/set-state-in-effect */
   React.useEffect(() => {
     if (open) {
-      setIsForSelf(true)
-      const phone = profile?.phone || ""
-      setPhoneNumber(phone)
-      const detected = phone ? detectNetwork(phone) : null
-      setNetwork(detected || "MTN")
-      setAmount("")
-      setPin("")
+      setStep(1)
+      setProvider("dstv")
+      setSmartcardNo("")
+      setVerifiedName(null)
+      setVerifyError(null)
+      setSelectedPlan(null)
       setUsePoints(false)
-      setAirtimeStep(1)
-      setAirtimeError(null)
-      setAirtimeSuccess(false)
+      setPin("")
+      setSubmitError(null)
+      setSuccess(false)
       setShowHistory(false)
       setHistory([])
       setIsLoadingHistory(false)
     }
-  }, [open, profile?.phone])
+  }, [open])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Fetch airtime history when history panel is shown
+  // Fetch cabletv history when history panel is shown
   React.useEffect(() => {
     if (showHistory && open) {
       const loadHistory = async () => {
         setIsLoadingHistory(true)
         try {
-          const res = await nestPurseApi.getAirtimeTransactions({ limit: 50 })
+          const res = await nestPurseApi.getCableTvTransactions({ limit: 50 })
           if (res.data?.transactions) {
             setHistory(res.data.transactions)
           }
         } catch (err) {
-          console.error("Failed to load airtime transactions:", err)
+          console.error("Failed to load cabletv transactions:", err)
         } finally {
           setIsLoadingHistory(false)
         }
@@ -173,48 +172,62 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
     }
   }, [showHistory, open])
 
-  const isStep1Valid = phoneNumber.replace(/[\s\-\+]/g, "").length >= 10 && !!network
-  const isStep2Valid = Number(amount) >= 100
-  const isStep3Valid = pin.length === 4
+  const handleVerify = async () => {
+    if (!provider || !smartcardNo.trim()) return
+    setIsVerifying(true)
+    setVerifyError(null)
+    setVerifiedName(null)
+    try {
+      const res = await nestPurseApi.lookupCable({
+        cableTvType: provider,
+        customerId: smartcardNo.trim(),
+      })
+      if (res.error) {
+        setVerifyError(res.error)
+      } else if (res.data?.customerName || res.data?.name) {
+        setVerifiedName(res.data.customerName || res.data.name || "")
+      } else {
+        setVerifyError("Smartcard number could not be verified. Please check and try again.")
+      }
+    } catch (err) {
+      setVerifyError(err instanceof Error ? err.message : "Verification failed. Please try again.")
+    } finally {
+      setIsVerifying(false)
+    }
+  }
 
-  const handleBuyAirtime = async (e: React.FormEvent) => {
+  const handlePurchase = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (airtimeStep === 1) {
-      if (isStep1Valid) {
-        setAirtimeStep(2)
-      }
+
+    if (step === 1) {
+      if (isStep1Valid) setStep(2)
       return
     }
-    if (airtimeStep === 2) {
-      if (isStep2Valid) {
-        setAirtimeStep(3)
-      }
+    if (step === 2) {
+      if (isStep2Valid) setStep(3)
       return
     }
-    
-    if (!phoneNumber || !amount || !pin) {
-      setAirtimeError("Please fill in all fields.")
-      return
-    }
+
+    if (!selectedPlan) return
 
     setIsSubmitting(true)
-    setAirtimeError(null)
-
+    setSubmitError(null)
     try {
-      const res = await nestPurseApi.purchaseAirtime({
-        phoneNumber,
-        network,
-        amount: Number(amount),
+      const res = await nestPurseApi.subscribeCableTv({
+        cableTvType: provider,
+        amount: numericAmount,
+        customerId: smartcardNo.trim(),
         pin,
+        payerName: verifiedName || undefined,
         usePoints,
       })
 
       if (res.error) {
-        setAirtimeError(res.error || "Failed to purchase airtime. Please try again.")
+        setSubmitError(res.error || "Failed to purchase cable TV subscription. Please try again.")
+        setPin("")
       } else {
-        setAirtimeSuccess(true)
-        toast.success("Airtime purchased successfully!")
+        setSuccess(true)
+        toast.success("Cable TV subscription successful!")
         confetti({
           particleCount: 100,
           spread: 60,
@@ -226,11 +239,16 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
     } catch (err: unknown) {
       const errorResponse = err as { response?: { data?: { error?: string } } }
       const errMsg = errorResponse?.response?.data?.error || (err instanceof Error ? err.message : "An error occurred.")
-      setAirtimeError(errMsg)
+      setSubmitError(errMsg)
+      setPin("")
     } finally {
       setIsSubmitting(false)
     }
   }
+
+  const isStep1Valid = !!provider && smartcardNo.trim().length >= 6 && !!verifiedName
+  const isStep2Valid = !!selectedPlan
+  const isStep3Valid = pin.length === 4
 
   const renderHistory = () => {
     if (isLoadingHistory) {
@@ -256,12 +274,12 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
       return (
         <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3 animate-in fade-in duration-300">
           <div className="h-12 w-12 rounded-full bg-muted/30 flex items-center justify-center text-muted-foreground opacity-60">
-            <Smartphone className="h-6 w-6" />
+            <Tv className="h-6 w-6" />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-bold text-foreground">No Payment History</p>
             <p className="text-xs text-muted-foreground max-w-[240px] leading-relaxed">
-              You haven't purchased any airtime yet. Your transaction history will appear here.
+              You haven't purchased any cable TV subscriptions yet. Your transaction history will appear here.
             </p>
           </div>
         </div>
@@ -288,7 +306,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
               <div className="flex justify-between items-start">
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-bold text-foreground capitalize">
-                    {tx.method} Top-up
+                    Cable TV Subscription
                   </span>
                   <span className="text-xxs text-muted-foreground font-semibold">
                     {dateStr}
@@ -319,30 +337,31 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
     )
   }
 
-  const renderAirtimeForm = () => {
-    if (airtimeSuccess) {
+  const renderForm = () => {
+    if (success) {
       return (
         <div className="flex flex-col items-center justify-center py-8 px-4 text-center gap-4 animate-in fade-in zoom-in-95 duration-300">
-          <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
-            <CheckCircle2 className="h-10 w-10 fill-emerald-500 text-white dark:fill-transparent" />
+          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <CheckCircle2 className="h-10 w-10" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-black text-foreground">Top-up Successful!</h3>
+            <h3 className="text-lg font-black text-foreground">Subscription Successful!</h3>
             <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
               {usePoints && pointsToDeduct > 0 ? (
                 <>
-                  ₦{Number(amount).toLocaleString()} airtime has been sent to {phoneNumber}. Charged {pointsToDeduct.toLocaleString()} points
+                  {selectedPlan?.name} subscription has been vended to Smartcard {smartcardNo}.
+                  Charged {pointsToDeduct.toLocaleString()} points
                   {walletAmountToDeduct > 0 ? ` and ₦${walletAmountToDeduct.toLocaleString()} from your wallet` : ""}.
                 </>
               ) : (
                 <>
-                  ₦{Number(amount).toLocaleString()} airtime has been sent to {phoneNumber}. Your wallet balance has been updated.
+                  {selectedPlan?.name} subscription has been vended to Smartcard {smartcardNo}. Your wallet has been debited.
                 </>
               )}
             </p>
           </div>
-          <Button 
-            className={cn("mt-4 rounded-full px-8 font-bold text-xs h-10 cursor-pointer", theme.bg, theme.bgHover, theme.textFlipped)}
+          <Button
+            className="mt-4 rounded-full px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs h-10 cursor-pointer"
             onClick={() => onOpenChange(false)}
           >
             Done
@@ -352,141 +371,90 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
     }
 
     return (
-      <form onSubmit={handleBuyAirtime} className="flex-1 flex flex-col gap-4 py-2 select-none animate-in fade-in slide-in-from-bottom-4 duration-300">
-        {airtimeError && (
+      <form onSubmit={handlePurchase} className="flex-1 flex flex-col gap-4 py-2 select-none animate-in fade-in slide-in-from-bottom-4 duration-300">
+        {submitError && (
           <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-xs font-bold text-destructive text-center">
-            {airtimeError}
+            {submitError}
           </div>
         )}
 
         {/* Step Indicator */}
         <div className="flex justify-between items-center px-1 border-b pb-2 mb-1">
-          <span className={cn("text-xs font-black uppercase tracking-wider", theme.text)}>
-            {airtimeStep === 1 && "Step 1: Recipient & Network"}
-            {airtimeStep === 2 && "Step 2: Enter Amount"}
-            {airtimeStep === 3 && "Step 3: Secure Transaction PIN"}
+          <span className="text-xs font-black uppercase tracking-wider text-primary">
+            {step === 1 && "Step 1: Smartcard Details"}
+            {step === 2 && "Step 2: Choose Plan"}
+            {step === 3 && "Step 3: Secure PIN"}
           </span>
           <div className="flex gap-1">
-            <div className={cn("h-1.5 rounded-full transition-all duration-300", airtimeStep === 1 ? `${theme.bg} w-4.5` : "bg-muted w-1.5")} />
-            <div className={cn("h-1.5 rounded-full transition-all duration-300", airtimeStep === 2 ? `${theme.bg} w-4.5` : "bg-muted w-1.5")} />
-            <div className={cn("h-1.5 rounded-full transition-all duration-300", airtimeStep === 3 ? `${theme.bg} w-4.5` : "bg-muted w-1.5")} />
+            <div className={cn("h-1.5 rounded-full transition-all duration-300", step === 1 ? "bg-primary w-4.5" : "bg-muted w-1.5")} />
+            <div className={cn("h-1.5 rounded-full transition-all duration-300", step === 2 ? "bg-primary w-4.5" : "bg-muted w-1.5")} />
+            <div className={cn("h-1.5 rounded-full transition-all duration-300", step === 3 ? "bg-primary w-4.5" : "bg-muted w-1.5")} />
           </div>
         </div>
 
-        {/* STEP 1: RECIPIENT & NETWORK */}
-        {airtimeStep === 1 && (
+        {/* ── STEP 1: PROVIDER & SMARTCARD ── */}
+        {step === 1 && (
           <div className="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
-            {/* Recipient Selection (For Self / For Others) */}
+            {/* Cable provider select */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Recipient</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  key="self"
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={() => {
-                    setIsForSelf(true)
-                    if (profile?.phone) {
-                      setPhoneNumber(profile.phone)
-                      const detected = detectNetwork(profile.phone)
-                      if (detected) setNetwork(detected)
-                    } else {
-                      setPhoneNumber("")
-                    }
-                  }}
-                  className={cn(
-                    "h-10 rounded-xl border font-black text-sm transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer",
-                    isForSelf === true
-                      ? cn(theme.bg, theme.border, theme.textFlipped, "shadow-xs")
-                      : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
-                  )}
-                >
-                  For Self
-                </button>
-                <button
-                  key="others"
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={() => {
-                    setIsForSelf(false)
-                    setPhoneNumber("")
-                  }}
-                  className={cn(
-                    "h-10 rounded-xl border font-black text-sm transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer",
-                    isForSelf === false
-                      ? cn(theme.bg, theme.border, theme.textFlipped, "shadow-xs")
-                      : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
-                  )}
-                >
-                  For Others
-                </button>
-              </div>
+              <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Cable TV Provider</label>
+              <Select
+                value={provider}
+                onValueChange={(val) => {
+                  setProvider(val)
+                  setVerifiedName(null)
+                  setVerifyError(null)
+                  setSelectedPlan(null)
+                }}
+              >
+                <SelectTrigger className="h-11 rounded-xl border-muted text-sm font-semibold">
+                  <SelectValue placeholder="Select Provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROVIDERS.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Hidden phone and network fields revealed after choice */}
-            {isForSelf !== null && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                {/* Phone Number Input */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Phone Number</label>
-                  <input
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => {
-                      const val = e.target.value
-                      setPhoneNumber(val)
-                      const detected = detectNetwork(val)
-                      if (detected) {
-                        setNetwork(detected)
-                      }
-                    }}
-                    placeholder={isForSelf ? "No phone number set in profile" : "e.g. 08055441122"}
-                    disabled={isSubmitting || isForSelf}
-                    className={cn(
-                      "w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden text-sm font-semibold transition-all",
-                      theme.focusBorder, "focus:ring-1", theme.focusRing,
-                      isForSelf && "opacity-75 bg-muted/20 cursor-not-allowed"
-                    )}
-                  />
-                  {isForSelf && !profile?.phone && (
-                    <p className="text-xs text-destructive font-bold">
-                      No phone number set in your profile. Please choose &quot;For Others&quot; or update your profile.
-                    </p>
+            {/* Smartcard Number */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Smartcard / Customer Number</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={smartcardNo}
+                  onChange={(e) => {
+                    setSmartcardNo(e.target.value)
+                    setVerifiedName(null)
+                    setVerifyError(null)
+                  }}
+                  placeholder="e.g. 1023456789"
+                  disabled={isSubmitting}
+                  className="flex-1 h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-primary focus:ring-1 focus:ring-primary text-sm font-semibold transition-all"
+                />
+                <Button
+                  type="button"
+                  disabled={isVerifying || smartcardNo.trim().length < 6}
+                  onClick={handleVerify}
+                  className="h-11 rounded-xl font-bold text-xs px-4 cursor-pointer shrink-0"
+                >
+                  {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                    <><Search className="w-3.5 h-3.5 mr-1" /> Verify</>
                   )}
-                </div>
-
-                {/* Network Selection */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Network Provider</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { id: "MTN", label: "MTN", color: "bg-yellow-500 hover:bg-yellow-600 text-black border-yellow-500" },
-                      { id: "GLO", label: "Glo", color: "bg-green-600 hover:bg-green-700 text-white border-green-600" },
-                      { id: "AIRTEL", label: "Airtel", color: "bg-red-600 hover:bg-red-700 text-white border-red-600" },
-                      { id: "9MOBILE", label: "9Mobile", color: "bg-teal-800 hover:bg-teal-900 text-white border-teal-850" },
-                    ].map((net) => {
-                      const isSelected = network === net.id
-                      return (
-                        <button
-                          key={net.id}
-                          type="button"
-                          disabled={isSubmitting}
-                          onClick={() => setNetwork(net.id)}
-                          className={cn(
-                            "h-10 rounded-xl border font-black text-xs tracking-wide transition-all shadow-xs flex items-center justify-center cursor-pointer",
-                            isSelected 
-                              ? `${net.color} scale-105 ring-2 ring-offset-2 dark:ring-offset-card ${theme.ring}` 
-                              : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
-                          )}
-                        >
-                          {net.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
+                </Button>
               </div>
-            )}
+              {verifyError && (
+                <p className="text-xs text-destructive font-semibold mt-0.5">{verifyError}</p>
+              )}
+              {verifiedName && (
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs space-y-1">
+                  <p className="text-emerald-700 dark:text-emerald-400 font-bold">Verified Customer:</p>
+                  <p className="font-bold text-foreground text-[13px] uppercase">{verifiedName}</p>
+                </div>
+              )}
+            </div>
 
             {/* Step 1 Footer */}
             <div className="flex gap-2 border-t pt-4 mt-auto">
@@ -502,51 +470,40 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
               <Button
                 type="button"
                 disabled={!isStep1Valid}
-                onClick={() => setAirtimeStep(2)}
-                className={cn("flex-1 h-10 rounded-full font-bold gap-2 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed", theme.textFlipped, theme.bg, theme.bgHover)}
+                onClick={() => setStep(2)}
+                className="flex-1 h-10 rounded-full font-bold gap-2 text-sm text-primary-foreground bg-primary hover:bg-primary/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Next
-                <ArrowRight className="h-4 w-4" />
+                Next <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
         )}
 
-        {/* STEP 2: ENTER AMOUNT */}
-        {airtimeStep === 2 && (
+        {/* ── STEP 2: PLAN SELECTION & POINTS ── */}
+        {step === 2 && (
           <div className="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
-            {/* Amount Selection */}
+            {/* Plan dropdown select */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Amount (₦)</label>
-              <div className="grid grid-cols-5 gap-1.5">
-                {[100, 200, 500, 1000, 2000].map((val) => (
-                  <button
-                    key={val}
-                    type="button"
-                    disabled={isSubmitting}
-                    onClick={() => setAmount(String(val))}
-                    className={cn(
-                      "h-8 rounded-lg border font-bold text-xs transition-all flex items-center justify-center cursor-pointer",
-                      amount === String(val)
-                        ? cn(theme.bg, theme.textFlipped, theme.border, "scale-105")
-                        : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
-                    )}
-                  >
-                    ₦{val}
-                  </button>
-                ))}
-              </div>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Custom Amount (Min ₦100)"
-                disabled={isSubmitting}
-                className={cn("w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden text-sm font-semibold transition-all mt-2", theme.focusBorder, "focus:ring-1", theme.focusRing)}
-              />
+              <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Select Subscription Package</label>
+              <Select
+                value={selectedPlan ? JSON.stringify(selectedPlan) : ""}
+                onValueChange={(val) => {
+                  setSelectedPlan(JSON.parse(val))
+                }}
+              >
+                <SelectTrigger className="h-11 rounded-xl border-muted text-sm font-semibold">
+                  <SelectValue placeholder="Select Plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(CABLE_PLANS[provider] || []).map((p) => (
+                    <SelectItem key={p.name} value={JSON.stringify(p)}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {pointsBalance > 0 && (
+            {/* Use Points toggle */}
+            {pointsBalance > 0 && selectedPlan && (
               <div className="p-4 rounded-xl border border-muted bg-card flex flex-col gap-3">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
@@ -560,7 +517,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                     onClick={() => setUsePoints(!usePoints)}
                     className={cn(
                       "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden",
-                      usePoints ? "bg-emerald-500" : "bg-muted"
+                      usePoints ? "bg-primary" : "bg-muted"
                     )}
                   >
                     <span
@@ -576,7 +533,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                   <div className="pt-2 border-t border-dashed border-muted text-[11px] space-y-1 text-muted-foreground font-semibold">
                     <div className="flex justify-between">
                       <span>Points Charged:</span>
-                      <span className="text-emerald-600 dark:text-emerald-400">-{pointsToDeduct.toLocaleString()} pts (≈ ₦{(pointsToDeduct / 2).toLocaleString()})</span>
+                      <span className="text-primary">-{pointsToDeduct.toLocaleString()} pts (≈ ₦{(pointsToDeduct / 2).toLocaleString()})</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Wallet Cash Charged:</span>
@@ -593,7 +550,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                 type="button"
                 variant="ghost"
                 disabled={isSubmitting}
-                onClick={() => setAirtimeStep(1)}
+                onClick={() => setStep(1)}
                 className="flex-1 h-10 rounded-full font-bold text-sm cursor-pointer"
               >
                 Back
@@ -601,20 +558,19 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
               <Button
                 type="button"
                 disabled={!isStep2Valid}
-                onClick={() => setAirtimeStep(3)}
-                className={cn("flex-1 h-10 rounded-full font-bold gap-2 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed", theme.textFlipped, theme.bg, theme.bgHover)}
+                onClick={() => setStep(3)}
+                className="flex-1 h-10 rounded-full font-bold gap-2 text-sm text-primary-foreground bg-primary hover:bg-primary/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Next
-                <ArrowRight className="h-4 w-4" />
+                Next <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
         )}
 
-        {/* STEP 3: TRANSACTION PIN */}
-        {airtimeStep === 3 && (
+        {/* ── STEP 3: PIN + SUMMARY ── */}
+        {step === 3 && (
           <div className="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
-            {/* Transaction PIN */}
+            {/* PIN Input */}
             <div className="flex flex-col gap-2">
               <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Transaction PIN</label>
               <input
@@ -625,29 +581,37 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
                 placeholder="4-digit PIN"
                 disabled={isSubmitting}
-                className={cn("w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden text-sm font-semibold tracking-widest text-center transition-all", theme.focusBorder, "focus:ring-1", theme.focusRing)}
+                className="w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-primary focus:ring-1 focus:ring-primary text-sm font-semibold tracking-widest text-center transition-all"
               />
             </div>
 
-            {/* Summary Details */}
-            <div className="p-3.5 rounded-2xl bg-muted/30 border border-muted/50 text-xs font-semibold text-muted-foreground space-y-1">
+            {/* Summary */}
+            <div className="p-3.5 rounded-2xl bg-muted/30 border border-muted/50 text-xs font-semibold text-muted-foreground space-y-1.5">
               <div className="flex justify-between">
-                <span>Recipient:</span>
-                <span className="font-bold text-foreground">{isForSelf ? "Self" : "Others"} ({phoneNumber})</span>
+                <span>Customer:</span>
+                <span className="font-bold text-foreground text-right max-w-[65%] truncate">{verifiedName}</span>
               </div>
               <div className="flex justify-between">
-                <span>Network:</span>
-                <span className="font-bold text-foreground">{network}</span>
+                <span>Smartcard No:</span>
+                <span className="font-bold text-foreground">{smartcardNo}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Provider:</span>
+                <span className="font-bold text-foreground uppercase">{PROVIDERS.find(p => p.id === provider)?.name || provider}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Package:</span>
+                <span className="font-bold text-foreground text-right max-w-[65%] truncate">{selectedPlan?.name}</span>
               </div>
               <div className="flex justify-between">
                 <span>Total Amount:</span>
-                <span className="font-black text-foreground">₦{Number(amount).toLocaleString()}</span>
+                <span className="font-black text-foreground">₦{numericAmount.toLocaleString()}</span>
               </div>
               {usePoints && (
                 <>
-                  <div className="flex justify-between border-t border-dashed border-muted/80 pt-1 mt-1">
+                  <div className="flex justify-between border-t border-dashed border-muted/80 pt-1.5 mt-0.5">
                     <span>Points to Use:</span>
-                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{pointsToDeduct.toLocaleString()} pts (≈ ₦{(pointsToDeduct / 2).toLocaleString()})</span>
+                    <span className="font-bold text-primary">{pointsToDeduct.toLocaleString()} pts (≈ ₦{(pointsToDeduct / 2).toLocaleString()})</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Wallet Cash:</span>
@@ -663,7 +627,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                 type="button"
                 variant="ghost"
                 disabled={isSubmitting}
-                onClick={() => setAirtimeStep(2)}
+                onClick={() => setStep(2)}
                 className="flex-1 h-10 rounded-full font-bold text-sm cursor-pointer"
               >
                 Back
@@ -671,18 +635,12 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
               <Button
                 type="submit"
                 disabled={isSubmitting || !isStep3Valid}
-                className={cn("flex-1 h-10 rounded-full font-bold gap-2 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed", theme.textFlipped, theme.bg, theme.bgHover)}
+                className="flex-1 h-10 rounded-full font-bold gap-2 text-sm text-primary-foreground bg-primary hover:bg-primary/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Purchasing...
-                  </>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Subscribing...</>
                 ) : (
-                  <>
-                    Confirm Top-up
-                    <ArrowRight className="h-4 w-4" />
-                  </>
+                  <>Confirm Subscription <ArrowRight className="h-4 w-4" /></>
                 )}
               </Button>
             </div>
@@ -692,17 +650,12 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
     )
   }
 
-  const title = {
-    1: "Buy Airtime",
-    2: "Select Amount",
-    3: "Security Verification",
-  }[airtimeStep as 1 | 2 | 3] || "Buy Airtime"
-
+  const title = { 1: "Cable TV Subscription", 2: "Select Package", 3: "Security Verification" }[step as 1 | 2 | 3] || "Cable TV Subscription"
   const description = {
-    1: "Configure recipient details and carrier network provider",
-    2: "Enter or select the top-up amount in Naira",
-    3: "Confirm details and authorize top-up with your transaction PIN",
-  }[airtimeStep as 1 | 2 | 3] || "Purchase mobile network airtime top-up"
+    1: "Select your provider and verify your smartcard / customer number",
+    2: "Choose a subscription package and configure payment source",
+    3: "Confirm your details and authorize with your transaction PIN",
+  }[step as 1 | 2 | 3] || "Purchase Cable TV subscriptions"
 
   if (isMobile) {
     return (
@@ -757,7 +710,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                       "transition-all duration-300 font-bold",
                       showHistory 
                         ? "text-foreground text-lg sm:text-xl" 
-                        : cn("text-xs uppercase tracking-wider cursor-pointer pr-3", theme.text)
+                        : "text-xs uppercase tracking-wider cursor-pointer text-primary pr-3"
                     )}
                     onClick={() => !showHistory && setShowHistory(true)}
                   >
@@ -781,8 +734,8 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
               </AnimatePresence>
             </DrawerDescription>
           </DrawerHeader>
-          <div className={cn("px-2 py-2 flex-1 min-h-0 overflow-y-auto", (!airtimeSuccess && !showHistory) && "flex flex-col")}>
-            {showHistory ? renderHistory() : renderAirtimeForm()}
+          <div className={cn("px-2 py-2 flex-1 min-h-0 overflow-y-auto", (!success && !showHistory) && "flex flex-col")}>
+            {showHistory ? renderHistory() : renderForm()}
           </div>
         </DrawerContent>
       </Drawer>
@@ -791,7 +744,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-hidden rounded-[2rem] p-0 sm:max-w-[440px] h-[550px] max-h-[85vh] flex flex-col">
+      <DialogContent className="overflow-hidden rounded-[2rem] p-0 sm:max-w-[440px] h-[580px] max-h-[90vh] flex flex-col">
         <DialogHeader className="p-6 pb-0 shrink-0">
           <DialogTitle className="text-2xl font-bold relative">
             <div className="flex items-center justify-between w-full min-h-[32px] relative">
@@ -841,7 +794,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                     "transition-all duration-300 font-bold",
                     showHistory 
                       ? "text-foreground text-xl sm:text-2xl" 
-                      : cn("text-xs uppercase tracking-wider cursor-pointer pr-3", theme.text)
+                      : "text-xs uppercase tracking-wider cursor-pointer text-primary pr-3"
                   )}
                   onClick={() => !showHistory && setShowHistory(true)}
                 >
@@ -865,8 +818,8 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
             </AnimatePresence>
           </DialogDescription>
         </DialogHeader>
-        <div className={cn("p-6 pt-2 flex-1 min-h-0 overflow-y-auto flex flex-col", (airtimeSuccess || (showHistory && history.length === 0)) && "justify-center")}>
-          {showHistory ? renderHistory() : renderAirtimeForm()}
+        <div className={cn("p-6 pt-2 flex-1 min-h-0 overflow-y-auto flex flex-col", (success || (showHistory && history.length === 0)) && "justify-center")}>
+          {showHistory ? renderHistory() : renderForm()}
         </div>
       </DialogContent>
     </Dialog>

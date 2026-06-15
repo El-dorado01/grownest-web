@@ -38,7 +38,8 @@ import {
   TrendingUp,
   Settings,
   AlertCircle,
-  Check
+  Check,
+  User
 } from "lucide-react"
 import { nestBasketsApi } from "@/lib/nestbaskets-api"
 import useSWR from "swr"
@@ -100,6 +101,100 @@ export default function FlexibleSavingsGoalPage() {
 
   const plan = planRes?.data?.data || null
   const profiles = profilesRes?.data?.data ?? []
+
+  const isPendingSelection = plan?.status === "pending_selection"
+  const deliveries = plan?.deliveries || []
+
+  // Procurement states
+  const [selectedQuantities, setSelectedQuantities] = React.useState<Record<string, number>>({})
+
+  // Set default selection quantities when plan loads
+  React.useEffect(() => {
+    if (plan && plan.status === "pending_selection" && plan.items) {
+      const initial: Record<string, number> = {}
+      plan.items.forEach((item: any) => {
+        initial[item.foodItemId] = 0
+      })
+      setSelectedQuantities(initial)
+    }
+  }, [plan])
+
+  // Selected Cost
+  const selectedCost = React.useMemo(() => {
+    if (!plan || !plan.items) return 0
+    return plan.items.reduce((sum: number, planItem: any) => {
+      const qty = selectedQuantities[planItem.foodItemId] || 0
+      return sum + qty * planItem.foodItem.pricePerUnit
+    }, 0)
+  }, [plan, selectedQuantities])
+
+  // Greedy Check
+  const greedyCheckError = React.useMemo(() => {
+    if (!plan || plan.status !== "pending_selection" || !plan.items) return null
+    if (selectedCost > plan.paidAmount) return "Selected items cost exceeds your saved funds"
+    
+    const remainingFunds = plan.paidAmount - selectedCost
+    for (const planItem of plan.items) {
+      const selectedQty = selectedQuantities[planItem.foodItemId] || 0
+      const remainingPlanQty = planItem.quantity - selectedQty
+      const currentPrice = planItem.foodItem.pricePerUnit
+      
+      if (remainingPlanQty > 0 && currentPrice <= remainingFunds) {
+        return `You still have enough saved funds (₦${remainingFunds.toLocaleString()}) to select more items. For example, you can buy another unit of "${planItem.foodItem.name}" (₦${currentPrice.toLocaleString()}). Please increase your selection.`
+      }
+    }
+    return null
+  }, [plan, selectedQuantities, selectedCost])
+
+  const updateQuantity = (foodItemId: string, change: number, maxQty: number) => {
+    setSelectedQuantities(prev => {
+      const current = prev[foodItemId] || 0
+      const updated = Math.max(0, Math.min(maxQty, current + change))
+      return { ...prev, [foodItemId]: updated }
+    })
+  }
+
+  const handleProcureSubmit = async () => {
+    if (!plan) return
+    if (selectedCost === 0) {
+      toast.error("Please select at least one item to procure.")
+      return
+    }
+    if (selectedCost > plan.paidAmount) {
+      toast.error("Selected cost exceeds your saved budget.")
+      return
+    }
+    if (greedyCheckError) {
+      toast.error("Greedy completeness constraint not met: " + greedyCheckError)
+      return
+    }
+
+    setIsActionLoading(true)
+    try {
+      const selectedItemsPayload = Object.entries(selectedQuantities)
+        .filter(([_, qty]) => qty > 0)
+        .map(([foodItemId, qty]) => ({
+          foodItemId,
+          quantity: qty,
+        }))
+
+      const res = await nestBasketsApi.procureFlexiblePlan(plan.id, selectedItemsPayload)
+      if (res.data?.success) {
+        toast.success(
+          `Procurement successful! Delivery scheduled. Refund of ${formatCurrency(
+            res.data?.data?.refundAmount || 0
+          )} credited back to your NestPurse.`
+        )
+        mutate() // Refetch details
+      } else {
+        toast.error(res.data?.message || res.error || "Failed to process procurement")
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred during procurement.")
+    } finally {
+      setIsActionLoading(false)
+    }
+  }
 
   // Deposit Shortcut
   const handleAmountChipClick = (amount: number) => {
@@ -338,13 +433,15 @@ export default function FlexibleSavingsGoalPage() {
                 <span
                   className={cn(
                     "px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-full flex items-center gap-1",
-                    plan.isPaid
+                    isPendingSelection
+                      ? "bg-amber-500/15 text-amber-600 dark:bg-amber-500/25 animate-pulse"
+                      : plan.isPaid
                       ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20"
                       : "bg-primary/10 text-primary animate-pulse"
                   )}
                 >
-                  <span className={cn("size-1.5 rounded-full bg-current", !plan.isPaid && "animate-ping")} />
-                  {plan.isPaid ? "Ready for Delivery" : "Savings Active"}
+                  <span className={cn("size-1.5 rounded-full bg-current", (isPendingSelection || (!plan.isPaid && plan.status !== "pending_selection")) && "animate-ping")} />
+                  {isPendingSelection ? "Selection Pending" : plan.isPaid ? "Ready for Delivery" : "Savings Goal Active"}
                 </span>
                 <span className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
                   <PiggyBank className="w-3.5 h-3.5 text-primary" /> Flexible savings goal
@@ -369,228 +466,486 @@ export default function FlexibleSavingsGoalPage() {
             {/* Left side circular progress ring and list of ingredients */}
             <div className="lg:col-span-2 space-y-6">
               
-              {/* Radial Savings Meter Banner */}
-              <div className="rounded-2xl border bg-card p-6 flex flex-col sm:flex-row items-center justify-around gap-6 shadow-sm">
-                
-                {/* Glowing radial Progress Ring SVG */}
-                <div className="relative size-36 shrink-0 flex items-center justify-center">
-                  <svg className="size-full -rotate-90">
-                    {/* Background track circle */}
-                    <circle
-                      cx="72"
-                      cy="72"
-                      r={radius}
-                      className="stroke-muted"
-                      strokeWidth="10"
-                      fill="transparent"
-                    />
-                    {/* Glowing gold active progress path circle */}
-                    <circle
-                      cx="72"
-                      cy="72"
-                      r={radius}
-                      className="stroke-primary transition-all duration-1000 ease-out"
-                      strokeWidth="10"
-                      strokeDasharray={circumference}
-                      strokeDashoffset={strokeDashoffset}
-                      strokeLinecap="round"
-                      fill="transparent"
-                    />
-                  </svg>
-                  {/* Central Text Label overlay */}
-                  <div className="absolute flex flex-col items-center justify-center">
-                    <span className="text-2xl font-black text-foreground leading-none">{progressPercent}%</span>
-                    <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground mt-1">Saved</span>
+              {isPendingSelection ? (
+                <>
+                  {/* Procurement Banner */}
+                  <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 space-y-3.5 shadow-sm text-xs">
+                    <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                      <AlertCircle className="w-5 h-5" />
+                      <h3 className="text-sm font-bold">Important: Select Items to Procure</h3>
+                    </div>
+                    <p className="text-muted-foreground leading-relaxed">
+                      This custom savings goal has expired. As per the updated policy, we do not issue a full cash refund to prevent service abuse. Instead, you can select items from your basket below up to your accrued savings of <strong className="text-foreground">{formatCurrency(plan.paidAmount)}</strong>.
+                    </p>
+                    <p className="text-muted-foreground leading-relaxed">
+                      <strong>Greedy Selection Rule:</strong> You must select as many items as possible. The remaining balance after selection must be strictly less than the price of any remaining unselected items in your plan. Any leftover balance will be refunded to your NestPurse.
+                    </p>
                   </div>
-                </div>
 
-                <div className="space-y-3 text-center sm:text-left">
-                  <div className="flex items-center gap-1.5 justify-center sm:justify-start">
-                    <TrendingUp className="w-4 h-4 text-primary" />
-                    <h3 className="text-sm font-bold text-foreground"> Groceries Target Milestone</h3>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
-                    Keep contributing at your convenience. When the indicator glows green at <strong>100% complete</strong>, your customized food ingredients unlock and automatically schedule for immediate dispatch!
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-2.5 justify-center sm:justify-start pt-1.5">
-                    {!plan.isPaid && (
-                      <Button
-                        onClick={() => setIsDepositOpen(true)}
-                        size="sm"
-                        className="h-9 rounded-xl font-bold flex items-center gap-1.5 text-foreground shadow-md shadow-primary/10 transition-transform active:scale-95"
-                      >
-                        <Plus className="w-4 h-4 text-foreground" /> Save Now
-                      </Button>
-                    )}
-                    
-                    <Button
-                      onClick={() => setIsAutoPayOpen(true)}
-                      size="sm"
-                      variant="outline"
-                      className="h-9 rounded-xl font-semibold border-muted flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground active:scale-95"
-                    >
-                      <Settings className="w-3.5 h-3.5" /> Auto-Pay Settings
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Subscribed Ingredients Inventory */}
-              <div className="rounded-2xl border bg-card p-5 space-y-4 shadow-sm">
-                <div className="flex items-center gap-2 border-b pb-3">
-                  <ShoppingBag className="w-5 h-5 text-primary" />
-                  <h2 className="text-base font-bold text-foreground">Custom Basket Ingredients</h2>
-                </div>
-
-                <div className="divide-y text-xs font-medium">
-                  {items.map((planItem: any) => {
-                    const item = planItem.foodItem
-                    return (
-                      <div key={planItem.id} className="flex justify-between items-center py-3.5 first:pt-0 last:pb-0">
-                        <div className="flex gap-3 items-center min-w-0 pr-4">
-                          <div className="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center text-xl shrink-0">
-                            {item?.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover rounded-lg" /> : "🌾"}
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-bold text-foreground truncate">{item?.name || "Fresh Grocery"}</span>
-                            <span className="text-[10px] text-muted-foreground truncate">{item?.brand || "Fresh Farms"} • {item?.unit}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 shrink-0">
-                          <span className="text-muted-foreground font-black">×{planItem.quantity}</span>
-                          <span className="font-black text-foreground">{formatCurrency(item?.pricePerUnit * planItem.quantity)}</span>
-                        </div>
+                  {/* Procurement Item Selector */}
+                  <div className="rounded-2xl border bg-card p-5 space-y-4 shadow-sm">
+                    <div className="flex items-center gap-2 border-b pb-3 justify-between">
+                      <div className="flex items-center gap-2">
+                        <ShoppingBag className="w-5 h-5 text-primary" />
+                        <h2 className="text-base font-bold text-foreground">Select Items to Procure</h2>
                       </div>
-                    )
-                  })}
-                </div>
-              </div>
+                      <span className="text-xs text-muted-foreground font-semibold">
+                        Accrued Savings: <strong className="text-foreground">{formatCurrency(plan.paidAmount)}</strong>
+                      </span>
+                    </div>
+
+                    <div className="divide-y text-xs font-medium">
+                      {items.map((planItem: any) => {
+                        const item = planItem.foodItem
+                        const selectedQty = selectedQuantities[planItem.foodItemId] || 0
+                        const maxQty = planItem.quantity
+                        return (
+                          <div key={planItem.id} className="flex justify-between items-center py-4 first:pt-0 last:pb-0 gap-4">
+                            <div className="flex gap-3 items-center min-w-0 pr-4 flex-1">
+                              <div className="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center text-xl shrink-0">
+                                {item?.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover rounded-lg" /> : "🌾"}
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-bold text-foreground truncate">{item?.name || "Fresh Grocery"}</span>
+                                <span className="text-[10px] text-muted-foreground truncate">
+                                  {item?.brand || "Fresh Farms"} • {item?.unit} • {formatCurrency(item?.pricePerUnit)} / unit
+                                </span>
+                                <span className="text-[10px] text-primary/80 font-semibold mt-0.5">
+                                  Plan Target: {planItem.quantity} unit{planItem.quantity > 1 ? "s" : ""}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 shrink-0">
+                              {/* Decrement / Increment buttons */}
+                              <div className="flex items-center border rounded-xl overflow-hidden bg-muted/40">
+                                <button
+                                  type="button"
+                                  onClick={() => updateQuantity(planItem.foodItemId, -1, maxQty)}
+                                  disabled={selectedQty === 0}
+                                  className="px-2.5 py-1.5 hover:bg-muted text-foreground disabled:opacity-40 transition-colors"
+                                >
+                                  -
+                                </button>
+                                <span className="px-3 font-bold text-foreground min-w-[20px] text-center">
+                                  {selectedQty}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => updateQuantity(planItem.foodItemId, 1, maxQty)}
+                                  disabled={selectedQty >= maxQty}
+                                  className="px-2.5 py-1.5 hover:bg-muted text-foreground disabled:opacity-40 transition-colors"
+                                >
+                                  +
+                                </button>
+                              </div>
+                              <span className="font-black text-foreground min-w-[80px] text-right">
+                                {formatCurrency(item?.pricePerUnit * selectedQty)}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Radial Savings Meter Banner */}
+                  <div className="rounded-2xl border bg-card p-6 flex flex-col sm:flex-row items-center justify-around gap-6 shadow-sm">
+                    
+                    {/* Glowing radial Progress Ring SVG */}
+                    <div className="relative size-36 shrink-0 flex items-center justify-center">
+                      <svg className="size-full -rotate-90">
+                        {/* Background track circle */}
+                        <circle
+                          cx="72"
+                          cy="72"
+                          r={radius}
+                          className="stroke-muted"
+                          strokeWidth="10"
+                          fill="transparent"
+                        />
+                        {/* Glowing gold active progress path circle */}
+                        <circle
+                          cx="72"
+                          cy="72"
+                          r={radius}
+                          className="stroke-primary transition-all duration-1000 ease-out"
+                          strokeWidth="10"
+                          strokeDasharray={circumference}
+                          strokeDashoffset={strokeDashoffset}
+                          strokeLinecap="round"
+                          fill="transparent"
+                        />
+                      </svg>
+                      {/* Central Text Label overlay */}
+                      <div className="absolute flex flex-col items-center justify-center">
+                        <span className="text-2xl font-black text-foreground leading-none">{progressPercent}%</span>
+                        <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground mt-1">Saved</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 text-center sm:text-left">
+                      <div className="flex items-center gap-1.5 justify-center sm:justify-start">
+                        <TrendingUp className="w-4 h-4 text-primary" />
+                        <h3 className="text-sm font-bold text-foreground"> Groceries Target Milestone</h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
+                        Keep contributing at your convenience. When the indicator glows green at <strong>100% complete</strong>, your customized food ingredients unlock and automatically schedule for immediate dispatch!
+                      </p>
+                      
+                      <div className="flex flex-wrap gap-2.5 justify-center sm:justify-start pt-1.5">
+                        {!plan.isPaid && (
+                          <Button
+                            onClick={() => setIsDepositOpen(true)}
+                            size="sm"
+                            className="h-9 rounded-xl font-bold flex items-center gap-1.5 text-foreground shadow-md shadow-primary/10 transition-transform active:scale-95"
+                          >
+                            <Plus className="w-4 h-4 text-foreground" /> Save Now
+                          </Button>
+                        )}
+                        
+                        <Button
+                          onClick={() => setIsAutoPayOpen(true)}
+                          size="sm"
+                          variant="outline"
+                          className="h-9 rounded-xl font-semibold border-muted flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground active:scale-95"
+                        >
+                          <Settings className="w-3.5 h-3.5" /> Auto-Pay Settings
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Deliveries Timeline (Only shown if plan is fully paid/delivered and has dispatches) */}
+                  {plan.isPaid && (
+                    <div className="rounded-2xl border bg-card p-5 space-y-4 shadow-sm">
+                      <div className="flex items-center gap-2 border-b pb-3">
+                        <Truck className="w-5 h-5 text-primary" />
+                        <h2 className="text-base font-bold text-foreground">Delivery Timeline</h2>
+                      </div>
+
+                      {deliveries.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-10 text-center gap-2.5">
+                          <Truck className="w-8 h-8 text-muted-foreground/35" />
+                          <p className="text-xs font-bold text-muted-foreground">No dispatches created yet</p>
+                        </div>
+                      ) : (
+                        <div className="relative pl-6 border-l-2 border-primary/20 space-y-6 py-2 ml-3">
+                          {deliveries.map((delivery: any) => (
+                            <div key={delivery.id} className="relative">
+                              {/* Timeline marker */}
+                              <div
+                                className={cn(
+                                  "absolute left-[-31px] top-1 size-4.5 rounded-full border-4 border-card flex items-center justify-center shadow-md",
+                                  delivery.status === "delivered"
+                                    ? "bg-emerald-500"
+                                    : delivery.status === "failed"
+                                    ? "bg-destructive"
+                                    : "bg-primary animate-pulse"
+                                )}
+                              />
+                              <div className="flex justify-between items-start">
+                                <div className="space-y-1">
+                                  <h4 className="text-xs font-bold text-foreground">
+                                    {delivery.status === "delivered"
+                                      ? "Groceries Fulfilled"
+                                      : delivery.status === "in_transit"
+                                      ? "In Transit"
+                                      : delivery.status === "dispatched"
+                                      ? "Dispatched"
+                                      : "Delivery Scheduled"}
+                                  </h4>
+                                  <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" /> Scheduled: {formatDate(delivery.deliveryDate)}
+                                  </p>
+                                  {delivery.riderName && (
+                                    <div className="text-[10px] text-foreground font-medium flex items-center gap-1.5 p-1 px-2 rounded bg-muted/65 w-fit mt-1.5">
+                                      <User className="w-3 h-3 text-primary" />
+                                      <span>Rider: {delivery.riderName} ({delivery.riderPhone})</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <span
+                                  className={cn(
+                                    "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0",
+                                    delivery.status === "delivered"
+                                      ? "bg-emerald-500/10 text-emerald-600"
+                                      : "bg-primary/10 text-primary"
+                                  )}
+                                >
+                                  {delivery.status}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Subscribed Ingredients Inventory */}
+                  <div className="rounded-2xl border bg-card p-5 space-y-4 shadow-sm">
+                    <div className="flex items-center gap-2 border-b pb-3">
+                      <ShoppingBag className="w-5 h-5 text-primary" />
+                      <h2 className="text-base font-bold text-foreground">Custom Basket Ingredients</h2>
+                    </div>
+
+                    <div className="divide-y text-xs font-medium">
+                      {items.map((planItem: any) => {
+                        const item = planItem.foodItem
+                        return (
+                          <div key={planItem.id} className="flex justify-between items-center py-3.5 first:pt-0 last:pb-0">
+                            <div className="flex gap-3 items-center min-w-0 pr-4">
+                              <div className="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center text-xl shrink-0">
+                                {item?.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover rounded-lg" /> : "🌾"}
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-bold text-foreground truncate">{item?.name || "Fresh Grocery"}</span>
+                                <span className="text-[10px] text-muted-foreground truncate">{item?.brand || "Fresh Farms"} • {item?.unit}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 shrink-0">
+                              <span className="text-muted-foreground font-black">×{planItem.quantity}</span>
+                              <span className="font-black text-foreground">{formatCurrency(item?.pricePerUnit * planItem.quantity)}</span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Right side Auto-pay info, Delivery Profiles selector and delete button */}
             <div className="space-y-6">
               
-              {/* Auto-Pay Planner Card */}
-              <div className="rounded-2xl border bg-card p-5 space-y-3.5 shadow-sm text-xs">
-                <div className="flex items-center justify-between border-b pb-2">
-                  <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-primary" /> Auto-Pay Scheduler
-                  </h3>
-                  <span
-                    className={cn(
-                      "px-2 py-0.5 rounded text-[8px] tracking-tight font-black uppercase",
-                      plan.autoPayEnabled
-                        ? "bg-emerald-500/10 text-emerald-600"
-                        : "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    {plan.autoPayEnabled ? "Active" : "Inactive"}
-                  </span>
-                </div>
+              {isPendingSelection ? (
+                <>
+                  {/* Procurement Summary & Dispatch Card */}
+                  <div className="rounded-2xl border bg-card p-5 space-y-4 shadow-sm text-xs">
+                    <h3 className="text-sm font-bold text-foreground border-b pb-2 flex items-center gap-1.5">
+                      <Truck className="w-4 h-4 text-primary" /> Procurement Summary
+                    </h3>
 
-                {plan.autoPayEnabled ? (
-                  <div className="space-y-2.5">
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Automated savings transfer rules are configured and active. Periodic deductions will credit your groceries goal automatically.
-                    </p>
-                    <div className="grid grid-cols-2 gap-2 bg-muted/40 p-2.5 rounded-xl text-[10px] font-bold text-foreground">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[8px] uppercase tracking-wider text-muted-foreground font-black">Cycle Frequency</span>
-                        <span className="capitalize">{plan.autoPayFrequency}</span>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center font-semibold text-muted-foreground">
+                        <span>Accrued Savings:</span>
+                        <span className="text-foreground">{formatCurrency(plan.paidAmount)}</span>
                       </div>
-                      <div className="flex flex-col gap-0.5 items-end">
-                        <span className="text-[8px] uppercase tracking-wider text-muted-foreground font-black">Transfer Amount</span>
-                        <span>{formatCurrency(plan.autoPayAmount || 0)}</span>
+                      <div className="flex justify-between items-center font-semibold text-muted-foreground">
+                        <span>Selected Items Cost:</span>
+                        <span className="text-foreground">{formatCurrency(selectedCost)}</span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between items-center font-bold text-foreground text-xs">
+                        <span>Leftover Wallet Refund:</span>
+                        <span className="text-primary">{formatCurrency(Math.max(0, plan.paidAmount - selectedCost))}</span>
                       </div>
                     </div>
-                    {plan.autoPayNextDate && (
-                      <p className="text-[9px] text-primary font-bold text-center">
-                        Next Auto-Pay transfer: {formatDate(plan.autoPayNextDate)}
-                      </p>
+
+                    {/* Validation alerts */}
+                    <div className="space-y-2 mt-2">
+                      {selectedCost === 0 ? (
+                        <div className="p-3 bg-muted rounded-xl text-[10px] text-muted-foreground flex gap-1.5 items-start">
+                          <Info className="w-3.5 h-3.5 shrink-0 text-muted-foreground mt-0.5" />
+                          <span>Select one or more items from the list to enable checkout.</span>
+                        </div>
+                      ) : selectedCost > plan.paidAmount ? (
+                        <div className="p-3 bg-red-500/5 border border-red-500/10 text-red-600 rounded-xl text-[10px] flex gap-1.5 items-start">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-600 mt-0.5" />
+                          <span>The selected cost exceeds your saved budget by {formatCurrency(selectedCost - plan.paidAmount)}.</span>
+                        </div>
+                      ) : greedyCheckError ? (
+                        <div className="p-3 bg-amber-500/5 border border-amber-500/10 text-amber-600 rounded-xl text-[10px] flex gap-1.5 items-start leading-normal">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-600 mt-0.5" />
+                          <span>{greedyCheckError}</span>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-emerald-500/5 border border-emerald-500/15 text-emerald-600 rounded-xl text-[10px] flex gap-1.5 items-start">
+                          <Check className="w-3.5 h-3.5 shrink-0 text-emerald-600 mt-0.5" />
+                          <span>Selection satisfies the completeness rule! The remaining balance will be credited to your NestPurse.</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button
+                      onClick={handleProcureSubmit}
+                      disabled={isActionLoading || selectedCost === 0 || selectedCost > plan.paidAmount || !!greedyCheckError}
+                      className="w-full h-11 rounded-xl text-foreground font-black flex items-center justify-center gap-2"
+                    >
+                      {isActionLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-foreground" />
+                      ) : (
+                        "Confirm & Dispatch Deliveries"
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Delivery destination card */}
+                  <div className="rounded-2xl border bg-card p-5 space-y-3.5 shadow-sm text-xs">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 text-primary" /> Shipping Destination
+                      </h3>
+                      {profiles.length > 0 && (
+                        <select
+                          value={plan.deliveryProfileId || ""}
+                          onChange={(e) => handleAddressSwap(e.target.value)}
+                          disabled={isActionLoading}
+                          className="bg-transparent text-[10px] font-black text-primary underline focus:outline-none cursor-pointer text-right max-w-[130px]"
+                        >
+                          {profiles.map((p: any) => (
+                            <option key={p.id} value={p.id} className="text-foreground">
+                              {p.fullName} ({p.city})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+
+                    {profile ? (
+                      <div className="space-y-1.5">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-bold text-foreground">{profile.fullName} ({profile.phone})</span>
+                          <span className="text-[11px] text-muted-foreground leading-normal mt-0.5">
+                            {profile.address}, {profile.city}, {profile.state}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground">No active address profiles linked.</p>
                     )}
-                    <Button
-                      onClick={handleDisableAutoPay}
-                      disabled={isActionLoading}
-                      variant="outline"
-                      size="sm"
-                      className="w-full h-8 rounded-lg text-[10px] font-bold border-red-500/35 hover:bg-red-500/5 hover:text-red-500 transition-colors"
-                    >
-                      {isActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Disable Auto-Pay"}
-                    </Button>
                   </div>
-                ) : (
-                  <div className="space-y-2.5">
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Auto-Pay scheduler is inactive. Enable rules to automatically deposit set amounts periodically, accelerating your progress goal.
-                    </p>
-                    <Button
-                      onClick={() => setIsAutoPayOpen(true)}
-                      variant="outline"
-                      size="sm"
-                      className="w-full h-9 rounded-xl font-bold flex items-center justify-center gap-1.5"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Setup Auto-Pay Rules
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {/* Shipping profiles pre-delivery swap utility */}
-              <div className="rounded-2xl border bg-card p-5 space-y-3.5 shadow-sm text-xs">
-                <div className="flex items-center justify-between border-b pb-2">
-                  <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4 text-primary" /> Delivery Destination
-                  </h3>
-                  {profiles.length > 0 && !plan.isPaid && (
-                    <select
-                      value={plan.deliveryProfileId || ""}
-                      onChange={(e) => handleAddressSwap(e.target.value)}
-                      disabled={isActionLoading}
-                      className="bg-transparent text-[10px] font-black text-primary underline focus:outline-none cursor-pointer text-right max-w-[130px]"
-                    >
-                      {profiles.map((p: any) => (
-                        <option key={p.id} value={p.id} className="text-foreground">
-                          {p.fullName} ({p.city})
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-
-                {profile ? (
-                  <div className="space-y-1.5">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-bold text-foreground">{profile.fullName} ({profile.phone})</span>
-                      <span className="text-[11px] text-muted-foreground leading-normal mt-0.5">
-                        {profile.address}, {profile.city}, {profile.state}
+                </>
+              ) : (
+                <>
+                  {/* Auto-Pay Planner Card */}
+                  <div className="rounded-2xl border bg-card p-5 space-y-3.5 shadow-sm text-xs">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4 text-primary" /> Auto-Pay Scheduler
+                      </h3>
+                      <span
+                        className={cn(
+                          "px-2 py-0.5 rounded text-[8px] tracking-tight font-black uppercase",
+                          plan.autoPayEnabled
+                            ? "bg-emerald-500/10 text-emerald-600"
+                            : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {plan.autoPayEnabled ? "Active" : "Inactive"}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-[10px] font-bold border-t pt-2 mt-2">
-                      <span className="text-muted-foreground">Zone Shipping Fee:</span>
-                      <span className="text-foreground">{formatCurrency(plan.deliveryFee || 0)}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-[11px] text-muted-foreground">No active address profiles linked.</p>
-                )}
-              </div>
 
-              {/* Goal Deletion CTA */}
-              <div className="rounded-2xl border bg-card p-5 space-y-4 shadow-sm text-xs">
-                <h3 className="text-sm font-bold text-foreground border-b pb-2">Destructive Options</h3>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Delete savings goal permanently and instantly refund all accrued savings back to your digital NestPurse wallet.
-                </p>
-                <Button
-                  onClick={() => setIsDeleteOpen(true)}
-                  variant="destructive"
-                  className="w-full h-10 rounded-xl font-bold flex items-center justify-center gap-2"
-                >
-                  <Trash className="w-4 h-4" /> Delete Goal & Refund
-                </Button>
-              </div>
+                    {plan.autoPayEnabled ? (
+                      <div className="space-y-2.5">
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Automated savings transfer rules are configured and active. Periodic deductions will credit your groceries goal automatically.
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 bg-muted/40 p-2.5 rounded-xl text-[10px] font-bold text-foreground">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[8px] uppercase tracking-wider text-muted-foreground font-black">Cycle Frequency</span>
+                            <span className="capitalize">{plan.autoPayFrequency}</span>
+                          </div>
+                          <div className="flex flex-col gap-0.5 items-end">
+                            <span className="text-[8px] uppercase tracking-wider text-muted-foreground font-black">Transfer Amount</span>
+                            <span>{formatCurrency(plan.autoPayAmount || 0)}</span>
+                          </div>
+                        </div>
+                        {plan.autoPayNextDate && (
+                          <p className="text-[9px] text-primary font-bold text-center">
+                            Next Auto-Pay transfer: {formatDate(plan.autoPayNextDate)}
+                          </p>
+                        )}
+                        <Button
+                          onClick={handleDisableAutoPay}
+                          disabled={isActionLoading}
+                          variant="outline"
+                          size="sm"
+                          className="w-full h-8 rounded-lg text-[10px] font-bold border-red-500/35 hover:bg-red-500/5 hover:text-red-500 transition-colors"
+                        >
+                          {isActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Disable Auto-Pay"}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Auto-Pay scheduler is inactive. Enable rules to automatically deposit set amounts periodically, accelerating your progress goal.
+                        </p>
+                        <Button
+                          onClick={() => setIsAutoPayOpen(true)}
+                          variant="outline"
+                          size="sm"
+                          className="w-full h-9 rounded-xl font-bold flex items-center justify-center gap-1.5"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Setup Auto-Pay Rules
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Shipping profiles pre-delivery swap utility */}
+                  <div className="rounded-2xl border bg-card p-5 space-y-3.5 shadow-sm text-xs">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 text-primary" /> Delivery Destination
+                      </h3>
+                      {profiles.length > 0 && !plan.isPaid && (
+                        <select
+                          value={plan.deliveryProfileId || ""}
+                          onChange={(e) => handleAddressSwap(e.target.value)}
+                          disabled={isActionLoading}
+                          className="bg-transparent text-[10px] font-black text-primary underline focus:outline-none cursor-pointer text-right max-w-[130px]"
+                        >
+                          {profiles.map((p: any) => (
+                            <option key={p.id} value={p.id} className="text-foreground">
+                              {p.fullName} ({p.city})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+
+                    {profile ? (
+                      <div className="space-y-1.5">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-bold text-foreground">{profile.fullName} ({profile.phone})</span>
+                          <span className="text-[11px] text-muted-foreground leading-normal mt-0.5">
+                            {profile.address}, {profile.city}, {profile.state}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] font-bold border-t pt-2 mt-2">
+                          <span className="text-muted-foreground">Zone Shipping Fee:</span>
+                          <span className="text-foreground">{formatCurrency(plan.deliveryFee || 0)}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground">No active address profiles linked.</p>
+                    )}
+                  </div>
+
+                  {/* Goal Deletion CTA */}
+                  {!plan.isPaid && (
+                    <div className="rounded-2xl border bg-card p-5 space-y-4 shadow-sm text-xs">
+                      <h3 className="text-sm font-bold text-foreground border-b pb-2">Destructive Options</h3>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        Delete savings goal permanently and instantly refund all accrued savings back to your digital NestPurse wallet.
+                      </p>
+                      <Button
+                        onClick={() => setIsDeleteOpen(true)}
+                        variant="destructive"
+                        className="w-full h-10 rounded-xl font-bold flex items-center justify-center gap-2"
+                      >
+                        <Trash className="w-4 h-4" /> Delete Goal & Refund
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
 
             </div>
           </div>
@@ -614,7 +969,7 @@ export default function FlexibleSavingsGoalPage() {
                 <Input
                   type="number"
                   placeholder="e.g. 5000"
-                  className="h-10 rounded-xl border-muted font-bold text-sm"
+                  className="h-10 rounded-xl border-muted font-bold text-base md:text-sm"
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
                 />
@@ -681,7 +1036,7 @@ export default function FlexibleSavingsGoalPage() {
                   <select
                     value={autoPayFreq}
                     onChange={(e) => setAutoPayFreq(e.target.value as any)}
-                    className="w-full bg-card border rounded-lg h-9 px-2 text-[11px] font-bold"
+                    className="w-full bg-card border rounded-lg h-9 px-2 text-base md:text-[11px] font-bold"
                   >
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
@@ -694,7 +1049,7 @@ export default function FlexibleSavingsGoalPage() {
                   <Input
                     type="number"
                     placeholder="Min ₦500"
-                    className="h-9 rounded-lg text-[11px] border-muted font-bold"
+                    className="h-9 rounded-lg text-base md:text-[11px] border-muted font-bold"
                     value={autoPayAmount}
                     onChange={(e) => setAutoPayAmount(e.target.value)}
                   />

@@ -42,7 +42,7 @@ export function NavSecondary({
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton 
-                  asChild={!hasItems} 
+                  asChild 
                   onClick={(e) => {
                     if (hasItems) {
                       e.preventDefault()

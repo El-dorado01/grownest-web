@@ -287,6 +287,20 @@ To integrate NestBaskets into `grownest-web` with stunning, premium aesthetics, 
 
 ---
 
+### Phase 5: Backend Sweeper Adjustments & Bug Fixes
+- [ ] **Step 5.1: Global Grace Period Toggle Support**
+  Introduce a new global setting `custom_plan_grace_period_enabled` (boolean). Add a toggle Switch on the Admin Dashboard settings tab (`Admin-GrowNest`) to enable/disable it.
+- [ ] **Step 5.2: Implement Individual Grace Period Override**
+  Modify the backend sweeper ([expireFlexiblePlans.ts](file:///c:/Users/hp/Desktop/GrowNest.Africa/src/jobs/expireFlexiblePlans.ts#L35)) and plan status checks ([nestbaskets.ts](file:///c:/Users/hp/Desktop/GrowNest.Africa/src/routes/nestbaskets.ts)) to calculate expiration based on the following precedence:
+  1. If `gracePeriodEndsAt` is set on a plan, use it as the hard deadline (it overrides any global setting, active or inactive).
+  2. If `gracePeriodEndsAt` is not set:
+     - If global grace period is **enabled**, the deadline is `savingExpiresAt` + default grace duration.
+     - If global grace period is **disabled**, the deadline is simply `savingExpiresAt` (expires immediately after target date).
+- [ ] **Step 5.3: Filter Out Cancelled/Refunded Custom Plans**
+  Fix list queries (such as `/my-flexible-plans` and `/plans` in [nestbaskets.ts](file:///c:/Users/hp/Desktop/GrowNest.Africa/src/routes/nestbaskets.ts)) to filter out plans with `status: "cancelled"` from active dashboard views.
+
+---
+
 ## 6. Verification and Quality Safeguards
 
 To ensure no breaking changes are introduced on the live API:

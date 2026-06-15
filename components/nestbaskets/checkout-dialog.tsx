@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Calendar, ShieldCheck, AlertCircle, Check, Loader2, MapPin, Scale, X, ShoppingCart, ArrowLeft } from "lucide-react"
+import { Calendar, ShieldCheck, AlertCircle, Check, Loader2, MapPin, Scale, X, ShoppingCart, ArrowLeft, Info } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -418,6 +418,17 @@ export function CheckoutDialog({
         </div>
       ) : (
         <div className="space-y-3 rounded-xl border bg-muted/20 p-3.5">
+          {/* Policy Tip Box */}
+          <div className="p-3 rounded-lg border border-amber-500/15 bg-amber-500/5 text-amber-700 dark:text-amber-400 text-xs leading-normal flex gap-2.5 items-start">
+            <Info className="h-4.5 w-4.5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-500" />
+            <div className="space-y-0.5">
+              <span className="font-bold text-foreground">Partial Procurement Policy:</span>
+              <p className="text-muted-foreground text-[10px] leading-relaxed">
+                If your plan expires unpaid, you will be prompted to select and receive items from your basket matching whatever funds you have saved. Any leftover remainder will be refunded back to your NestPurse.
+              </p>
+            </div>
+          </div>
+
           {/* Saving duration selection */}
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-1 text-primary">
@@ -473,7 +484,7 @@ export function CheckoutDialog({
                       value={autoPayFreq}
                       onValueChange={(v) => setAutoPayFreq(v as any)}
                     >
-                      <SelectTrigger className="h-10 w-full rounded-xl border-muted bg-card text-xs font-bold">
+                      <SelectTrigger className="h-10 w-full rounded-xl border-muted bg-card text-base md:text-xs font-bold">
                         <SelectValue placeholder="Select frequency" />
                       </SelectTrigger>
                       <SelectContent>
@@ -491,7 +502,7 @@ export function CheckoutDialog({
                     <Input
                       type="number"
                       placeholder="Min ₦500"
-                      className="h-10 w-full rounded-xl border-muted text-xs font-bold"
+                      className="h-10 w-full rounded-xl border-muted text-base md:text-xs font-bold"
                       value={autoPayAmount}
                       onChange={(e) => setAutoPayAmount(e.target.value)}
                     />
