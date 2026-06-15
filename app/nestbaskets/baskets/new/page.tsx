@@ -43,6 +43,8 @@ import { CheckoutDialog } from "@/components/nestbaskets/checkout-dialog"
 import { getCategoryForFoodItem, formatCurrency } from "@/components/nestbaskets/utils"
 
 
+const CUSTOM_CART_STORAGE_KEY = "nestbaskets-custom-cart"
+
 function CustomBasketBuilderPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -50,6 +52,7 @@ function CustomBasketBuilderPageContent() {
 
   // Primary State
   const [quantities, setQuantities] = React.useState<Record<string, number>>({})
+  const [isCartLoaded, setIsCartLoaded] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [selectedBrand, setSelectedBrand] = React.useState<string>("all")
   const [selectedCategory, setSelectedCategory] = React.useState<string>("all")
@@ -99,6 +102,38 @@ function CustomBasketBuilderPageContent() {
   const profiles = profilesRes?.data?.data ?? []
   const zones = zonesRes?.data?.data ?? []
   const defaultProfile = profilesRes?.data?.default ?? null
+
+  // Restore saved cart from localStorage (skipped when cloning a predefined plan)
+  React.useEffect(() => {
+    if (!cloneFrom) {
+      try {
+        const saved = localStorage.getItem(CUSTOM_CART_STORAGE_KEY)
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (parsed && typeof parsed === "object") {
+            setQuantities(parsed)
+          }
+        }
+      } catch {
+        // Ignore corrupted or inaccessible storage
+      }
+    }
+    setIsCartLoaded(true)
+  }, [cloneFrom])
+
+  // Persist cart to localStorage whenever it changes (after initial load)
+  React.useEffect(() => {
+    if (!isCartLoaded) return
+    try {
+      if (Object.keys(quantities).length === 0) {
+        localStorage.removeItem(CUSTOM_CART_STORAGE_KEY)
+      } else {
+        localStorage.setItem(CUSTOM_CART_STORAGE_KEY, JSON.stringify(quantities))
+      }
+    } catch {
+      // Ignore storage errors (e.g. private browsing quota)
+    }
+  }, [quantities, isCartLoaded])
 
   // Seed quantities if cloning from predefined plan
   React.useEffect(() => {
@@ -312,6 +347,13 @@ function CustomBasketBuilderPageContent() {
       }
 
       const customPlan = createRes.data.data.customPlan
+
+      // Basket has been claimed by this plan — clear the saved draft cart
+      try {
+        localStorage.removeItem(CUSTOM_CART_STORAGE_KEY)
+      } catch {
+        // Ignore storage errors
+      }
 
       // 2. Perform Transaction Checkout depending on Payment Type
       if (paymentType === "subscription") {
