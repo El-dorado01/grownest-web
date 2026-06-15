@@ -174,7 +174,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
   }, [showHistory, open])
 
   const isStep1Valid = phoneNumber.replace(/[\s\-\+]/g, "").length >= 10 && !!network
-  const isStep2Valid = Number(amount) >= 50
+  const isStep2Valid = Number(amount) >= 100
   const isStep3Valid = pin.length === 4
 
   const handleBuyAirtime = async (e: React.FormEvent) => {
@@ -519,7 +519,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
             <div className="flex flex-col gap-2">
               <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Amount (₦)</label>
               <div className="grid grid-cols-5 gap-1.5">
-                {[50, 100, 200, 500, 1000].map((val) => (
+                {[100, 200, 500, 1000, 2000].map((val) => (
                   <button
                     key={val}
                     type="button"
@@ -540,7 +540,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="Custom Amount (Min ₦50)"
+                placeholder="Custom Amount (Min ₦100)"
                 disabled={isSubmitting}
                 className={cn("w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden text-sm font-semibold transition-all mt-2", theme.focusBorder, "focus:ring-1", theme.focusRing)}
               />
