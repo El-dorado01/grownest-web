@@ -752,7 +752,7 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[85vh] max-h-[95vh] px-4 pb-8 flex flex-col">
+        <DrawerContent className="h-[75vh] max-h-[95vh] px-4 pb-8 flex flex-col">
           <DrawerHeader className="mb-2 px-0 shrink-0">
             <DrawerTitle className="text-xl font-bold relative">
               <div className="flex items-center justify-between w-full min-h-[28px] relative">

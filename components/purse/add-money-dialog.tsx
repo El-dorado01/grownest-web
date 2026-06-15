@@ -1382,7 +1382,7 @@ export function AddMoneyDialog({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[85vh] max-h-[95vh] px-4 pb-8 flex flex-col">
+        <DrawerContent className="h-[75vh] max-h-[95vh] px-4 pb-8 flex flex-col">
           <div className="flex h-full flex-col overflow-hidden">
             <DrawerHeader className="shrink-0 px-0">
               <DrawerTitle>

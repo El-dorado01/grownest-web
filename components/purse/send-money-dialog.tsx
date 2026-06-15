@@ -580,7 +580,7 @@ export function SendMoneyDialog({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[85vh] max-h-[95vh] px-4 pb-8 flex flex-col">
+        <DrawerContent className="h-[75vh] max-h-[95vh] px-4 pb-8 flex flex-col">
           <DrawerHeader className="mb-2 px-0">
             <DrawerTitle className="flex items-center justify-center gap-2 text-xl font-bold">
               {title}

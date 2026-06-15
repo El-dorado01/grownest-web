@@ -424,7 +424,7 @@ export function WithdrawDialog({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[85vh] max-h-[95vh] px-4 pb-8 flex flex-col">
+        <DrawerContent className="h-[75vh] max-h-[95vh] px-4 pb-8 flex flex-col">
           <DrawerHeader className="px-0 mb-2">
             <DrawerTitle className="text-xl font-bold flex items-center justify-center gap-2">
               {title}
