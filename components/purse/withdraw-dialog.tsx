@@ -424,14 +424,14 @@ export function WithdrawDialog({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="px-4 pb-8 max-h-[95vh]">
+        <DrawerContent className="h-[85vh] max-h-[95vh] px-4 pb-8 flex flex-col">
           <DrawerHeader className="px-0 mb-2">
             <DrawerTitle className="text-xl font-bold flex items-center justify-center gap-2">
               {title}
             </DrawerTitle>
             <DrawerDescription>{description}</DrawerDescription>
           </DrawerHeader>
-          <div className="overflow-y-auto max-h-[70vh] pb-4">
+          <div className="flex-1 min-h-0 overflow-y-auto pb-4">
             {renderStep()}
           </div>
         </DrawerContent>
