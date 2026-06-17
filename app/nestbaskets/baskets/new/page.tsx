@@ -26,6 +26,7 @@ import {
   ShoppingCart,
   Loader2,
   ShoppingBag,
+  Check,
 } from "lucide-react"
 import { nestBasketsApi } from "@/lib/nestbaskets-api"
 import { FoodItem } from "@/types/nestbaskets"
@@ -34,6 +35,9 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 // Sub-components
 import { CatalogHeader } from "@/components/nestbaskets/catalog-header"
@@ -67,6 +71,28 @@ function CustomBasketBuilderPageContent() {
   const [enableAutoPay, setEnableAutoPay] = React.useState(false)
   const [autoPayFreq, setAutoPayFreq] = React.useState<"daily" | "weekly" | "biweekly" | "monthly">("monthly")
   const [autoPayAmount, setAutoPayAmount] = React.useState("")
+
+  // Option B states
+  const [fundNow, setFundNow] = React.useState(false)
+  const [fundingMode, setFundingMode] = React.useState<"full" | "custom">("full")
+  const [initialDepositAmount, setInitialDepositAmount] = React.useState("")
+
+  // Success dialog states
+  const [isSuccessOpen, setIsSuccessOpen] = React.useState(false)
+  const [createdPlanId, setCreatedPlanId] = React.useState("")
+  const [createdPlanTitle, setCreatedPlanTitle] = React.useState("")
+  const [createdPlanType, setCreatedPlanType] = React.useState<"subscription" | "flexible">("flexible")
+  const [actualFundedAmount, setActualFundedAmount] = React.useState(0)
+
+  // Reset/Clear PIN and Option B states when the checkout dialog is loaded/opened
+  React.useEffect(() => {
+    if (isCheckoutOpen) {
+      setPinValue("")
+      setFundNow(false)
+      setFundingMode("full")
+      setInitialDepositAmount("")
+    }
+  }, [isCheckoutOpen])
 
   // Security Verification
   const [pinValue, setPinValue] = React.useState("")
@@ -355,6 +381,8 @@ function CustomBasketBuilderPageContent() {
         // Ignore storage errors
       }
 
+      let funded = 0
+
       // 2. Perform Transaction Checkout depending on Payment Type
       if (paymentType === "subscription") {
         const subRes = await nestBasketsApi.subscribeToPlan({
@@ -369,7 +397,6 @@ function CustomBasketBuilderPageContent() {
         }
 
         toast.success(`Successfully subscribed to custom plan: ${basketTitle}`)
-        router.push("/nestbaskets/baskets")
       } else {
         // Flexible Savings plan
         if (enableAutoPay) {
@@ -383,10 +410,35 @@ function CustomBasketBuilderPageContent() {
             toast.warning("Goal created, but Auto-Pay setup failed. You can re-enable it in your goal details page.")
           }
         }
+
+        if (fundNow) {
+          const depositVal = fundingMode === "full" ? totalCost : parseFloat(initialDepositAmount)
+          try {
+            const payRes = await nestBasketsApi.makeFlexiblePayment({
+              customPlanId: customPlan.id,
+              amount: depositVal,
+              pin: pinValue,
+            })
+            if (payRes.data?.success) {
+              funded = depositVal
+              toast.success(`Deposit of ${formatCurrency(depositVal)} successful!`)
+            } else {
+              toast.error(payRes.data?.message || payRes.error || "Initial deposit transaction failed")
+            }
+          } catch (payErr: any) {
+            toast.error(payErr.message || "Failed to process initial deposit. Check wallet PIN and balance.")
+          }
+        }
         toast.success(`Successfully established flexible savings goal: ${basketTitle}`)
-        router.push("/nestbaskets/baskets")
       }
+
+      // Record success details and trigger dialog
+      setCreatedPlanId(customPlan.id)
+      setCreatedPlanTitle(basketTitle)
+      setCreatedPlanType(paymentType)
+      setActualFundedAmount(funded)
       setIsCheckoutOpen(false)
+      setIsSuccessOpen(true)
     } catch (err: any) {
       toast.error(err.message || "Transaction failed. Please verify your PIN and NestPurse balance.")
       setPinValue("")
@@ -564,6 +616,24 @@ function CustomBasketBuilderPageContent() {
           totalWeight={totalWeight}
           selectedItemsList={selectedItemsList}
           updateQuantity={updateQuantity}
+          fundNow={fundNow}
+          setFundNow={setFundNow}
+          fundingMode={fundingMode}
+          setFundingMode={setFundingMode}
+          initialDepositAmount={initialDepositAmount}
+          setInitialDepositAmount={setInitialDepositAmount}
+        />
+
+        {/* Success Modal */}
+        <CheckoutSuccessDialog
+          isOpen={isSuccessOpen}
+          onClose={() => setIsSuccessOpen(false)}
+          planId={createdPlanId}
+          planTitle={createdPlanTitle}
+          planType={createdPlanType}
+          fundedAmount={actualFundedAmount}
+          totalCost={totalCost}
+          subFreq={subFreq}
         />
       </SidebarInset>
     </SidebarProvider>
@@ -581,5 +651,180 @@ export default function CustomBasketBuilderPage() {
     >
       <CustomBasketBuilderPageContent />
     </React.Suspense>
+  )
+}
+
+function CheckoutSuccessDialog({
+  isOpen,
+  onClose,
+  planId,
+  planTitle,
+  planType,
+  fundedAmount,
+  totalCost,
+  subFreq,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  planId: string
+  planTitle: string
+  planType: "subscription" | "flexible"
+  fundedAmount: number
+  totalCost: number
+  subFreq: string
+}) {
+  const router = useRouter()
+  const isMobile = useIsMobile()
+
+  const handleAction = (route: string) => {
+    onClose()
+    router.push(route)
+  }
+
+  const overviewCard = (
+    <div className="w-full rounded-xl border bg-muted/20 p-4 text-xs font-semibold space-y-2.5 text-left">
+      <div className="flex justify-between items-center">
+        <span className="text-muted-foreground">Plan Name:</span>
+        <span className="text-foreground max-w-[200px] truncate">{planTitle}</span>
+      </div>
+      <div className="flex justify-between items-center">
+        <span className="text-muted-foreground">Plan Type:</span>
+        <span className="text-foreground capitalize">{planType === "flexible" ? "Flexible Target" : "Subscription"}</span>
+      </div>
+      {planType === "subscription" ? (
+        <>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Billing Cycle:</span>
+            <span className="text-foreground capitalize">{subFreq}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Cycle Cost:</span>
+            <span className="text-foreground font-black">{formatCurrency(totalCost)}</span>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Total Budget:</span>
+            <span className="text-foreground font-black">{formatCurrency(totalCost)}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Funded Amount:</span>
+            <span className="text-emerald-600 font-black">{formatCurrency(fundedAmount)}</span>
+          </div>
+        </>
+      )}
+    </div>
+  )
+
+  const actionButtons = (
+    <>
+      {planType === "flexible" && fundedAmount === 0 ? (
+        <div className="w-full space-y-3 pt-2">
+          <div className="p-3 bg-primary/5 rounded-xl border border-primary/10 text-xs text-primary leading-normal font-semibold">
+            Would you like to make a deposit to your plan now?
+          </div>
+          <div className="flex gap-3">
+            <Button
+              onClick={() => handleAction("/nestbaskets/baskets")}
+              variant="outline"
+              className="flex-1 rounded-xl h-11 text-xs"
+            >
+              Later
+            </Button>
+            <Button
+              onClick={() => handleAction(`/nestbaskets/baskets/flexible/${planId}?deposit=true`)}
+              className="flex-1 rounded-xl h-11 text-xs text-foreground font-bold"
+            >
+              Yes, Deposit Now
+            </Button>
+          </div>
+        </div>
+      ) : planType === "flexible" ? (
+        <div className="w-full flex gap-3 pt-2">
+          <Button
+            onClick={() => handleAction("/nestbaskets/baskets")}
+            variant="outline"
+            className="flex-1 rounded-xl h-11 text-xs"
+          >
+            Back to Baskets
+          </Button>
+          <Button
+            onClick={() => handleAction(`/nestbaskets/baskets/flexible/${planId}`)}
+            className="flex-1 rounded-xl h-11 text-xs text-foreground font-bold"
+          >
+            View Goal Details
+          </Button>
+        </div>
+      ) : (
+        <div className="w-full flex gap-3 pt-2">
+          <Button
+            onClick={() => handleAction("/nestbaskets/baskets")}
+            variant="outline"
+            className="flex-1 rounded-xl h-11 text-xs"
+          >
+            Back to Baskets
+          </Button>
+          <Button
+            onClick={() => handleAction(`/nestbaskets/baskets/subscription/${planId}`)}
+            className="flex-1 rounded-xl h-11 text-xs text-foreground font-bold"
+          >
+            View Subscription Details
+          </Button>
+        </div>
+      )}
+    </>
+  )
+
+  if (isMobile) {
+    return (
+      <Drawer open={isOpen} onOpenChange={() => {}}>
+        <DrawerContent className="p-6 select-none">
+          <div className="flex flex-col items-center text-center space-y-4 pb-6">
+            {/* Animated check bubble */}
+            <div className="size-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 animate-bounce">
+              <Check className="size-8" strokeWidth={3} />
+            </div>
+
+            <DrawerHeader className="space-y-1 text-center px-0">
+              <DrawerTitle className="text-xl font-black text-foreground tracking-tight">
+                Basket Setup Successful!
+              </DrawerTitle>
+              <DrawerDescription className="text-xs text-muted-foreground">
+                Your custom food basket has been created successfully.
+              </DrawerDescription>
+            </DrawerHeader>
+
+            {overviewCard}
+            {actionButtons}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={() => {}}>
+      <DialogContent className="max-w-md rounded-2xl p-6 select-none" showCloseButton={false}>
+        <div className="flex flex-col items-center text-center space-y-4">
+          {/* Animated check bubble */}
+          <div className="size-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 animate-bounce">
+            <Check className="size-8" strokeWidth={3} />
+          </div>
+
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-xl font-black text-foreground tracking-tight">
+              Basket Setup Successful!
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Your custom food basket has been created successfully.
+            </DialogDescription>
+          </DialogHeader>
+
+          {overviewCard}
+          {actionButtons}
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

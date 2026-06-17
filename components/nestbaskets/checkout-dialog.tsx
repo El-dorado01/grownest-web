@@ -68,6 +68,14 @@ interface CheckoutDialogProps {
   totalWeight: number
   selectedItemsList: Array<{ item: FoodItem; quantity: number }>
   updateQuantity: (id: string, newQty: number) => void
+
+  // Option B states
+  fundNow: boolean
+  setFundNow: (val: boolean) => void
+  fundingMode: "full" | "custom"
+  setFundingMode: (val: "full" | "custom") => void
+  initialDepositAmount: string
+  setInitialDepositAmount: (val: string) => void
 }
 
 export function CheckoutDialog({
@@ -101,12 +109,26 @@ export function CheckoutDialog({
   totalWeight,
   selectedItemsList,
   updateQuantity,
+
+  fundNow,
+  setFundNow,
+  fundingMode,
+  setFundingMode,
+  initialDepositAmount,
+  setInitialDepositAmount,
 }: CheckoutDialogProps) {
   const isMobile = useIsMobile()
   const basketTitleRef = React.useRef<HTMLInputElement>(null)
   
   // Two-stage checkout for mobile Drawer
   const [step, setStep] = React.useState<"review" | "checkout">("review")
+
+  const isDepositInvalid = paymentType === "flexible" && fundNow && fundingMode === "custom" && (
+    !initialDepositAmount ||
+    isNaN(parseFloat(initialDepositAmount)) ||
+    parseFloat(initialDepositAmount) < 500 ||
+    parseFloat(initialDepositAmount) > totalCost
+  )
 
   // Reset to first stage ("review") whenever dialog/drawer opens
   React.useEffect(() => {
@@ -511,6 +533,77 @@ export function CheckoutDialog({
               </div>
             )}
           </div>
+
+          {/* Initial Funding Options */}
+          <div className="space-y-2.5 border-t border-border/40 pt-3">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-foreground">
+                Make Initial Deposit
+              </span>
+              <Switch
+                checked={fundNow}
+                onCheckedChange={setFundNow}
+              />
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Fund your savings plan immediately upon creation.
+            </p>
+            {fundNow && (
+              <div className="animate-in space-y-3 pt-1 duration-300 fade-in">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFundingMode("full")}
+                    className={cn(
+                      "rounded-lg border py-2 text-center text-xs font-black capitalize transition-all",
+                      fundingMode === "full"
+                        ? "border-primary bg-primary font-black text-primary-foreground"
+                        : "border-border bg-card text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    100% Full Payment
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFundingMode("custom")}
+                    className={cn(
+                      "rounded-lg border py-2 text-center text-xs font-black capitalize transition-all",
+                      fundingMode === "custom"
+                        ? "border-primary bg-primary font-black text-primary-foreground"
+                        : "border-border bg-card text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    Custom Deposit
+                  </button>
+                </div>
+
+                {fundingMode === "full" ? (
+                  <div className="rounded-lg bg-primary/5 border border-primary/15 p-2.5 text-center text-xs font-bold text-primary">
+                    Deposit Amount: {formatCurrency(totalCost)}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-black text-muted-foreground uppercase">
+                      Deposit Amount (₦)
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="Min ₦500"
+                      className="h-10 w-full rounded-xl border-muted text-base md:text-xs font-bold"
+                      value={initialDepositAmount}
+                      onChange={(e) => setInitialDepositAmount(e.target.value)}
+                    />
+                    {initialDepositAmount && (parseFloat(initialDepositAmount) < 500 || parseFloat(initialDepositAmount) > totalCost) && (
+                      <span className="text-[10px] text-destructive font-semibold flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        Amount must be between ₦500 and {formatCurrency(totalCost)}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -550,7 +643,7 @@ export function CheckoutDialog({
       {/* Submit CTA button */}
       <Button
         onClick={onSubmit}
-        disabled={isSubmitting || pinValue.length !== 4}
+        disabled={isSubmitting || pinValue.length !== 4 || isDepositInvalid}
         className="flex h-12 w-full items-center justify-center gap-2 rounded-xl font-black text-foreground"
       >
         {isSubmitting ? (

@@ -185,10 +185,10 @@ export default function AccountPage() {
         <DashboardHeader>
           <Breadcrumb>
             <BreadcrumbList>
-              <BreadcrumbItem>
+              <BreadcrumbItem className="hidden sm:inline-flex">
                 <BreadcrumbLink href="/">Dashboard</BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbSeparator />
+              <BreadcrumbSeparator className="hidden sm:inline-flex" />
               <BreadcrumbItem>
                 <BreadcrumbPage>Account Verification</BreadcrumbPage>
               </BreadcrumbItem>
@@ -207,19 +207,19 @@ export default function AccountPage() {
             <>
               {/* Profile Overview Section */}
               <section className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b">
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center border-2 border-background ring-2 ring-muted/50 relative">
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                  <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center border-2 border-background ring-2 ring-muted/50 relative shrink-0">
                     <User className="h-8 w-8 text-muted-foreground" />
                     <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5">
                       <BadgeCheck className={cn("h-5 w-5", getTierBadgeColor(currentTier))} />
                     </div>
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h1 className="text-2xl font-bold tracking-tight line-clamp-1">{profile?.fullName || "User"}</h1>
-                      <BadgeCheck className={cn("h-5 w-5 min-w-5", getTierBadgeColor(currentTier))} />
+                      <h1 className="text-2xl font-bold tracking-tight truncate">{profile?.fullName || "User"}</h1>
+                      <BadgeCheck className={cn("h-5 w-5 min-w-5 shrink-0", getTierBadgeColor(currentTier))} />
                     </div>
-                    <p className="text-muted-foreground text-sm font-medium">{profile?.email}</p>
+                    <p className="text-muted-foreground text-sm font-medium truncate">{profile?.email}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

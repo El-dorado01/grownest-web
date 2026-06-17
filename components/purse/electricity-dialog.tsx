@@ -86,6 +86,8 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [elecError, setElecError] = React.useState<string | null>(null)
   const [elecSuccess, setElecSuccess] = React.useState(false)
+  const [purchasedToken, setPurchasedToken] = React.useState<string | null>(null)
+  const [purchasedUnits, setPurchasedUnits] = React.useState<string | null>(null)
 
   // History view states
   const [showHistory, setShowHistory] = React.useState(false)
@@ -159,6 +161,8 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
       setPin("")
       setElecError(null)
       setElecSuccess(false)
+      setPurchasedToken(null)
+      setPurchasedUnits(null)
       setShowHistory(false)
       setHistory([])
       setIsLoadingHistory(false)
@@ -185,6 +189,11 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
       loadHistory()
     }
   }, [showHistory, open])
+
+  const handleCopyToken = (tokenStr: string) => {
+    navigator.clipboard.writeText(tokenStr)
+    toast.success("Token copied to clipboard!")
+  }
 
   const handleVerify = async () => {
     if (!disco || !meterNumber.trim()) return
@@ -238,6 +247,8 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
         setElecError(res.error || "Failed to vend electricity. Please try again.")
         setPin("")
       } else {
+        setPurchasedToken(res.data?.token || null)
+        setPurchasedUnits(res.data?.units || null)
         setElecSuccess(true)
         toast.success("Electricity vended successfully!")
         confetti({
@@ -374,9 +385,9 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
   const renderForm = () => {
     if (elecSuccess) {
       return (
-        <div className="flex flex-col items-center justify-center py-8 px-4 text-center gap-4 animate-in fade-in zoom-in-95 duration-300">
-          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-            <CheckCircle2 className="h-10 w-10" />
+        <div className="w-full flex flex-col items-center justify-center py-6 px-4 text-center gap-4 animate-in fade-in zoom-in-95 duration-300 my-auto">
+          <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <CheckCircle2 className="h-8 w-8" />
           </div>
           <div className="space-y-1">
             <h3 className="text-lg font-black text-foreground">Electricity Vended!</h3>
@@ -394,8 +405,42 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
               )}
             </p>
           </div>
+
+          {purchasedToken ? (
+            <div className="w-full bg-primary/5 dark:bg-primary/10 rounded-2xl p-4 border border-primary/20 flex flex-col gap-2.5 my-1 text-left">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[10px] font-bold text-primary/70 uppercase tracking-wider">
+                  Electricity Token
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCopyToken(purchasedToken)}
+                  className="p-1 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer"
+                  title="Copy Token"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="font-mono text-lg font-black text-foreground tracking-widest text-center py-2 bg-background rounded-xl border border-muted/50 select-all">
+                {purchasedToken}
+              </div>
+              {purchasedUnits && (
+                <div className="flex justify-between items-center text-xs font-bold text-muted-foreground border-t border-dashed border-muted/50 pt-2 mt-1">
+                  <span>Units Purchased:</span>
+                  <span className="font-mono text-foreground">{purchasedUnits} kWh</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="w-full bg-amber-500/5 rounded-2xl p-4 border border-amber-500/15 flex flex-col gap-2 my-1 text-left">
+              <p className="text-xs font-semibold text-amber-600 leading-relaxed text-center">
+                Your purchase was successful. We are generating your token. It will appear in your <strong>History</strong> tab shortly.
+              </p>
+            </div>
+          )}
+
           <Button
-            className="mt-4 rounded-full px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs h-10 cursor-pointer"
+            className="mt-4 rounded-xl w-full bg-primary hover:bg-primary/95 text-primary-foreground font-bold text-sm h-11 cursor-pointer"
             onClick={() => onOpenChange(false)}
           >
             Done
@@ -738,9 +783,96 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent className="h-[75vh] max-h-[95vh] px-4 pb-8 flex flex-col">
-          <DrawerHeader className="mb-2 px-0 shrink-0">
-            <DrawerTitle className="text-xl font-bold relative">
-              <div className="flex items-center justify-between w-full min-h-[28px] relative">
+          {!elecSuccess && (
+            <DrawerHeader className="mb-2 px-0 shrink-0">
+              <DrawerTitle className="text-xl font-bold relative">
+                <div className="flex items-center justify-between w-full min-h-[28px] relative">
+                  <AnimatePresence>
+                    {showHistory && (
+                      <motion.button
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ type: "spring", stiffness: 80, damping: 16 }}
+                        type="button"
+                        onClick={() => setShowHistory(false)}
+                        className="p-1 -ml-1 rounded-full hover:bg-muted/50 transition-colors cursor-pointer shrink-0 absolute left-0"
+                      >
+                        <ArrowLeft className="h-5 w-5" />
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="flex items-center flex-1 min-w-0 pl-1">
+                    <AnimatePresence mode="wait">
+                      {!showHistory && (
+                        <motion.span
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -10 }}
+                          transition={{ duration: 0.5 }}
+                          className="text-foreground truncate block font-bold"
+                        >
+                          {title}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  <motion.div
+                    layout
+                    transition={{ type: "spring", stiffness: 80, damping: 16 }}
+                    className={cn(
+                      "flex items-center",
+                      showHistory ? "absolute left-8" : "absolute right-4"
+                    )}
+                  >
+                    <motion.span
+                      layout="position"
+                      className={cn(
+                        "transition-all duration-300 font-bold",
+                        showHistory 
+                          ? "text-foreground text-lg sm:text-xl" 
+                          : "text-xs uppercase tracking-wider cursor-pointer text-primary pr-3"
+                      )}
+                      onClick={() => !showHistory && setShowHistory(true)}
+                    >
+                      {showHistory ? "Payment History" : "History"}
+                    </motion.span>
+                  </motion.div>
+                </div>
+              </DrawerTitle>
+              <DrawerDescription className={cn(showHistory ? "text-left pl-8" : "text-left pl-1", "transition-all duration-300 min-h-[20px] relative")}>
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={showHistory ? "history" : "form"}
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.5 }}
+                    className="block"
+                  >
+                    {showHistory ? "Your recent transaction history" : description}
+                  </motion.span>
+                </AnimatePresence>
+              </DrawerDescription>
+            </DrawerHeader>
+          )}
+          <div className={cn("px-2 py-2 flex-1 min-h-0 overflow-y-auto", (!elecSuccess && !showHistory) && "flex flex-col")}>
+            {showHistory ? renderHistory() : renderForm()}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="overflow-hidden rounded-[2rem] p-0 sm:max-w-[440px] h-[580px] max-h-[90vh] flex flex-col">
+        {!elecSuccess && (
+          <DialogHeader className="p-6 pb-0 shrink-0">
+            <DialogTitle className="text-2xl font-bold relative">
+              <div className="flex items-center justify-between w-full min-h-[32px] relative">
                 <AnimatePresence>
                   {showHistory && (
                     <motion.button
@@ -778,7 +910,7 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
                   transition={{ type: "spring", stiffness: 80, damping: 16 }}
                   className={cn(
                     "flex items-center",
-                    showHistory ? "absolute left-8" : "absolute right-4"
+                    showHistory ? "absolute left-8" : "absolute right-6"
                   )}
                 >
                   <motion.span
@@ -786,7 +918,7 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
                     className={cn(
                       "transition-all duration-300 font-bold",
                       showHistory 
-                        ? "text-foreground text-lg sm:text-xl" 
+                        ? "text-foreground text-xl sm:text-2xl" 
                         : "text-xs uppercase tracking-wider cursor-pointer text-primary pr-3"
                     )}
                     onClick={() => !showHistory && setShowHistory(true)}
@@ -795,8 +927,8 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
                   </motion.span>
                 </motion.div>
               </div>
-            </DrawerTitle>
-            <DrawerDescription className={cn(showHistory ? "text-left pl-8" : "text-left pl-1", "transition-all duration-300 min-h-[20px] relative")}>
+            </DialogTitle>
+            <DialogDescription className={cn(showHistory ? "text-left pl-8" : "text-left pl-1", "transition-all duration-300 min-h-[20px] relative")}>
               <AnimatePresence mode="wait">
                 <motion.span
                   key={showHistory ? "history" : "form"}
@@ -809,93 +941,10 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
                   {showHistory ? "Your recent transaction history" : description}
                 </motion.span>
               </AnimatePresence>
-            </DrawerDescription>
-          </DrawerHeader>
-          <div className={cn("px-2 py-2 flex-1 min-h-0 overflow-y-auto", (!elecSuccess && !showHistory) && "flex flex-col")}>
-            {showHistory ? renderHistory() : renderForm()}
-          </div>
-        </DrawerContent>
-      </Drawer>
-    )
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-hidden rounded-[2rem] p-0 sm:max-w-[440px] h-[580px] max-h-[90vh] flex flex-col">
-        <DialogHeader className="p-6 pb-0 shrink-0">
-          <DialogTitle className="text-2xl font-bold relative">
-            <div className="flex items-center justify-between w-full min-h-[32px] relative">
-              <AnimatePresence>
-                {showHistory && (
-                  <motion.button
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ type: "spring", stiffness: 80, damping: 16 }}
-                    type="button"
-                    onClick={() => setShowHistory(false)}
-                    className="p-1 -ml-1 rounded-full hover:bg-muted/50 transition-colors cursor-pointer shrink-0 absolute left-0"
-                  >
-                    <ArrowLeft className="h-5 w-5" />
-                  </motion.button>
-                )}
-              </AnimatePresence>
-
-              <div className="flex items-center flex-1 min-w-0 pl-1">
-                <AnimatePresence mode="wait">
-                  {!showHistory && (
-                    <motion.span
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      transition={{ duration: 0.5 }}
-                      className="text-foreground truncate block font-bold"
-                    >
-                      {title}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <motion.div
-                layout
-                transition={{ type: "spring", stiffness: 80, damping: 16 }}
-                className={cn(
-                  "flex items-center",
-                  showHistory ? "absolute left-8" : "absolute right-6"
-                )}
-              >
-                <motion.span
-                  layout="position"
-                  className={cn(
-                    "transition-all duration-300 font-bold",
-                    showHistory 
-                      ? "text-foreground text-xl sm:text-2xl" 
-                      : "text-xs uppercase tracking-wider cursor-pointer text-primary pr-3"
-                  )}
-                  onClick={() => !showHistory && setShowHistory(true)}
-                >
-                  {showHistory ? "Payment History" : "History"}
-                </motion.span>
-              </motion.div>
-            </div>
-          </DialogTitle>
-          <DialogDescription className={cn(showHistory ? "text-left pl-8" : "text-left pl-1", "transition-all duration-300 min-h-[20px] relative")}>
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={showHistory ? "history" : "form"}
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                transition={{ duration: 0.5 }}
-                className="block"
-              >
-                {showHistory ? "Your recent transaction history" : description}
-              </motion.span>
-            </AnimatePresence>
-          </DialogDescription>
-        </DialogHeader>
-        <div className={cn("p-6 pt-2 flex-1 min-h-0 overflow-y-auto flex flex-col", (elecSuccess || (showHistory && history.length === 0)) && "justify-center")}>
+            </DialogDescription>
+          </DialogHeader>
+        )}
+        <div className={cn("p-6 pt-2 flex-1 min-h-0 overflow-y-auto flex flex-col", (showHistory && history.length === 0) && "justify-center")}>
           {showHistory ? renderHistory() : renderForm()}
         </div>
       </DialogContent>

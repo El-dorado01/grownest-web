@@ -38,7 +38,8 @@ import {
   MapPin,
   ChevronRight,
   User,
-  ShoppingBag
+  ShoppingBag,
+  AlertTriangle
 } from "lucide-react"
 import { nestBasketsApi } from "@/lib/nestbaskets-api"
 import useSWR from "swr"
@@ -46,7 +47,9 @@ import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer"
 import { PinInput } from "@/components/ui/pin-input"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { toast } from "sonner"
 
 const formatCurrency = (amount: number) =>
@@ -63,6 +66,62 @@ const formatDate = (dateString?: string) => {
     month: "long",
     day: "numeric",
   })
+}
+
+interface ResponsiveDialogProps {
+  isOpen: boolean
+  onClose: (open: boolean) => void
+  title: React.ReactNode
+  description?: React.ReactNode
+  children: React.ReactNode
+}
+
+function ResponsiveDialog({
+  isOpen,
+  onClose,
+  title,
+  description,
+  children,
+}: ResponsiveDialogProps) {
+  const isMobile = useIsMobile()
+
+  if (isMobile) {
+    return (
+      <Drawer open={isOpen} onOpenChange={onClose}>
+        <DrawerContent className="p-6">
+          <DrawerHeader className="text-left mb-4 px-0">
+            <DrawerTitle className="text-base font-bold text-foreground flex items-center gap-1.5">
+              {title}
+            </DrawerTitle>
+            {description && (
+              <DrawerDescription className="text-xs text-muted-foreground mt-1">
+                {description}
+              </DrawerDescription>
+            )}
+          </DrawerHeader>
+          <div className="pb-6">{children}</div>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-sm rounded-2xl p-6">
+        <DialogHeader className="mb-4">
+          <DialogTitle className="text-base font-bold text-foreground flex items-center gap-1.5">
+            {title}
+          </DialogTitle>
+          {description && (
+            <DialogDescription className="text-xs text-muted-foreground mt-1">
+              {description}
+            </DialogDescription>
+          )}
+        </DialogHeader>
+        {children}
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 export default function SubscriptionDetailsPage() {
@@ -161,8 +220,8 @@ export default function SubscriptionDetailsPage() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
-            <span className="text-5xl">⚠️</span>
+          <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
+            <AlertTriangle className="h-12 w-12 text-amber-500 animate-pulse" />
             <h2 className="text-xl font-bold">Subscription Not Found</h2>
             <p className="text-sm text-muted-foreground">The requested active delivery pipeline does not exist.</p>
             <Button asChild>
@@ -194,14 +253,14 @@ export default function SubscriptionDetailsPage() {
         >
           <Breadcrumb className="flex-1">
             <BreadcrumbList>
-              <BreadcrumbItem>
+              <BreadcrumbItem className="hidden md:inline-flex">
                 <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
+              <BreadcrumbSeparator className="hidden md:inline-flex" />
+              <BreadcrumbItem className="hidden sm:inline-flex">
                 <BreadcrumbLink href="/nestbaskets/baskets">Food Baskets</BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbSeparator />
+              <BreadcrumbSeparator className="hidden sm:inline-flex" />
               <BreadcrumbItem>
                 <BreadcrumbPage>Subscription details</BreadcrumbPage>
               </BreadcrumbItem>
@@ -404,23 +463,23 @@ export default function SubscriptionDetailsPage() {
               </div>
 
               {/* Delivery Address */}
-              <div className="rounded-2xl border bg-card p-5 space-y-3 shadow-sm text-xs">
-                <h3 className="text-sm font-bold text-foreground border-b pb-2">Shipping Destination</h3>
+              <div className="rounded-2xl border bg-card p-5 space-y-3.5 shadow-sm text-xs">
+                <h3 className="flex items-center gap-2 text-sm font-bold text-foreground border-b pb-2">
+                  <MapPin className="h-4 w-4 text-primary shrink-0" /> Shipping Destination
+                </h3>
                 {profile ? (
-                  <div className="space-y-2 pt-1">
-                    <div className="flex gap-2 items-start">
-                      <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-foreground">{profile.fullName}</span>
-                        <span className="text-muted-foreground">{profile.phone}</span>
-                        <span className="text-[11px] text-muted-foreground leading-relaxed mt-1">
-                          {profile.address}, {profile.city}, {profile.state}
-                        </span>
-                      </div>
+                  <div className="w-full rounded-xl border border-border/60 bg-muted/20 p-3 text-left text-xs leading-relaxed text-muted-foreground">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-bold text-foreground">
+                        {profile.fullName} ({profile.phone})
+                      </span>
+                      <span className="truncate">
+                        {profile.address}, {profile.city}, {profile.state}
+                      </span>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-[11px] text-muted-foreground">No address profile attached.</p>
+                  <p className="text-xs text-muted-foreground">No address profile attached.</p>
                 )}
               </div>
 
@@ -461,60 +520,58 @@ export default function SubscriptionDetailsPage() {
         </div>
 
         {/* Cancellation confirmation PIN modal */}
-        <Dialog open={isCancelOpen} onOpenChange={setIsCancelOpen}>
-          <DialogContent className="max-w-sm rounded-2xl p-6">
-            <DialogHeader className="mb-4">
-              <DialogTitle className="text-base font-bold flex items-center gap-1.5 text-foreground">
-                <Trash className="w-5 h-5 text-destructive" /> Cancel Subscription
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground">
-                Are you sure you want to cancel this plan? Cancellation is permanent.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 text-xs font-medium">
-              <div className="p-3.5 rounded-xl bg-destructive/5 border border-destructive/10 text-destructive text-[11px] leading-relaxed">
-                <strong>Attention:</strong> If you paid for the current cycle, cancelling immediately stops shipping and automatically refunds the amount of <strong>{formatCurrency(subscription.totalAmount)}</strong> back into your NestPurse balance.
-              </div>
-
-              {/* PIN confirm input */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-1 justify-center text-primary mb-1">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Confirm NestPurse PIN</span>
-                </div>
-                <PinInput
-                  value={pinValue}
-                  onChange={setPinValue}
-                  disabled={isActionLoading}
-                />
-              </div>
-
-              <div className="flex gap-3 mt-4">
-                <Button
-                  onClick={() => setIsCancelOpen(false)}
-                  variant="outline"
-                  className="flex-1 rounded-xl"
-                  disabled={isActionLoading}
-                >
-                  Dismiss
-                </Button>
-                <Button
-                  onClick={handleCancelSubmit}
-                  disabled={isActionLoading || pinValue.length !== 4}
-                  variant="destructive"
-                  className="flex-1 rounded-xl font-bold"
-                >
-                  {isActionLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  ) : (
-                    "Authorize Cancel"
-                  )}
-                </Button>
-              </div>
+        <ResponsiveDialog
+          isOpen={isCancelOpen}
+          onClose={setIsCancelOpen}
+          title={
+            <>
+              <Trash className="w-5 h-5 text-destructive" /> Cancel Subscription
+            </>
+          }
+          description="Are you sure you want to cancel this plan? Cancellation is permanent."
+        >
+          <div className="space-y-4 text-xs font-medium">
+            <div className="p-3.5 rounded-xl bg-destructive/5 border border-destructive/10 text-destructive text-[11px] leading-relaxed">
+              <strong>Attention:</strong> If you paid for the current cycle, cancelling immediately stops shipping and automatically refunds the amount of <strong>{formatCurrency(subscription.totalAmount)}</strong> back into your NestPurse balance.
             </div>
-          </DialogContent>
-        </Dialog>
+
+            {/* PIN confirm input */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1 justify-center text-primary mb-1">
+                <ShieldCheck className="w-4 h-4" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Confirm NestPurse PIN</span>
+              </div>
+              <PinInput
+                value={pinValue}
+                onChange={setPinValue}
+                disabled={isActionLoading}
+              />
+            </div>
+
+            <div className="flex gap-3 mt-4">
+              <Button
+                onClick={() => setIsCancelOpen(false)}
+                variant="outline"
+                className="flex-1 rounded-xl"
+                disabled={isActionLoading}
+              >
+                Dismiss
+              </Button>
+              <Button
+                onClick={handleCancelSubmit}
+                disabled={isActionLoading || pinValue.length !== 4}
+                variant="destructive"
+                className="flex-1 rounded-xl font-bold"
+              >
+                {isActionLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                ) : (
+                  "Authorize Cancel"
+                )}
+              </Button>
+            </div>
+          </div>
+        </ResponsiveDialog>
       </SidebarInset>
     </SidebarProvider>
   )

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui/field"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, CameraIcon, CheckCircle2, XCircle } from "lucide-react"
+import { Loader2, CameraIcon, CheckCircle2, XCircle, Copy } from "lucide-react"
 import { toast } from "sonner"
 import { ErrorState } from "@/components/error-state"
 import { useProfile } from "@/hooks/use-profile"
@@ -171,6 +171,43 @@ export function ProfileSettings({ onNavigate }: ProfileSettingsProps = {}) {
       </div>
 
       <FieldGroup className="max-w-3xl">
+        <div className="flex flex-col gap-5 p-5 rounded-2xl border border-primary/10 bg-primary/5 dark:bg-primary/10 mb-6">
+          <div className="flex items-center gap-6">
+            <img 
+              src="/undraw_gifts_4gy3.svg" 
+              alt="Gifts" 
+              className="w-24 h-auto object-contain shrink-0" 
+            />
+            <div className="space-y-0.5 text-left">
+              <h4 className="text-sm font-black text-foreground">Invite Friends & Earn Points</h4>
+              <p className="text-xs text-muted-foreground leading-normal max-w-md">
+                Earn 500 NestCircle points for every friend who registers and verifies their account using your referral code.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5 w-full pt-4 border-t border-dashed border-primary/10">
+            <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Your Referral Code</span>
+            <div className="flex items-center justify-between gap-2.5 bg-background border border-muted/50 rounded-xl px-3 py-1.5 w-full">
+              <span className="font-mono text-sm font-black tracking-widest text-foreground select-all">
+                {profile?.referralCode || "—"}
+              </span>
+              {profile?.referralCode && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(profile.referralCode)
+                    toast.success("Referral code copied to clipboard!")
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-muted text-primary cursor-pointer transition-colors"
+                  title="Copy Code"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div className="grid gap-6 md:grid-cols-2">
           <Field>
             <FieldLabel>Full Name</FieldLabel>

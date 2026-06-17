@@ -198,7 +198,14 @@ export const nestPurseApi = {
     payerName?: string;
     usePoints?: boolean;
   }) =>
-    api.post<{ message: string; reference: string }>("/api/nestpurse/electricity/vend", data),
+    api.post<{
+      message: string;
+      reference: string;
+      token: string | null;
+      units: string | null;
+      meterName: string | null;
+      address: string | null;
+    }>("/api/nestpurse/electricity/vend", data),
 
   lookupCable: (params: { cableTvType: string; customerId: string }) =>
     api.get<{ message: string; name?: string; customerName?: string; customerId?: string }>(
