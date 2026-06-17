@@ -331,34 +331,19 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
 
               {tx.metadata?.token && (
                 <div 
-                  className="flex flex-col gap-1.5 bg-primary/5 dark:bg-primary/10 rounded-xl p-3 border border-primary/10 my-1 animate-in fade-in duration-200"
+                  className="flex flex-col gap-1 bg-primary/5 dark:bg-primary/10 rounded-xl p-2.5 border border-primary/10 my-1 animate-in fade-in duration-200"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex flex-col gap-0.5 min-w-0">
-                      <span className="text-[9px] font-bold text-primary/70 uppercase tracking-wider">
-                        Electricity Token
-                      </span>
-                      <span className="font-mono text-base font-black text-primary tracking-wider select-all">
-                        {tx.metadata.token}
-                      </span>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 gap-1.5 border-primary/30 px-3 text-xs font-bold text-primary hover:bg-primary/10 cursor-pointer bg-transparent shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        navigator.clipboard.writeText(tx.metadata.token)
-                        toast.success("Token copied to clipboard")
-                      }}
-                    >
-                      <Copy className="h-3 w-3" />
-                      Copy
-                    </Button>
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-[10px] font-bold text-primary/70 uppercase tracking-wider">
+                      Electricity Token
+                    </span>
+                    <span className="font-mono font-black text-primary tracking-wider">
+                      {tx.metadata.token}
+                    </span>
                   </div>
                   {tx.metadata?.units && (
-                    <div className="flex justify-between items-center border-t border-primary/10 pt-1.5 mt-0.5 text-xxs font-bold text-primary/80">
+                    <div className="flex justify-between items-center border-t border-primary/10 pt-1 mt-1 text-[10px] font-bold text-primary/80">
                       <span>Units Purchased</span>
                       <span className="font-mono text-primary font-black">{tx.metadata.units} kWh</span>
                     </div>
