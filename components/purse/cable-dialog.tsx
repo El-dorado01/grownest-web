@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { nestPurseApi } from "@/lib/nestpurse-api"
+import useSWR from "swr"
 import { useProfile } from "@/hooks/use-profile"
 import { useNestFeathers } from "@/hooks/use-nestfeathers"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -100,8 +101,11 @@ export function CableDialog({ open, onOpenChange }: CableDialogProps) {
 
   // History view states
   const [showHistory, setShowHistory] = React.useState(false)
-  const [history, setHistory] = React.useState<any[]>([])
-  const [isLoadingHistory, setIsLoadingHistory] = React.useState(false)
+  const { data: historyRes, isLoading: isLoadingHistory, mutate: mutateHistory } = useSWR(
+    (open && showHistory) ? "cable-history" : null,
+    () => nestPurseApi.getCableTvTransactions({ limit: 50 })
+  )
+  const history = historyRes?.data?.transactions || []
 
   const pinInputRef = React.useRef<HTMLInputElement>(null)
 
@@ -146,31 +150,9 @@ export function CableDialog({ open, onOpenChange }: CableDialogProps) {
       setSubmitError(null)
       setSuccess(false)
       setShowHistory(false)
-      setHistory([])
-      setIsLoadingHistory(false)
     }
   }, [open])
   /* eslint-enable react-hooks/set-state-in-effect */
-
-  // Fetch cabletv history when history panel is shown
-  React.useEffect(() => {
-    if (showHistory && open) {
-      const loadHistory = async () => {
-        setIsLoadingHistory(true)
-        try {
-          const res = await nestPurseApi.getCableTvTransactions({ limit: 50 })
-          if (res.data?.transactions) {
-            setHistory(res.data.transactions)
-          }
-        } catch (err) {
-          console.error("Failed to load cabletv transactions:", err)
-        } finally {
-          setIsLoadingHistory(false)
-        }
-      }
-      loadHistory()
-    }
-  }, [showHistory, open])
 
   const handleVerify = async () => {
     if (!provider || !smartcardNo.trim()) return
@@ -234,7 +216,7 @@ export function CableDialog({ open, onOpenChange }: CableDialogProps) {
           origin: { y: 0.6 },
           colors: ["#eab308", "#fbbf24", "#22c55e"],
         })
-        await Promise.all([mutateProfile(), mutateFeathers()])
+        await Promise.all([mutateProfile(), mutateFeathers(), mutateHistory()])
       }
     } catch (err: unknown) {
       const errorResponse = err as { response?: { data?: { error?: string } } }

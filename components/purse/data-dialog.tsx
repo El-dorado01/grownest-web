@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/drawer"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
-import { nestPurseApi } from "@/lib/nestpurse-api"
+import { nestPurseApi, Provider } from "@/lib/nestpurse-api"
+import useSWR from "swr"
 import { useProfile } from "@/hooks/use-profile"
 import { useNestFeathers } from "@/hooks/use-nestfeathers"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -60,6 +61,33 @@ function detectNetwork(phone: string): string | null {
   return null
 }
 
+const FALLBACK_PROVIDERS: Provider[] = [
+  { 
+    id: "MTN", 
+    label: "MTN", 
+    logo: "https://pomimqfhhlvqtqiotuoy.supabase.co/storage/v1/object/public/network-providers/MTN_Logo.svg",
+    color: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500" 
+  },
+  { 
+    id: "GLO", 
+    label: "Glo", 
+    logo: "https://pomimqfhhlvqtqiotuoy.supabase.co/storage/v1/object/public/network-providers/GloLogo.png",
+    color: "bg-green-600/10 text-green-600 dark:text-green-400 border-green-600" 
+  },
+  { 
+    id: "AIRTEL", 
+    label: "Airtel", 
+    logo: "https://pomimqfhhlvqtqiotuoy.supabase.co/storage/v1/object/public/network-providers/Airtel_logo.svg",
+    color: "bg-red-600/10 text-red-600 dark:text-red-400 border-red-600" 
+  },
+  { 
+    id: "9MOBILE", 
+    label: "9Mobile", 
+    logo: "https://pomimqfhhlvqtqiotuoy.supabase.co/storage/v1/object/public/network-providers/9mobile.svg",
+    color: "bg-teal-800/10 text-teal-700 dark:text-teal-400 border-teal-800" 
+  },
+];
+
 // Parse plan description e.g. "40GB -> 30Days (N15,000)"
 function parsePlanDetails(planStr: string) {
   const parts = planStr.split("->")
@@ -89,8 +117,11 @@ export function DataDialog({ open, onOpenChange }: DataDialogProps) {
   const [network, setNetwork] = React.useState("MTN")
   
   // Data plans states
-  const [plans, setPlans] = React.useState<DataPlan[]>([])
-  const [isLoadingPlans, setIsLoadingPlans] = React.useState(false)
+  const { data: plansRes, isLoading: isLoadingPlans } = useSWR(
+    (open && dataStep === 2 && network) ? ["data-plans", network] : null,
+    () => nestPurseApi.getDataPlans(network)
+  )
+  const plans = plansRes?.data?.plans || []
   const [selectedPlan, setSelectedPlan] = React.useState<DataPlan | null>(null)
   const [searchQuery, setSearchQuery] = React.useState("")
 
@@ -100,10 +131,20 @@ export function DataDialog({ open, onOpenChange }: DataDialogProps) {
   const [dataError, setDataError] = React.useState<string | null>(null)
   const [dataSuccess, setDataSuccess] = React.useState(false)
 
+  const { data: providersRes } = useSWR(
+    open ? "data-providers" : null,
+    () => nestPurseApi.getProviders()
+  )
+  const providers = providersRes?.data?.providers || []
+
   // History view states
   const [showHistory, setShowHistory] = React.useState(false)
-  const [history, setHistory] = React.useState<any[]>([])
-  const [isLoadingHistory, setIsLoadingHistory] = React.useState(false)
+
+  const { data: historyRes, isLoading: isLoadingHistory, mutate: mutateHistory } = useSWR(
+    (open && showHistory) ? "data-history" : null,
+    () => nestPurseApi.getDataTransactions({ limit: 50 })
+  )
+  const history = historyRes?.data?.transactions || []
 
   const pinInputRef = React.useRef<HTMLInputElement>(null)
 
@@ -125,31 +166,6 @@ export function DataDialog({ open, onOpenChange }: DataDialogProps) {
     }
   }
 
-  // Fetch data plans when step 2 is active or when network changes
-  React.useEffect(() => {
-    if (open && dataStep === 2 && network) {
-      const fetchPlans = async () => {
-        setIsLoadingPlans(true)
-        setDataError(null)
-        try {
-          const res = await nestPurseApi.getDataPlans(network)
-          if (res.error) {
-            setDataError(res.error || "Failed to load data plans.")
-          } else {
-            setPlans(res.data?.plans || [])
-          }
-        } catch (err: unknown) {
-          const errorResponse = err as { response?: { data?: { error?: string } } }
-          const errMsg = errorResponse?.response?.data?.error || (err instanceof Error ? err.message : "An error occurred while loading data plans.")
-          setDataError(errMsg)
-        } finally {
-          setIsLoadingPlans(false)
-        }
-      }
-      fetchPlans()
-    }
-  }, [open, dataStep, network])
-
   // Auto focus PIN field on step 3
   React.useEffect(() => {
     if (dataStep === 3) {
@@ -169,7 +185,6 @@ export function DataDialog({ open, onOpenChange }: DataDialogProps) {
       setPhoneNumber(phone)
       const detected = phone ? detectNetwork(phone) : null
       setNetwork(detected || "MTN")
-      setPlans([])
       setSelectedPlan(null)
       setSearchQuery("")
       setPin("")
@@ -178,31 +193,9 @@ export function DataDialog({ open, onOpenChange }: DataDialogProps) {
       setDataError(null)
       setDataSuccess(false)
       setShowHistory(false)
-      setHistory([])
-      setIsLoadingHistory(false)
     }
   }, [open, profile?.phone])
   /* eslint-enable react-hooks/set-state-in-effect */
-
-  // Fetch data history when history panel is shown
-  React.useEffect(() => {
-    if (showHistory && open) {
-      const loadHistory = async () => {
-        setIsLoadingHistory(true)
-        try {
-          const res = await nestPurseApi.getDataTransactions({ limit: 50 })
-          if (res.data?.transactions) {
-            setHistory(res.data.transactions)
-          }
-        } catch (err) {
-          console.error("Failed to load data transactions:", err)
-        } finally {
-          setIsLoadingHistory(false)
-        }
-      }
-      loadHistory()
-    }
-  }, [showHistory, open])
 
   const isStep1Valid = phoneNumber.replace(/[\s\-\+]/g, "").length >= 10 && !!network
   const isStep2Valid = !!selectedPlan
@@ -253,7 +246,7 @@ export function DataDialog({ open, onOpenChange }: DataDialogProps) {
           origin: { y: 0.6 },
           colors: ["#eab308", "#fbbf24", "#22c55e"],
         })
-        await Promise.all([mutateProfile(), mutateFeathers()])
+        await Promise.all([mutateProfile(), mutateFeathers(), mutateHistory()])
       }
     } catch (err: unknown) {
       const errorResponse = err as { response?: { data?: { error?: string } } }
@@ -497,12 +490,7 @@ export function DataDialog({ open, onOpenChange }: DataDialogProps) {
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Network Provider</label>
                   <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { id: "MTN", label: "MTN", color: "bg-yellow-500 hover:bg-yellow-600 text-black border-yellow-500" },
-                      { id: "GLO", label: "Glo", color: "bg-green-600 hover:bg-green-700 text-white border-green-600" },
-                      { id: "AIRTEL", label: "Airtel", color: "bg-red-600 hover:bg-red-700 text-white border-red-600" },
-                      { id: "9MOBILE", label: "9Mobile", color: "bg-teal-800 hover:bg-teal-900 text-white border-teal-850" },
-                    ].map((net) => {
+                    {(providers.length > 0 ? providers : FALLBACK_PROVIDERS).map((net) => {
                       const isSelected = network === net.id
                       return (
                         <button
@@ -511,13 +499,22 @@ export function DataDialog({ open, onOpenChange }: DataDialogProps) {
                           disabled={isSubmitting}
                           onClick={() => setNetwork(net.id)}
                           className={cn(
-                            "h-10 rounded-xl border font-black text-xs tracking-wide transition-all shadow-xs flex items-center justify-center cursor-pointer",
+                            "h-16 rounded-xl border font-black transition-all shadow-xs flex flex-col items-center justify-center gap-1.5 p-2 cursor-pointer",
                             isSelected 
                               ? `${net.color} scale-105 ring-2 ring-offset-2 ring-primary/50 dark:ring-offset-card` 
                               : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
                           )}
                         >
-                          {net.label}
+                          <img 
+                            src={net.logo} 
+                            alt={`${net.label} logo`} 
+                            className={cn(
+                              net.id === "MTN"
+                                ? "h-7 w-auto object-contain rounded-full bg-white p-0.5 border border-muted/20"
+                                : "h-6 w-auto object-contain"
+                            )}
+                          />
+                          <span className="text-[10px] tracking-wide font-extrabold">{net.label}</span>
                         </button>
                       )
                     })}

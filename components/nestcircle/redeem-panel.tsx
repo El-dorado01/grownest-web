@@ -19,6 +19,35 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import confetti from "canvas-confetti"
 import { Button } from "@/components/ui/button"
+import { nestPurseApi, Provider } from "@/lib/nestpurse-api"
+import useSWR from "swr"
+
+const FALLBACK_PROVIDERS: Provider[] = [
+  { 
+    id: "MTN", 
+    label: "MTN", 
+    logo: "https://pomimqfhhlvqtqiotuoy.supabase.co/storage/v1/object/public/network-providers/MTN_Logo.svg",
+    color: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500" 
+  },
+  { 
+    id: "GLO", 
+    label: "Glo", 
+    logo: "https://pomimqfhhlvqtqiotuoy.supabase.co/storage/v1/object/public/network-providers/GloLogo.png",
+    color: "bg-green-600/10 text-green-600 dark:text-green-400 border-green-600" 
+  },
+  { 
+    id: "AIRTEL", 
+    label: "Airtel", 
+    logo: "https://pomimqfhhlvqtqiotuoy.supabase.co/storage/v1/object/public/network-providers/Airtel_logo.svg",
+    color: "bg-red-600/10 text-red-600 dark:text-red-400 border-red-600" 
+  },
+  { 
+    id: "9MOBILE", 
+    label: "9Mobile", 
+    logo: "https://pomimqfhhlvqtqiotuoy.supabase.co/storage/v1/object/public/network-providers/9mobile.svg",
+    color: "bg-teal-800/10 text-teal-700 dark:text-teal-400 border-teal-800" 
+  },
+];
 import {
   Dialog,
   DialogContent,
@@ -73,10 +102,8 @@ export function RedeemPanel({
 
   // Electricity states
   const [disco, setDisco] = React.useState("")
-  const [isLoadingDiscos, setIsLoadingDiscos] = React.useState(false)
   const [meterNumber, setMeterNumber] = React.useState("")
   const [meterType, setMeterType] = React.useState("PREPAID")
-  const [discos, setDiscos] = React.useState<Array<{ id: string; name: string }>>([])
 
   // Cable TV states
   const [cableTvType, setCableTvType] = React.useState("dstv")
@@ -89,10 +116,14 @@ export function RedeemPanel({
   const [verificationError, setVerificationError] = React.useState<string | null>(null)
 
   // Data plans states
-  const [dataPlans, setDataPlans] = React.useState<DataPlan[]>([])
-  const [isLoadingDataPlans, setIsLoadingDataPlans] = React.useState(false)
   const [selectedDataPlan, setSelectedDataPlan] = React.useState<DataPlan | null>(null)
   const [dataSearchQuery, setDataSearchQuery] = React.useState("")
+
+  const { data: providersRes } = useSWR(
+    open ? "redeem-providers" : null,
+    () => nestPurseApi.getProviders()
+  )
+  const providers = providersRes?.data?.providers || []
 
   // Cable TV plans states
   const [selectedCablePlan, setSelectedCablePlan] = React.useState<{ name: string; amount: number } | null>(null)
@@ -107,77 +138,35 @@ export function RedeemPanel({
   const pinInputRef = React.useRef<HTMLInputElement>(null)
 
   // Fetch discos for electricity
+  const { data: discosRes, isLoading: isLoadingDiscos } = useSWR(
+    (open && redemptionType === 'electricity') ? "electricity-discos" : null,
+    () => nestPurseApi.getElectricityDiscos()
+  )
+  const discos = discosRes?.data?.discos || [
+    { id: "phed", name: "Port Harcourt (PHED)" },
+    { id: "jed", name: "Jos Electric (JEDC)" },
+    { id: "kaduna", name: "Kaduna Electric (KAEDCO)" },
+    { id: "ibedc", name: "Ibadan Electric (IBEDC)" },
+    { id: "eko", name: "Eko Electric (EKEDC)" },
+    { id: "benin", name: "Benin Electric (BEDC)" },
+    { id: "abuja", name: "Abuja Electric (AEDC)" },
+    { id: "kano", name: "Kano Electric (KEDCO)" },
+    { id: "ikeja", name: "Ikeja Electric (IKEDC)" },
+    { id: "enugu", name: "Enugu Electric (EEDC)" }
+  ]
+
   React.useEffect(() => {
-    if (open && redemptionType === 'electricity' && discos.length === 0) {
-      const fetchDiscos = async () => {
-        setIsLoadingDiscos(true)
-        try {
-          const { nestPurseApi } = await import("@/lib/nestpurse-api")
-          const res = await nestPurseApi.getElectricityDiscos()
-          if (res.data?.discos) {
-            setDiscos(res.data.discos)
-            if (res.data.discos.length > 0) {
-              setDisco(res.data.discos[0].id)
-            }
-          } else {
-            const fallback = [
-              { id: "phed", name: "Port Harcourt (PHED)" },
-              { id: "jed", name: "Jos Electric (JEDC)" },
-              { id: "kaduna", name: "Kaduna Electric (KAEDCO)" },
-              { id: "ibedc", name: "Ibadan Electric (IBEDC)" },
-              { id: "eko", name: "Eko Electric (EKEDC)" },
-              { id: "benin", name: "Benin Electric (BEDC)" },
-              { id: "abuja", name: "Abuja Electric (AEDC)" },
-              { id: "kano", name: "Kano Electric (KEDCO)" },
-              { id: "ikeja", name: "Ikeja Electric (IKEDC)" },
-              { id: "enugu", name: "Enugu Electric (EEDC)" }
-            ]
-            setDiscos(fallback)
-            setDisco(fallback[0].id)
-          }
-        } catch {
-          const fallback = [
-            { id: "phed", name: "Port Harcourt (PHED)" },
-            { id: "jed", name: "Jos Electric (JEDC)" },
-            { id: "kaduna", name: "Kaduna Electric (KAEDCO)" },
-            { id: "ibedc", name: "Ibadan Electric (IBEDC)" },
-            { id: "eko", name: "Eko Electric (EKEDC)" },
-            { id: "benin", name: "Benin Electric (BEDC)" },
-            { id: "abuja", name: "Abuja Electric (AEDC)" },
-            { id: "kano", name: "Kano Electric (KEDCO)" },
-            { id: "ikeja", name: "Ikeja Electric (IKEDC)" },
-            { id: "enugu", name: "Enugu Electric (EEDC)" }
-          ]
-          setDiscos(fallback)
-          setDisco(fallback[0].id)
-        } finally {
-          setIsLoadingDiscos(false)
-        }
-      }
-      fetchDiscos()
+    if (discos.length > 0 && !disco) {
+      setDisco(discos[0].id)
     }
-  }, [open, redemptionType, discos.length])
+  }, [discos, disco])
 
   // Fetch data plans
-  React.useEffect(() => {
-    if (open && redemptionStep === 2 && redemptionType === 'data' && network) {
-      const fetchPlans = async () => {
-        setIsLoadingDataPlans(true)
-        try {
-          const { nestPurseApi } = await import("@/lib/nestpurse-api")
-          const res = await nestPurseApi.getDataPlans(network)
-          if (res.data?.plans) {
-            setDataPlans(res.data.plans)
-          }
-        } catch (err) {
-          console.error("Failed to load data plans", err)
-        } finally {
-          setIsLoadingDataPlans(false)
-        }
-      }
-      fetchPlans()
-    }
-  }, [open, redemptionStep, redemptionType, network])
+  const { data: dataPlansRes, isLoading: isLoadingDataPlans } = useSWR(
+    (open && redemptionStep === 2 && redemptionType === 'data' && network) ? ["redeem-data-plans", network] : null,
+    () => nestPurseApi.getDataPlans(network)
+  )
+  const dataPlans = dataPlansRes?.data?.plans || []
 
   // Reset fields when redemptionType changes
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -549,12 +538,7 @@ export function RedeemPanel({
                     <div className="flex flex-col gap-2">
                       <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Network Provider</label>
                       <div className="grid grid-cols-4 gap-2">
-                        {[
-                          { id: "MTN", label: "MTN", color: "bg-yellow-500 hover:bg-yellow-600 text-black border-yellow-500" },
-                          { id: "GLO", label: "Glo", color: "bg-green-600 hover:bg-green-700 text-white border-green-600" },
-                          { id: "AIRTEL", label: "Airtel", color: "bg-red-600 hover:bg-red-700 text-white border-red-600" },
-                          { id: "9MOBILE", label: "9Mobile", color: "bg-teal-800 hover:bg-teal-900 text-white border-teal-850" },
-                        ].map((net) => {
+                        {(providers.length > 0 ? providers : FALLBACK_PROVIDERS).map((net) => {
                           const isSelected = network === net.id
                           return (
                             <button
@@ -563,13 +547,22 @@ export function RedeemPanel({
                               disabled={isSubmitting}
                               onClick={() => setNetwork(net.id)}
                               className={cn(
-                                "h-10 rounded-xl border font-black text-xs tracking-wide transition-all flex items-center justify-center cursor-pointer",
+                                "h-16 rounded-xl border font-black transition-all flex flex-col items-center justify-center gap-1.5 p-2 cursor-pointer",
                                 isSelected 
                                   ? `${net.color} scale-105 ring-2 ring-offset-2 ring-primary/50 dark:ring-offset-card` 
                                   : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
                               )}
                             >
-                              {net.label}
+                              <img 
+                                src={net.logo} 
+                                alt={`${net.label} logo`} 
+                                className={cn(
+                                  net.id === "MTN"
+                                    ? "h-7 w-auto object-contain rounded-full bg-white p-0.5 border border-muted/20"
+                                    : "h-6 w-auto object-contain"
+                                )}
+                              />
+                              <span className="text-[10px] tracking-wide font-extrabold">{net.label}</span>
                             </button>
                           )
                         })}

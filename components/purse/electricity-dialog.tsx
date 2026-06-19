@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { nestPurseApi } from "@/lib/nestpurse-api"
+import useSWR from "swr"
 import { useProfile } from "@/hooks/use-profile"
 import { useNestFeathers } from "@/hooks/use-nestfeathers"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -67,9 +68,18 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
   const [step, setStep] = React.useState<number>(1)
 
   // Step 1: Disco, meter type, meter number, customer lookup
-  const [discos, setDiscos] = React.useState<Disco[]>([])
-  const [isLoadingDiscos, setIsLoadingDiscos] = React.useState(false)
+  const { data: discosRes, isLoading: isLoadingDiscos } = useSWR(
+    open ? "electricity-discos" : null,
+    () => nestPurseApi.getElectricityDiscos()
+  )
+  const discos = discosRes?.data?.discos || FALLBACK_DISCOS
   const [disco, setDisco] = React.useState("")
+
+  React.useEffect(() => {
+    if (discos.length > 0 && !disco) {
+      setDisco(discos[0].id)
+    }
+  }, [discos, disco])
   const [meterType, setMeterType] = React.useState<"PREPAID" | "POSTPAID">("PREPAID")
   const [meterNumber, setMeterNumber] = React.useState("")
   const [isVerifying, setIsVerifying] = React.useState(false)
@@ -91,8 +101,11 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
 
   // History view states
   const [showHistory, setShowHistory] = React.useState(false)
-  const [history, setHistory] = React.useState<any[]>([])
-  const [isLoadingHistory, setIsLoadingHistory] = React.useState(false)
+  const { data: historyRes, isLoading: isLoadingHistory, mutate: mutateHistory } = useSWR(
+    (open && showHistory) ? "electricity-history" : null,
+    () => nestPurseApi.getElectricityTransactions({ limit: 50 })
+  )
+  const history = historyRes?.data?.transactions || []
 
   const pinInputRef = React.useRef<HTMLInputElement>(null)
 
@@ -114,29 +127,7 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
     }
   }
 
-  // Fetch discos on open
-  React.useEffect(() => {
-    if (!open) return
-    const load = async () => {
-      setIsLoadingDiscos(true)
-      try {
-        const res = await nestPurseApi.getElectricityDiscos()
-        if (res.data?.discos?.length) {
-          setDiscos(res.data.discos)
-          setDisco(res.data.discos[0].id)
-        } else {
-          setDiscos(FALLBACK_DISCOS)
-          setDisco(FALLBACK_DISCOS[0].id)
-        }
-      } catch {
-        setDiscos(FALLBACK_DISCOS)
-        setDisco(FALLBACK_DISCOS[0].id)
-      } finally {
-        setIsLoadingDiscos(false)
-      }
-    }
-    load()
-  }, [open])
+
 
   // Auto-focus PIN on step 3
   React.useEffect(() => {
@@ -164,31 +155,11 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
       setPurchasedToken(null)
       setPurchasedUnits(null)
       setShowHistory(false)
-      setHistory([])
-      setIsLoadingHistory(false)
     }
   }, [open])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Fetch electricity history when history panel is shown
-  React.useEffect(() => {
-    if (showHistory && open) {
-      const loadHistory = async () => {
-        setIsLoadingHistory(true)
-        try {
-          const res = await nestPurseApi.getElectricityTransactions({ limit: 50 })
-          if (res.data?.transactions) {
-            setHistory(res.data.transactions)
-          }
-        } catch (err) {
-          console.error("Failed to load electricity transactions:", err)
-        } finally {
-          setIsLoadingHistory(false)
-        }
-      }
-      loadHistory()
-    }
-  }, [showHistory, open])
+
 
   const handleCopyToken = (tokenStr: string) => {
     navigator.clipboard.writeText(tokenStr)
@@ -257,7 +228,7 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
           origin: { y: 0.6 },
           colors: ["#eab308", "#fbbf24", "#22c55e"],
         })
-        await Promise.all([mutateProfile(), mutateFeathers()])
+        await Promise.all([mutateProfile(), mutateFeathers(), mutateHistory()])
       }
     } catch (err: unknown) {
       const errorResponse = err as { response?: { data?: { error?: string } } }

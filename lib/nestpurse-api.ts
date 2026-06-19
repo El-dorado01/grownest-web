@@ -39,6 +39,13 @@ export interface Mandate {
   endDate: string;
 }
 
+export interface Provider {
+  id: string;
+  label: string;
+  logo: string;
+  color: string;
+}
+
 export interface Bank {
   name: string;
   code: string;
@@ -54,6 +61,9 @@ export const nestPurseApi = {
 
   getBanks: () =>
     api.get<{ message: string; banks: Bank[] }>("/api/nestpurse/banks"),
+
+  getProviders: () =>
+    api.get<{ message: string; providers: Provider[] }>("/api/nestpurse/providers"),
 
   lookupAccount: (data: { bankCode: string; accountNumber: string }) =>
     api.post<{ message: string; account: { bankCode: string; accountNumber: string; accountName: string } }>("/api/nestpurse/lookup-account", data),

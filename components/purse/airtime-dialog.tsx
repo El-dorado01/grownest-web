@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/drawer"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
-import { nestPurseApi } from "@/lib/nestpurse-api"
+import { nestPurseApi, Provider } from "@/lib/nestpurse-api"
+import useSWR from "swr"
 import { useProfile } from "@/hooks/use-profile"
 import { useNestFeathers } from "@/hooks/use-nestfeathers"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -55,6 +56,33 @@ function detectNetwork(phone: string): string | null {
   
   return null
 }
+
+const FALLBACK_PROVIDERS: Provider[] = [
+  { 
+    id: "MTN", 
+    label: "MTN", 
+    logo: "https://pomimqfhhlvqtqiotuoy.supabase.co/storage/v1/object/public/network-providers/MTN_Logo.svg",
+    color: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500" 
+  },
+  { 
+    id: "GLO", 
+    label: "Glo", 
+    logo: "https://pomimqfhhlvqtqiotuoy.supabase.co/storage/v1/object/public/network-providers/GloLogo.png",
+    color: "bg-green-600/10 text-green-600 dark:text-green-400 border-green-600" 
+  },
+  { 
+    id: "AIRTEL", 
+    label: "Airtel", 
+    logo: "https://pomimqfhhlvqtqiotuoy.supabase.co/storage/v1/object/public/network-providers/Airtel_logo.svg",
+    color: "bg-red-600/10 text-red-600 dark:text-red-400 border-red-600" 
+  },
+  { 
+    id: "9MOBILE", 
+    label: "9Mobile", 
+    logo: "https://pomimqfhhlvqtqiotuoy.supabase.co/storage/v1/object/public/network-providers/9mobile.svg",
+    color: "bg-teal-800/10 text-teal-700 dark:text-teal-400 border-teal-800" 
+  },
+];
 
 export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: AirtimeDialogProps) {
   const isMobile = useIsMobile()
@@ -96,10 +124,20 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
   const [airtimeError, setAirtimeError] = React.useState<string | null>(null)
   const [airtimeSuccess, setAirtimeSuccess] = React.useState(false)
 
+  const { data: providersRes } = useSWR(
+    open ? "airtime-providers" : null,
+    () => nestPurseApi.getProviders()
+  )
+  const providers = providersRes?.data?.providers || []
+
   // History view states
   const [showHistory, setShowHistory] = React.useState(false)
-  const [history, setHistory] = React.useState<any[]>([])
-  const [isLoadingHistory, setIsLoadingHistory] = React.useState(false)
+
+  const { data: historyRes, isLoading: isLoadingHistory, mutate: mutateHistory } = useSWR(
+    (open && showHistory) ? "airtime-history" : null,
+    () => nestPurseApi.getAirtimeTransactions({ limit: 50 })
+  )
+  const history = historyRes?.data?.transactions || []
 
   const pinInputRef = React.useRef<HTMLInputElement>(null)
 
@@ -147,31 +185,9 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
       setAirtimeError(null)
       setAirtimeSuccess(false)
       setShowHistory(false)
-      setHistory([])
-      setIsLoadingHistory(false)
     }
   }, [open, profile?.phone])
   /* eslint-enable react-hooks/set-state-in-effect */
-
-  // Fetch airtime history when history panel is shown
-  React.useEffect(() => {
-    if (showHistory && open) {
-      const loadHistory = async () => {
-        setIsLoadingHistory(true)
-        try {
-          const res = await nestPurseApi.getAirtimeTransactions({ limit: 50 })
-          if (res.data?.transactions) {
-            setHistory(res.data.transactions)
-          }
-        } catch (err) {
-          console.error("Failed to load airtime transactions:", err)
-        } finally {
-          setIsLoadingHistory(false)
-        }
-      }
-      loadHistory()
-    }
-  }, [showHistory, open])
 
   const isStep1Valid = phoneNumber.replace(/[\s\-\+]/g, "").length >= 10 && !!network
   const isStep2Valid = Number(amount) >= 100
@@ -221,7 +237,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
           origin: { y: 0.6 },
           colors: ["#eab308", "#fbbf24", "#22c55e"],
         })
-        await Promise.all([mutateProfile(), mutateFeathers()])
+        await Promise.all([mutateProfile(), mutateFeathers(), mutateHistory()])
       }
     } catch (err: unknown) {
       const errorResponse = err as { response?: { data?: { error?: string } } }
@@ -459,12 +475,7 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Network Provider</label>
                   <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { id: "MTN", label: "MTN", color: "bg-yellow-500 hover:bg-yellow-600 text-black border-yellow-500" },
-                      { id: "GLO", label: "Glo", color: "bg-green-600 hover:bg-green-700 text-white border-green-600" },
-                      { id: "AIRTEL", label: "Airtel", color: "bg-red-600 hover:bg-red-700 text-white border-red-600" },
-                      { id: "9MOBILE", label: "9Mobile", color: "bg-teal-800 hover:bg-teal-900 text-white border-teal-850" },
-                    ].map((net) => {
+                    {(providers.length > 0 ? providers : FALLBACK_PROVIDERS).map((net) => {
                       const isSelected = network === net.id
                       return (
                         <button
@@ -473,13 +484,22 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                           disabled={isSubmitting}
                           onClick={() => setNetwork(net.id)}
                           className={cn(
-                            "h-10 rounded-xl border font-black text-xs tracking-wide transition-all shadow-xs flex items-center justify-center cursor-pointer",
+                            "h-16 rounded-xl border font-black transition-all shadow-xs flex flex-col items-center justify-center gap-1.5 p-2 cursor-pointer",
                             isSelected 
                               ? `${net.color} scale-105 ring-2 ring-offset-2 dark:ring-offset-card ${theme.ring}` 
                               : "bg-card border-muted text-muted-foreground hover:bg-muted/30"
                           )}
                         >
-                          {net.label}
+                          <img 
+                            src={net.logo} 
+                            alt={`${net.label} logo`} 
+                            className={cn(
+                              net.id === "MTN"
+                                ? "h-7 w-auto object-contain rounded-full bg-white p-0.5 border border-muted/20"
+                                : "h-6 w-auto object-contain"
+                            )}
+                          />
+                          <span className="text-[10px] tracking-wide font-extrabold">{net.label}</span>
                         </button>
                       )
                     })}
