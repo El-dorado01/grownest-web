@@ -562,8 +562,18 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="Custom Amount (Min ₦100)"
                 disabled={isSubmitting}
-                className={cn("w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden text-sm font-semibold transition-all mt-2", theme.focusBorder, "focus:ring-1", theme.focusRing)}
+                className={cn(
+                  "w-full h-11 px-4 rounded-xl border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden text-sm font-semibold transition-all mt-2",
+                  amount && Number(amount) < 100
+                    ? "border-destructive focus:ring-destructive/20 focus:border-destructive"
+                    : cn("border-muted", theme.focusBorder, "focus:ring-1", theme.focusRing)
+                )}
               />
+              {amount && Number(amount) < 100 && (
+                <p className="text-[10px] font-bold text-destructive mt-1">
+                  Minimum airtime purchase is ₦100
+                </p>
+              )}
             </div>
 
             {pointsBalance > 0 && (

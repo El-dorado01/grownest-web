@@ -128,6 +128,17 @@ export function RedeemPanel({
   // Cable TV plans states
   const [selectedCablePlan, setSelectedCablePlan] = React.useState<{ name: string; amount: number } | null>(null)
 
+  const currentMinPoints = React.useMemo(() => {
+    if (redemptionType === 'airtime' || redemptionType === 'data') {
+      return 200 // ₦100 value
+    }
+    return minPoints
+  }, [redemptionType, minPoints])
+
+  const currentMinNaira = React.useMemo(() => {
+    return currentMinPoints / 2
+  }, [currentMinPoints])
+
   // Presets & inputs for points
   const [pointsToRedeem, setPointsToRedeem] = React.useState(minPoints)
   const [pin, setPin] = React.useState("")
@@ -179,7 +190,8 @@ export function RedeemPanel({
     setSelectedCablePlan(null)
     setPin("")
     setRedemptionStep(1)
-  }, [redemptionType])
+    setPointsToRedeem(currentMinPoints)
+  }, [redemptionType, currentMinPoints])
 
   // Auto focus PIN field on step 3
   React.useEffect(() => {
@@ -200,7 +212,7 @@ export function RedeemPanel({
       setPhoneNumber(phone)
       const detected = phone ? detectNetwork(phone) : null
       setNetwork(detected || "MTN")
-      setPointsToRedeem(minPoints)
+      setPointsToRedeem(200)
       setPin("")
       setRedemptionType('airtime')
       setRedemptionStep(1)
@@ -214,7 +226,7 @@ export function RedeemPanel({
       setSelectedDataPlan(null)
       setSelectedCablePlan(null)
     }
-  }, [open, profile?.phone, minPoints])
+  }, [open, profile?.phone])
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleVerifyElectricity = async () => {
@@ -306,7 +318,7 @@ export function RedeemPanel({
 
   const isStep2Valid = React.useMemo(() => {
     if (redemptionType === 'airtime' || redemptionType === 'electricity') {
-      return pointsToRedeem >= minPoints && pointsToRedeem <= pointsBalance
+      return pointsToRedeem >= currentMinPoints && pointsToRedeem <= pointsBalance
     }
     if (redemptionType === 'data') {
       return !!selectedDataPlan && (selectedDataPlan.amount * 2) <= pointsBalance
@@ -315,7 +327,7 @@ export function RedeemPanel({
       return !!selectedCablePlan && (selectedCablePlan.amount * 2) <= pointsBalance
     }
     return false
-  }, [redemptionType, pointsToRedeem, minPoints, pointsBalance, selectedDataPlan, selectedCablePlan])
+  }, [redemptionType, pointsToRedeem, currentMinPoints, pointsBalance, selectedDataPlan, selectedCablePlan])
 
   const isStep3Valid = pin.length === 4
 
@@ -763,15 +775,23 @@ export function RedeemPanel({
                 </div>
                 <input
                   type="number"
-                  min={minPoints}
+                  min={currentMinPoints}
                   max={pointsBalance}
                   step={100}
                   value={pointsToRedeem}
                   onChange={(e) => setPointsToRedeem(Number(e.target.value))}
-                  placeholder={`Min ${minPoints} pts`}
+                  placeholder={`Min ${currentMinPoints} pts`}
                   disabled={isSubmitting}
-                  className="w-full h-11 px-4 rounded-xl border border-muted bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-primary focus:ring-1 focus:ring-primary text-sm font-semibold transition-all mt-2"
+                  className={cn(
+                    "w-full h-11 px-4 rounded-xl border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-primary focus:ring-1 focus:ring-primary text-sm font-semibold transition-all mt-2",
+                    pointsToRedeem < currentMinPoints ? "border-destructive focus:ring-destructive/20 focus:border-destructive" : "border-muted"
+                  )}
                 />
+                {pointsToRedeem < currentMinPoints && (
+                  <p className="text-[10px] font-bold text-destructive mt-1">
+                    Minimum redemption for {redemptionType === 'airtime' ? 'airtime' : 'electricity'} is {currentMinPoints} points (₦{currentMinNaira})
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground mt-1">
                   Rate: 2 points = ₦1 · You&apos;ll redeem <strong className="text-foreground">{pointsToRedeem.toLocaleString()} pts</strong> for <strong className="text-foreground">₦{nairaValue.toLocaleString()}</strong> value.
                 </p>
