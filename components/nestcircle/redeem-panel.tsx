@@ -363,7 +363,7 @@ export function RedeemPanel({
       }
 
       if (redemptionType === 'airtime' || redemptionType === 'data') {
-        payload.phoneNumber = phoneNumber
+        payload.phoneNumber = phoneNumber ? phoneNumber.replace(/\+/g, "").trim() : phoneNumber
         payload.network = network
       } else if (redemptionType === 'electricity') {
         payload.disco = disco

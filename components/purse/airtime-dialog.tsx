@@ -218,8 +218,9 @@ export function AirtimeDialog({ open, onOpenChange, colorTheme = "primary" }: Ai
     setAirtimeError(null)
 
     try {
+      const cleanPhone = phoneNumber.replace(/\+/g, "").trim()
       const res = await nestPurseApi.purchaseAirtime({
-        phoneNumber,
+        phoneNumber: cleanPhone,
         network,
         amount: Number(amount),
         pin,

@@ -226,8 +226,9 @@ export function DataDialog({ open, onOpenChange }: DataDialogProps) {
     setDataError(null)
 
     try {
+      const cleanPhone = phoneNumber.replace(/\+/g, "").trim()
       const res = await nestPurseApi.purchaseData({
-        phoneNumber,
+        phoneNumber: cleanPhone,
         network,
         amount: selectedPlan.amount,
         plan: selectedPlan.plan,
