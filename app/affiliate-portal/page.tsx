@@ -15,12 +15,12 @@ export default function AffiliateLandingPage() {
   return (
     <main className="min-h-screen bg-white">
       {/* Hero */}
-      <section className="bg-gradient-to-br from-green-600 to-green-800 text-white px-4 py-20 text-center">
+      <section className="bg-gradient-to-br from-primary to-secondary text-white px-4 py-20 text-center">
         <h1 className="text-3xl md:text-5xl font-bold mb-4">Earn with GrowNest</h1>
-        <p className="text-green-100 text-lg md:text-xl max-w-xl mx-auto mb-8">
+        <p className="text-primary-foreground/80 text-lg md:text-xl max-w-xl mx-auto mb-8">
           Share GrowNest with your audience and earn monthly commission for every person who joins and saves.
         </p>
-        <Button asChild size="lg" className="bg-white text-green-700 hover:bg-green-50 min-h-[52px] text-base font-semibold px-8">
+        <Button asChild size="lg" className="bg-background text-primary hover:bg-accent border border-primary/20 min-h-[52px] text-base font-semibold px-8">
           <Link href="/login">
             Get Started <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
           </Link>
@@ -33,10 +33,10 @@ export default function AffiliateLandingPage() {
         <div className="grid md:grid-cols-3 gap-8">
           {STEPS.map((step, i) => (
             <div key={step.title} className="text-center space-y-3">
-              <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-                <step.icon className="w-7 h-7 text-green-700" aria-hidden="true" />
+              <div className="w-14 h-14 rounded-full bg-accent flex items-center justify-center mx-auto">
+                <step.icon className="w-7 h-7 text-primary" aria-hidden="true" />
               </div>
-              <p className="text-xs font-bold text-green-600 uppercase tracking-widest">Step {i + 1}</p>
+              <p className="text-xs font-bold text-primary uppercase tracking-widest">Step {i + 1}</p>
               <h3 className="text-lg font-semibold text-gray-900">{step.title}</h3>
               <p className="text-gray-600 text-sm leading-relaxed">{step.description}</p>
             </div>
@@ -66,7 +66,7 @@ export default function AffiliateLandingPage() {
       <section className="px-4 py-16 text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Ready to start earning?</h2>
         <p className="text-gray-600 mb-8">Log in with your GrowNest account to apply. Approval within 48 hours.</p>
-        <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white min-h-[52px] text-base font-semibold px-10">
+        <Button asChild size="lg" variant="default" className="min-h-[52px] text-base font-semibold px-10">
           <Link href="/login">Log in to Apply</Link>
         </Button>
       </section>

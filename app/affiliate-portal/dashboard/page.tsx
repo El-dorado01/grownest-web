@@ -43,7 +43,7 @@ export default function AffiliateDashboardPage() {
     return (
       <div className="max-w-xl mx-auto px-4 py-20 text-center">
         <p className="text-gray-500 mb-4">No affiliate account found.</p>
-        <Button asChild className="bg-green-600 hover:bg-green-700 min-h-[44px]">
+        <Button asChild className="min-h-[44px]">
           <Link href="/apply">Apply now</Link>
         </Button>
       </div>
@@ -106,7 +106,7 @@ export default function AffiliateDashboardPage() {
             {affiliate.campaign && (
               <div className="rounded-xl border bg-white p-5 space-y-2">
                 <p className="text-sm font-semibold text-gray-900">Active Campaign</p>
-                <p className="text-base font-bold text-green-700">{affiliate.campaign.name}</p>
+                <p className="text-base font-bold text-primary">{affiliate.campaign.name}</p>
                 <p className="text-sm text-gray-600">
                   Commission:{' '}
                   {affiliate.campaign.commissionType === 'FIXED'
@@ -129,7 +129,7 @@ export default function AffiliateDashboardPage() {
               <p className="font-semibold text-gray-900">Recent Referrals</p>
               <Link
                 href="/dashboard/referrals"
-                className="text-sm text-green-600 hover:underline flex items-center gap-1"
+                className="text-sm text-primary hover:underline flex items-center gap-1"
               >
                 View all <ArrowRight className="w-3.5 h-3.5" />
               </Link>
@@ -168,7 +168,7 @@ export default function AffiliateDashboardPage() {
             )}
           </div>
           <div className="text-center">
-            <Link href="/dashboard/commissions" className="text-sm text-green-600 hover:underline">
+            <Link href="/dashboard/commissions" className="text-sm text-primary hover:underline">
               View full commission history →
             </Link>
           </div>

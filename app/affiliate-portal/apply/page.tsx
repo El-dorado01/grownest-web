@@ -102,14 +102,14 @@ export default function AffiliateApplyPage() {
             <div key={label} className="flex items-center gap-2 flex-1 last:flex-none">
               <div
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
-                  step > i + 1 || step === i + 1 ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-500'
+                  step > i + 1 || step === i + 1 ? 'bg-primary text-primary-foreground' : 'bg-gray-200 text-gray-500'
                 }`}
               >
                 {i + 1}
               </div>
               <span
                 className={`text-xs font-medium hidden sm:block ${
-                  step === i + 1 ? 'text-green-700' : 'text-gray-400'
+                  step === i + 1 ? 'text-primary' : 'text-gray-400'
                 }`}
               >
                 {label}
@@ -140,7 +140,7 @@ export default function AffiliateApplyPage() {
               </div>
               <Button
                 onClick={() => setStep(2)}
-                className="w-full min-h-[44px] bg-green-600 hover:bg-green-700"
+                className="w-full min-h-[44px]"
               >
                 Continue
               </Button>
@@ -162,8 +162,8 @@ export default function AffiliateApplyPage() {
                     onClick={() => togglePlatform(id)}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors min-h-[36px] ${
                       selectedPlatforms.includes(id)
-                        ? 'bg-green-600 text-white border-green-600'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-green-400'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-primary/60'
                     }`}
                   >
                     {label}
@@ -190,7 +190,7 @@ export default function AffiliateApplyPage() {
                 <Button
                   onClick={() => setStep(3)}
                   disabled={!canProceedStep2}
-                  className="flex-1 min-h-[44px] bg-green-600 hover:bg-green-700"
+                  className="flex-1 min-h-[44px]"
                 >
                   Continue
                 </Button>
@@ -213,7 +213,7 @@ export default function AffiliateApplyPage() {
                 <ul className="space-y-1">
                   {selectedPlatforms.map((p) => (
                     <li key={p} className="text-sm text-gray-700 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
                       <span className="font-medium">{PLATFORMS.find((pl) => pl.id === p)?.label}</span>
                       <span className="text-gray-400">— {socialEntries[p]?.handle}</span>
                       <span className="text-gray-400 text-xs">
@@ -241,7 +241,7 @@ export default function AffiliateApplyPage() {
                 <Button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="flex-1 min-h-[44px] bg-green-600 hover:bg-green-700"
+                  className="flex-1 min-h-[44px]"
                 >
                   {submitting ? 'Submitting...' : 'Submit Application'}
                 </Button>

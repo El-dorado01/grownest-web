@@ -76,7 +76,7 @@ export const SocialHandleCard = ({ platform, entry, onChange }: Props) => {
           Screenshots <span className="text-red-500">*</span>
           <span className="text-gray-400 ml-1">{isStatus ? '(min 2 — show view count)' : '(min 1, max 3)'}</span>
         </Label>
-        <button type="button" onClick={() => fileRef.current?.click()} className="mt-1 w-full border-2 border-dashed border-gray-300 rounded-lg p-3 text-sm text-gray-500 hover:border-green-400 hover:text-green-600 transition-colors flex items-center justify-center gap-2 min-h-[44px]">
+        <button type="button" onClick={() => fileRef.current?.click()} className="mt-1 w-full border-2 border-dashed border-gray-300 rounded-lg p-3 text-sm text-gray-500 hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 min-h-[44px]">
           <Upload className="w-4 h-4" aria-hidden="true" />
           {screenshots.length < 3 ? 'Upload screenshot' : 'Max 3 reached'}
         </button>

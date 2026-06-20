@@ -71,13 +71,13 @@ export default function AffiliateLoginPage() {
           {error && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{error}</p>
           )}
-          <Button type="submit" disabled={loading} className="w-full min-h-[44px] bg-green-600 hover:bg-green-700">
+          <Button type="submit" disabled={loading} className="w-full min-h-[44px]">
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
         <p className="text-center text-xs text-gray-400">
           {"Don't have a GrowNest account? "}
-          <a href="https://grownest.africa/signup" className="text-green-600 hover:underline">
+          <a href="https://grownest.africa/signup" className="text-primary hover:underline">
             Sign up on the app first
           </a>
         </p>
