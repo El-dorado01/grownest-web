@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { nestPurseApi, Provider } from "@/lib/nestpurse-api"
+import { normalizeNigerianPhone, detectNigerianNetwork } from "@/lib/phone-utils"
 import useSWR from "swr"
 import { useProfile } from "@/hooks/use-profile"
 import { useNestFeathers } from "@/hooks/use-nestfeathers"
@@ -37,29 +38,6 @@ interface DataPlan {
   plan: string
 }
 
-// Smart network provider detection based on Nigerian phone prefixes
-function detectNetwork(phone: string): string | null {
-  const cleanPhone = phone.replace(/[\s\-\+]/g, "")
-  let localPhone = cleanPhone
-  if (cleanPhone.startsWith("234")) {
-    localPhone = "0" + cleanPhone.slice(3)
-  }
-  
-  if (localPhone.length < 4) return null
-  const prefix = localPhone.substring(0, 4)
-  
-  const mtnPrefixes = ["0803", "0806", "0810", "0813", "0814", "0816", "0903", "0906", "0913", "0916", "0703", "0706", "0704"]
-  const gloPrefixes = ["0805", "0807", "0811", "0815", "0905", "0915", "0705"]
-  const airtelPrefixes = ["0802", "0808", "0812", "0901", "0902", "0904", "0907", "0912", "0701", "0708"]
-  const nineMobilePrefixes = ["0809", "0817", "0818", "0908", "0909"]
-  
-  if (mtnPrefixes.includes(prefix)) return "MTN"
-  if (gloPrefixes.includes(prefix)) return "GLO"
-  if (airtelPrefixes.includes(prefix)) return "AIRTEL"
-  if (nineMobilePrefixes.includes(prefix)) return "9MOBILE"
-  
-  return null
-}
 
 const FALLBACK_PROVIDERS: Provider[] = [
   { 
@@ -181,9 +159,9 @@ export function DataDialog({ open, onOpenChange }: DataDialogProps) {
   React.useEffect(() => {
     if (open) {
       setIsForSelf(true)
-      const phone = profile?.phone || ""
+      const phone = normalizeNigerianPhone(profile?.phone || "")
       setPhoneNumber(phone)
-      const detected = phone ? detectNetwork(phone) : null
+      const detected = phone ? detectNigerianNetwork(phone) : null
       setNetwork(detected || "MTN")
       setSelectedPlan(null)
       setSearchQuery("")
@@ -197,7 +175,7 @@ export function DataDialog({ open, onOpenChange }: DataDialogProps) {
   }, [open, profile?.phone])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const isStep1Valid = phoneNumber.replace(/[\s\-\+]/g, "").length >= 10 && !!network
+  const isStep1Valid = normalizeNigerianPhone(phoneNumber).length === 11 && !!network
   const isStep2Valid = !!selectedPlan
   const isStep3Valid = pin.length === 4
 
@@ -226,7 +204,7 @@ export function DataDialog({ open, onOpenChange }: DataDialogProps) {
     setDataError(null)
 
     try {
-      const cleanPhone = phoneNumber.replace(/\+/g, "").trim()
+      const cleanPhone = normalizeNigerianPhone(phoneNumber)
       const res = await nestPurseApi.purchaseData({
         phoneNumber: cleanPhone,
         network,
@@ -420,8 +398,9 @@ export function DataDialog({ open, onOpenChange }: DataDialogProps) {
                   onClick={() => {
                     setIsForSelf(true)
                     if (profile?.phone) {
-                      setPhoneNumber(profile.phone)
-                      const detected = detectNetwork(profile.phone)
+                      const normalized = normalizeNigerianPhone(profile.phone)
+                      setPhoneNumber(normalized)
+                      const detected = detectNigerianNetwork(normalized)
                       if (detected) setNetwork(detected)
                     } else {
                       setPhoneNumber("")
@@ -468,7 +447,7 @@ export function DataDialog({ open, onOpenChange }: DataDialogProps) {
                     onChange={(e) => {
                       const val = e.target.value
                       setPhoneNumber(val)
-                      const detected = detectNetwork(val)
+                      const detected = detectNigerianNetwork(val)
                       if (detected) {
                         setNetwork(detected)
                       }
