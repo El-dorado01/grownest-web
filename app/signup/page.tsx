@@ -107,6 +107,9 @@ export default function SignupPage() {
         {/* Footer */}
         <footer className="flex items-center justify-between px-8 py-5 text-xs text-muted-foreground">
           <span>© 2026 GrowNest</span>
+          <a href="https://affiliate.grownest.africa" className="text-sm text-muted-foreground hover:text-foreground transition-colors" target="_blank" rel="noopener noreferrer">
+            Affiliate Program
+          </a>
           <span>ENG</span>
         </footer>
       </div>
