@@ -13,7 +13,7 @@ const STEPS = [
 
 export default function AffiliateLandingPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-background">
       {/* Hero */}
       <section className="bg-gradient-to-br from-primary to-secondary text-white px-4 py-20 text-center">
         <h1 className="text-3xl md:text-5xl font-bold mb-4">Earn with GrowNest</h1>
@@ -29,7 +29,7 @@ export default function AffiliateLandingPage() {
 
       {/* How it works */}
       <section className="px-4 py-16 max-w-4xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-900 mb-12">How it works</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-12">How it works</h2>
         <div className="grid md:grid-cols-3 gap-8">
           {STEPS.map((step, i) => (
             <div key={step.title} className="text-center space-y-3">
@@ -37,26 +37,26 @@ export default function AffiliateLandingPage() {
                 <step.icon className="w-7 h-7 text-primary" aria-hidden="true" />
               </div>
               <p className="text-xs font-bold text-primary uppercase tracking-widest">Step {i + 1}</p>
-              <h3 className="text-lg font-semibold text-gray-900">{step.title}</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">{step.description}</p>
+              <h3 className="text-lg font-semibold text-foreground">{step.title}</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Requirements */}
-      <section className="bg-gray-50 px-4 py-14">
+      <section className="bg-muted/50 px-4 py-14">
         <div className="max-w-2xl mx-auto space-y-6">
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">Who can join?</h2>
+          <h2 className="text-2xl font-bold text-foreground text-center mb-8">Who can join?</h2>
           {[
             { q: 'Do I need a GrowNest account?', a: 'Yes — you must already have a verified GrowNest account with an active NestPurse wallet. Log in with your existing GrowNest email and password.' },
             { q: 'What social media do I need?', a: "At least one active channel — Instagram, Facebook, X (Twitter), WhatsApp Channel, WhatsApp Status, YouTube, or TikTok. You'll upload screenshots to verify your reach." },
             { q: 'When do I get paid?', a: 'Commissions are paid monthly into your NestPurse wallet. From there, you can withdraw to your bank account anytime.' },
             { q: 'Is there a minimum deposit for referrals?', a: 'Yes — your referred user must make a minimum qualifying first deposit. The exact amount is shown in your dashboard once approved.' },
           ].map(({ q, a }) => (
-            <div key={q} className="rounded-xl bg-white border p-5">
-              <p className="font-semibold text-gray-900 mb-1">{q}</p>
-              <p className="text-gray-600 text-sm leading-relaxed">{a}</p>
+            <div key={q} className="rounded-xl bg-card border border-border p-5">
+              <p className="font-semibold text-foreground mb-1">{q}</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">{a}</p>
             </div>
           ))}
         </div>
@@ -64,8 +64,8 @@ export default function AffiliateLandingPage() {
 
       {/* Bottom CTA */}
       <section className="px-4 py-16 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Ready to start earning?</h2>
-        <p className="text-gray-600 mb-8">Log in with your GrowNest account to apply. Approval within 48 hours.</p>
+        <h2 className="text-2xl font-bold text-foreground mb-4">Ready to start earning?</h2>
+        <p className="text-muted-foreground mb-8">Log in with your GrowNest account to apply. Approval within 48 hours.</p>
         <Button asChild size="lg" variant="default" className="min-h-[52px] text-base font-semibold px-10">
           <Link href="/login">Log in to Apply</Link>
         </Button>

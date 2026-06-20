@@ -15,8 +15,8 @@ export default function CommissionsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Commission History</h1>
-      <div className="rounded-xl border bg-white overflow-hidden">
+      <h1 className="text-2xl font-bold text-foreground mb-6">Commission History</h1>
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
         {isLoading ? (
           <div className="p-5 space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -24,10 +24,10 @@ export default function CommissionsPage() {
             ))}
           </div>
         ) : commissions.length === 0 ? (
-          <div className="py-16 text-center text-sm text-gray-400">No commissions yet.</div>
+          <div className="py-16 text-center text-sm text-muted-foreground">No commissions yet.</div>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+            <thead className="bg-muted text-xs text-muted-foreground uppercase">
               <tr>
                 <th className="px-5 py-3 text-left">Amount</th>
                 <th className="px-5 py-3 text-left">Status</th>
@@ -36,22 +36,22 @@ export default function CommissionsPage() {
                 <th className="px-5 py-3 text-left">Paid on</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-border">
               {commissions.map((c) => (
                 <tr key={c.id}>
-                  <td className="px-5 py-3 font-bold tabular-nums text-gray-900">
+                  <td className="px-5 py-3 font-bold tabular-nums text-foreground">
                     {formatNaira(c.amount)}
                   </td>
                   <td className="px-5 py-3">
                     <AffiliateStatusBadge status={c.status} />
                   </td>
-                  <td className="px-5 py-3 text-gray-500">
+                  <td className="px-5 py-3 text-muted-foreground">
                     {format(new Date(c.pendingSince), 'dd MMM yyyy')}
                   </td>
-                  <td className="px-5 py-3 text-gray-500">
+                  <td className="px-5 py-3 text-muted-foreground">
                     {format(new Date(c.availableAt), 'dd MMM yyyy')}
                   </td>
-                  <td className="px-5 py-3 text-gray-500">
+                  <td className="px-5 py-3 text-muted-foreground">
                     {c.paidAt ? format(new Date(c.paidAt), 'dd MMM yyyy') : '—'}
                   </td>
                 </tr>

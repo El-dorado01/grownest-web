@@ -30,13 +30,13 @@ export const ReferralTools = ({ affiliateCode }: ReferralToolsProps) => {
   };
 
   return (
-    <div className="rounded-xl border bg-white p-5 space-y-4">
+    <div className="rounded-xl border border-border bg-card p-5 space-y-4">
       <div>
-        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Your Affiliate Code</p>
+        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-1">Your Affiliate Code</p>
         <p className="text-2xl font-mono font-bold text-primary tracking-widest">{affiliateCode}</p>
       </div>
       <div>
-        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Your Referral Link</p>
+        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-1">Your Referral Link</p>
         <div className="flex gap-2">
           <Input value={referralLink} readOnly className="text-sm font-mono" />
           <Button variant="outline" size="icon" onClick={handleCopy} aria-label="Copy referral link" className="min-h-[44px] min-w-[44px] shrink-0">

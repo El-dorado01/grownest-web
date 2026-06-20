@@ -94,7 +94,7 @@ export default function AffiliateApplyPage() {
   const stepLabels = ['Your Info', 'Social Presence', 'Review & Submit'];
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-10">
+    <div className="min-h-screen bg-background px-4 py-10">
       <div className="max-w-xl mx-auto">
         {/* Progress */}
         <div className="flex items-center gap-2 mb-8">
@@ -102,32 +102,32 @@ export default function AffiliateApplyPage() {
             <div key={label} className="flex items-center gap-2 flex-1 last:flex-none">
               <div
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
-                  step > i + 1 || step === i + 1 ? 'bg-primary text-primary-foreground' : 'bg-gray-200 text-gray-500'
+                  step > i + 1 || step === i + 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {i + 1}
               </div>
               <span
                 className={`text-xs font-medium hidden sm:block ${
-                  step === i + 1 ? 'text-primary' : 'text-gray-400'
+                  step === i + 1 ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >
                 {label}
               </span>
-              {i < 2 && <div className="flex-1 h-px bg-gray-200" />}
+              {i < 2 && <div className="flex-1 h-px bg-border" />}
             </div>
           ))}
         </div>
 
-        <div className="bg-white rounded-2xl border p-6 space-y-6">
+        <div className="bg-card text-card-foreground rounded-2xl border border-border p-6 space-y-6">
           {/* Step 1 */}
           {step === 1 && (
             <>
-              <h1 className="text-xl font-bold text-gray-900">Your Info</h1>
+              <h1 className="text-xl font-bold text-foreground">Your Info</h1>
               <div>
                 <Label htmlFor="promoNote">
                   How will you promote GrowNest?{' '}
-                  <span className="text-gray-400 text-xs">(optional)</span>
+                  <span className="text-muted-foreground text-xs">(optional)</span>
                 </Label>
                 <Textarea
                   id="promoNote"
@@ -136,7 +136,7 @@ export default function AffiliateApplyPage() {
                   placeholder="e.g. I'll post weekly on my Instagram and WhatsApp status to my 8k followers..."
                   className="mt-1 min-h-[100px]"
                 />
-                <p className="text-xs text-gray-400 mt-1 text-right">{promoNote.length}/300</p>
+                <p className="text-xs text-muted-foreground mt-1 text-right">{promoNote.length}/300</p>
               </div>
               <Button
                 onClick={() => setStep(2)}
@@ -150,8 +150,8 @@ export default function AffiliateApplyPage() {
           {/* Step 2 */}
           {step === 2 && (
             <>
-              <h1 className="text-xl font-bold text-gray-900">Your Social Presence</h1>
-              <p className="text-sm text-gray-500">
+              <h1 className="text-xl font-bold text-foreground">Your Social Presence</h1>
+              <p className="text-sm text-muted-foreground">
                 Select every platform you use, then fill in your details and upload at least one screenshot per platform.
               </p>
               <div className="flex flex-wrap gap-2">
@@ -163,7 +163,7 @@ export default function AffiliateApplyPage() {
                     className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors min-h-[36px] ${
                       selectedPlatforms.includes(id)
                         ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-primary/60'
+                        : 'bg-background text-foreground border-border hover:border-primary/60'
                     }`}
                   >
                     {label}
@@ -201,22 +201,22 @@ export default function AffiliateApplyPage() {
           {/* Step 3 */}
           {step === 3 && (
             <>
-              <h1 className="text-xl font-bold text-gray-900">Review & Submit</h1>
+              <h1 className="text-xl font-bold text-foreground">Review & Submit</h1>
               {promoNote && (
                 <div>
-                  <p className="text-xs text-gray-500 font-medium uppercase mb-1">How you plan to promote</p>
-                  <p className="text-sm text-gray-700">{promoNote}</p>
+                  <p className="text-xs text-muted-foreground font-medium uppercase mb-1">How you plan to promote</p>
+                  <p className="text-sm text-foreground">{promoNote}</p>
                 </div>
               )}
               <div>
-                <p className="text-xs text-gray-500 font-medium uppercase mb-2">Social Platforms</p>
+                <p className="text-xs text-muted-foreground font-medium uppercase mb-2">Social Platforms</p>
                 <ul className="space-y-1">
                   {selectedPlatforms.map((p) => (
-                    <li key={p} className="text-sm text-gray-700 flex items-center gap-2">
+                    <li key={p} className="text-sm text-foreground flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
                       <span className="font-medium">{PLATFORMS.find((pl) => pl.id === p)?.label}</span>
-                      <span className="text-gray-400">— {socialEntries[p]?.handle}</span>
-                      <span className="text-gray-400 text-xs">
+                      <span className="text-muted-foreground">— {socialEntries[p]?.handle}</span>
+                      <span className="text-muted-foreground text-xs">
                         ({socialEntries[p]?.screenshots?.length ?? 0} screenshot
                         {(socialEntries[p]?.screenshots?.length ?? 0) !== 1 ? 's' : ''})
                       </span>

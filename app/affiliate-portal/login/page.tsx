@@ -40,10 +40,10 @@ export default function AffiliateLoginPage() {
 
   return (
     <div className="min-h-[calc(100vh-57px)] flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl border p-8 w-full max-w-sm space-y-5">
+      <div className="bg-card text-card-foreground rounded-2xl border border-border p-8 w-full max-w-sm space-y-5">
         <div className="text-center">
-          <h1 className="text-xl font-bold text-gray-900">Sign in to apply</h1>
-          <p className="text-sm text-gray-500 mt-1">Use your GrowNest email and password</p>
+          <h1 className="text-xl font-bold text-foreground">Sign in to apply</h1>
+          <p className="text-sm text-muted-foreground mt-1">Use your GrowNest email and password</p>
         </div>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
@@ -75,7 +75,7 @@ export default function AffiliateLoginPage() {
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
-        <p className="text-center text-xs text-gray-400">
+        <p className="text-center text-xs text-muted-foreground">
           {"Don't have a GrowNest account? "}
           <a href="https://grownest.africa/signup" className="text-primary hover:underline">
             Sign up on the app first

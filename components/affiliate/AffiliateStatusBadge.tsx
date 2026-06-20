@@ -10,7 +10,7 @@ const CONFIG: Record<Status, { label: string; icon: React.ElementType; className
   ACTIVE:    { label: 'Active',    icon: CheckCircle,  className: 'bg-green-100 text-green-800 border-green-200' },
   SUSPENDED: { label: 'Suspended', icon: XCircle,      className: 'bg-red-100 text-red-800 border-red-200' },
   AVAILABLE: { label: 'Available', icon: CheckCircle,  className: 'bg-green-100 text-green-800 border-green-200' },
-  PAID:      { label: 'Paid',      icon: CheckCircle,  className: 'bg-gray-100 text-gray-700 border-gray-200' },
+  PAID:      { label: 'Paid',      icon: CheckCircle,  className: 'bg-muted text-muted-foreground border-border' },
   REVERSED:  { label: 'Reversed',  icon: XCircle,      className: 'bg-red-100 text-red-800 border-red-200' },
 };
 

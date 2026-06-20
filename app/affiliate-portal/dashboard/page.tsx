@@ -42,7 +42,7 @@ export default function AffiliateDashboardPage() {
   if (!affiliate) {
     return (
       <div className="max-w-xl mx-auto px-4 py-20 text-center">
-        <p className="text-gray-500 mb-4">No affiliate account found.</p>
+        <p className="text-muted-foreground mb-4">No affiliate account found.</p>
         <Button asChild className="min-h-[44px]">
           <Link href="/apply">Apply now</Link>
         </Button>
@@ -53,14 +53,14 @@ export default function AffiliateDashboardPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Affiliate Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground">Affiliate Dashboard</h1>
         <AffiliateStatusBadge status={affiliate.status} />
       </div>
 
       {isPending && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
-          <p className="font-semibold text-amber-900">Application under review</p>
-          <p className="text-sm text-amber-700 mt-1">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900/50 p-5">
+          <p className="font-semibold text-amber-900 dark:text-amber-400">Application under review</p>
+          <p className="text-sm text-amber-700 dark:text-amber-500 mt-1">
             Our team is reviewing your application. You will be notified within 48 hours.
           </p>
         </div>
@@ -72,12 +72,12 @@ export default function AffiliateDashboardPage() {
             <EarningsCard label="Total Earned" value={summary?.totalEarned ?? null} isLoading={summaryLoading} />
             <EarningsCard label="Available" value={summary?.available ?? null} isLoading={summaryLoading} highlight />
             <EarningsCard label="Pending" value={summary?.pending ?? null} isLoading={summaryLoading} />
-            <div className="rounded-xl border bg-white p-4 flex flex-col gap-1">
-              <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Next Payout</p>
+            <div className="rounded-xl border border-border bg-card p-4 flex flex-col gap-1">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Next Payout</p>
               {summaryLoading ? (
                 <Skeleton className="h-6 w-24 mt-1" />
               ) : (
-                <p className="text-sm font-semibold text-gray-700 mt-1">
+                <p className="text-sm font-semibold text-foreground mt-1">
                   {summary?.nextPayoutDate
                     ? new Date(summary.nextPayoutDate).toLocaleDateString('en-NG', {
                         day: 'numeric',
@@ -91,30 +91,30 @@ export default function AffiliateDashboardPage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="rounded-xl border bg-white p-5 space-y-3">
-              <p className="text-sm font-semibold text-gray-900">Performance</p>
+            <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+              <p className="text-sm font-semibold text-foreground">Performance</p>
               {[
                 { label: 'Total Signups', value: summary?.totalReferrals ?? 0 },
                 { label: 'Qualified Deposits', value: summary?.qualifiedReferrals ?? 0 },
               ].map(({ label, value }) => (
                 <div key={label} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">{label}</span>
-                  <span className="font-bold tabular-nums text-gray-900">{value}</span>
+                  <span className="text-sm text-muted-foreground">{label}</span>
+                  <span className="font-bold tabular-nums text-foreground">{value}</span>
                 </div>
               ))}
             </div>
             {affiliate.campaign && (
-              <div className="rounded-xl border bg-white p-5 space-y-2">
-                <p className="text-sm font-semibold text-gray-900">Active Campaign</p>
+              <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                <p className="text-sm font-semibold text-foreground">Active Campaign</p>
                 <p className="text-base font-bold text-primary">{affiliate.campaign.name}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Commission:{' '}
                   {affiliate.campaign.commissionType === 'FIXED'
                     ? formatNaira(affiliate.campaign.commissionValue)
                     : `${affiliate.campaign.commissionValue}%`}{' '}
                   per qualified deposit
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   Min deposit: {formatNaira(affiliate.campaign.minDepositAmount)} · Hold:{' '}
                   {affiliate.campaign.holdDays} days
                 </p>
@@ -124,9 +124,9 @@ export default function AffiliateDashboardPage() {
 
           <ReferralTools affiliateCode={affiliate.affiliateCode} />
 
-          <div className="rounded-xl border bg-white overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b">
-              <p className="font-semibold text-gray-900">Recent Referrals</p>
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <p className="font-semibold text-foreground">Recent Referrals</p>
               <Link
                 href="/dashboard/referrals"
                 className="text-sm text-primary hover:underline flex items-center gap-1"
@@ -135,12 +135,12 @@ export default function AffiliateDashboardPage() {
               </Link>
             </div>
             {!referralsData?.data?.referrals || referralsData.data.referrals.length === 0 ? (
-              <div className="px-5 py-8 text-center text-sm text-gray-400">
+              <div className="px-5 py-8 text-center text-sm text-muted-foreground">
                 No referrals yet — share your link to get started!
               </div>
             ) : (
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+                <thead className="bg-muted text-xs text-muted-foreground uppercase">
                   <tr>
                     <th className="px-5 py-3 text-left">Name</th>
                     <th className="px-5 py-3 text-left">Signed up</th>
@@ -148,17 +148,17 @@ export default function AffiliateDashboardPage() {
                     <th className="px-5 py-3 text-right">Commission</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-border">
                   {referralsData.data.referrals.slice(0, 5).map((r) => (
                     <tr key={r.id}>
-                      <td className="px-5 py-3 font-medium text-gray-900">{r.displayName}</td>
-                      <td className="px-5 py-3 text-gray-500">
+                      <td className="px-5 py-3 font-medium text-foreground">{r.displayName}</td>
+                      <td className="px-5 py-3 text-muted-foreground">
                         {formatDistanceToNow(new Date(r.signedUpAt), { addSuffix: true })}
                       </td>
                       <td className="px-5 py-3">
                         <AffiliateStatusBadge status={r.qualified ? 'AVAILABLE' : 'PENDING'} />
                       </td>
-                      <td className="px-5 py-3 text-right tabular-nums font-medium">
+                      <td className="px-5 py-3 text-right tabular-nums font-medium text-foreground">
                         {r.commission ? formatNaira(r.commission.amount) : '—'}
                       </td>
                     </tr>

@@ -51,8 +51,8 @@ export const SocialHandleCard = ({ platform, entry, onChange }: Props) => {
   };
 
   return (
-    <div className="border rounded-xl p-4 space-y-3 bg-gray-50">
-      <p className="font-semibold text-gray-900 text-sm">{PLATFORM_LABELS[platform]}</p>
+    <div className="border border-border rounded-xl p-4 space-y-3 bg-muted/50">
+      <p className="font-semibold text-foreground text-sm">{PLATFORM_LABELS[platform]}</p>
       <div>
         <Label htmlFor={`handle-${platform}`} className="text-xs">
           {isStatus ? 'Display name or phone' : 'Handle / URL'} <span className="text-red-500">*</span>
@@ -61,22 +61,22 @@ export const SocialHandleCard = ({ platform, entry, onChange }: Props) => {
       </div>
       {!isStatus && (
         <div>
-          <Label htmlFor={`link-${platform}`} className="text-xs">Profile link <span className="text-gray-400">(optional)</span></Label>
+          <Label htmlFor={`link-${platform}`} className="text-xs">Profile link <span className="text-muted-foreground">(optional)</span></Label>
           <Input id={`link-${platform}`} value={entry?.platformLink ?? ''} onChange={(e) => onChange({ platformLink: e.target.value })} placeholder="https://..." className="mt-1 text-sm" />
         </div>
       )}
       <div>
         <Label htmlFor={`followers-${platform}`} className="text-xs">
-          {isStatus ? 'Average status views' : 'Approx. followers'} <span className="text-gray-400">(optional)</span>
+          {isStatus ? 'Average status views' : 'Approx. followers'} <span className="text-muted-foreground">(optional)</span>
         </Label>
         <Input id={`followers-${platform}`} type="number" min={0} value={entry?.followersCount ?? ''} onChange={(e) => onChange({ followersCount: e.target.value })} placeholder="e.g. 5000" className="mt-1 text-sm" />
       </div>
       <div>
         <Label className="text-xs">
           Screenshots <span className="text-red-500">*</span>
-          <span className="text-gray-400 ml-1">{isStatus ? '(min 2 — show view count)' : '(min 1, max 3)'}</span>
+          <span className="text-muted-foreground ml-1">{isStatus ? '(min 2 — show view count)' : '(min 1, max 3)'}</span>
         </Label>
-        <button type="button" onClick={() => fileRef.current?.click()} className="mt-1 w-full border-2 border-dashed border-gray-300 rounded-lg p-3 text-sm text-gray-500 hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 min-h-[44px]">
+        <button type="button" onClick={() => fileRef.current?.click()} className="mt-1 w-full border-2 border-dashed border-border rounded-lg p-3 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 min-h-[44px]">
           <Upload className="w-4 h-4" aria-hidden="true" />
           {screenshots.length < 3 ? 'Upload screenshot' : 'Max 3 reached'}
         </button>
