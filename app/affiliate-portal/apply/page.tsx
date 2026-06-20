@@ -30,11 +30,17 @@ export default function AffiliateApplyPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Check if already has affiliate record — redirect to dashboard
+  // Gate: no token → send to login with redirect back to /apply
+  // If already has affiliate record → send to dashboard
   useEffect(() => {
+    const { getAuthToken } = require('@/lib/api');
+    if (!getAuthToken()) {
+      router.replace('/login?redirect=/apply');
+      return;
+    }
     affiliateApi.getMe().then((res) => {
       if (res.data?.affiliate) router.replace('/dashboard');
-    }).catch(() => {}); // ignore 404
+    }).catch(() => {}); // 404 = no affiliate yet, stay on page
   }, [router]);
 
   const togglePlatform = (platform: SocialPlatform) => {
