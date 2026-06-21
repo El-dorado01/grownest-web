@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { ArrowRight, Users, TrendingUp, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export const metadata = { title: 'Affiliate Program | GrowNest Africa' };
 
@@ -20,8 +21,8 @@ export default function AffiliateLandingPage() {
         <p className="text-primary-foreground/80 text-lg md:text-xl max-w-xl mx-auto mb-8">
           Share GrowNest with your audience and earn monthly commission for every person who joins and saves.
         </p>
-        <Button asChild size="lg" className="bg-background text-primary hover:bg-accent border border-primary/20 min-h-[52px] text-base font-semibold px-8">
-          <Link href="/login">
+        <Button asChild size="lg" className="bg-background text-primary hover:bg-background hover:text-primary-foreground border border-primary/20 min-h-[52px] text-base font-semibold px-8">
+          <Link href="/login?redirect=/dashboard">
             Get Started <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
           </Link>
         </Button>
@@ -48,17 +49,19 @@ export default function AffiliateLandingPage() {
       <section className="bg-muted/50 px-4 py-14">
         <div className="max-w-2xl mx-auto space-y-6">
           <h2 className="text-2xl font-bold text-foreground text-center mb-8">Who can join?</h2>
-          {[
-            { q: 'Do I need a GrowNest account?', a: 'Yes — you must already have a verified GrowNest account with an active NestPurse wallet. Log in with your existing GrowNest email and password.' },
-            { q: 'What social media do I need?', a: "At least one active channel — Instagram, Facebook, X (Twitter), WhatsApp Channel, WhatsApp Status, YouTube, or TikTok. You'll upload screenshots to verify your reach." },
-            { q: 'When do I get paid?', a: 'Commissions are paid monthly into your NestPurse wallet. From there, you can withdraw to your bank account anytime.' },
-            { q: 'Is there a minimum deposit for referrals?', a: 'Yes — your referred user must make a minimum qualifying first deposit. The exact amount is shown in your dashboard once approved.' },
-          ].map(({ q, a }) => (
-            <div key={q} className="rounded-xl bg-card border border-border p-5">
-              <p className="font-semibold text-foreground mb-1">{q}</p>
-              <p className="text-muted-foreground text-sm leading-relaxed">{a}</p>
-            </div>
-          ))}
+          <Accordion type="single" collapsible className="w-full">
+            {[
+              { q: 'Do I need a GrowNest account?', a: 'Yes — you must already have a verified GrowNest account with an active NestPurse wallet. Log in with your existing GrowNest email and password.' },
+              { q: 'What social media do I need?', a: "At least one active channel — Instagram, Facebook, X (Twitter), WhatsApp Channel, WhatsApp Status, YouTube, or TikTok. You'll upload screenshots to verify your reach." },
+              { q: 'When do I get paid?', a: 'Commissions are paid monthly into your NestPurse wallet. From there, you can withdraw to your bank account anytime.' },
+              { q: 'Is there a minimum deposit for referrals?', a: 'Yes — your referred user must make a minimum qualifying first deposit. The exact amount is shown in your dashboard once approved.' },
+            ].map(({ q, a }, i) => (
+              <AccordionItem key={q} value={`item-${i}`} className="border border-border rounded-xl mb-3 px-5 last:mb-0">
+                <AccordionTrigger className="font-semibold text-foreground text-sm hover:no-underline">{q}</AccordionTrigger>
+                <AccordionContent className="text-muted-foreground text-sm leading-relaxed">{a}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       </section>
 
@@ -67,7 +70,7 @@ export default function AffiliateLandingPage() {
         <h2 className="text-2xl font-bold text-foreground mb-4">Ready to start earning?</h2>
         <p className="text-muted-foreground mb-8">Log in with your GrowNest account to apply. Approval within 48 hours.</p>
         <Button asChild size="lg" variant="default" className="min-h-[52px] text-base font-semibold px-10">
-          <Link href="/login">Log in to Apply</Link>
+          <Link href="/login?redirect=/dashboard">Log in to Apply</Link>
         </Button>
       </section>
     </main>

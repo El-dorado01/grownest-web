@@ -1,35 +1,14 @@
 // app/affiliate-portal/login/page.tsx
 // Affiliate portal login — reuses the main LoginForm (Google OAuth, 2FA, forgot password).
-//
-// LoginForm reads ?redirect= from the URL after login.
-// We ensure ?redirect=/dashboard is always present so:
-//   - No-2FA users → /dashboard after login
-//   - 2FA users    → /login/verify (auth context) → /dashboard after verify
-//
-// If a ?redirect= param already exists (e.g. from the dashboard layout guard),
-// we keep it as-is.
-"use client";
-
-import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+// All entry points to this page include ?redirect=/dashboard so LoginForm always
+// sends users to the dashboard after a successful login, not the landing page.
 import { LoginForm } from "@/components/login-form";
 import Image from "next/image";
 import Link from "next/link";
 
+export const metadata = { title: "Sign In | GrowNest Affiliate" };
+
 export default function AffiliateLoginPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  // Ensure there is always a ?redirect= so LoginForm knows where to send the
-  // user after a successful login. Default to /dashboard so new users land on
-  // the dashboard (where they can see Apply or their stats).
-  useEffect(() => {
-    if (!searchParams.get("redirect")) {
-      // Replace current history entry so the Back button still works cleanly
-      router.replace("/login?redirect=/dashboard");
-    }
-  }, [router, searchParams]);
-
   return (
     <div className="min-h-[calc(100vh-57px)] flex flex-col items-center justify-center px-4 py-10 bg-background">
       {/* Brand header */}
@@ -48,7 +27,9 @@ export default function AffiliateLoginPage() {
         </p>
       </div>
 
-      {/* Full LoginForm — Google OAuth, 2FA, forgot password all wired in */}
+      {/* Full LoginForm — Google OAuth, 2FA, forgot password all wired in.
+          ?redirect=/dashboard is set by all entry links so LoginForm routes
+          users to the dashboard (not the landing page) after login. */}
       <LoginForm />
 
       <p className="text-center text-xs text-muted-foreground mt-6">
