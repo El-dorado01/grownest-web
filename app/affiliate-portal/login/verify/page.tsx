@@ -7,7 +7,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { authApi } from "@/lib/auth-api";
 import { setAuthToken } from "@/lib/api";
@@ -27,6 +27,9 @@ import Image from "next/image";
 export default function AffiliateVerify2FAPage() {
   const { requires2FA, pendingUserId } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Honour ?redirect= if present, otherwise default to /dashboard
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
 
   const [code, setCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,8 +88,9 @@ export default function AffiliateVerify2FAPage() {
 
       toast.success("Verified! Taking you to your dashboard...");
 
-      // Full page navigation so AuthProvider re-initialises with the new token
-      window.location.href = "/dashboard";
+      // Full page navigation so AuthProvider re-initialises with the new token.
+      // Uses redirectTo so ?redirect= params are honoured (e.g. /apply, /dashboard).
+      window.location.href = redirectTo;
     } catch {
       toast.error("An unexpected error occurred. Please try again.");
       setIsSubmitting(false);
