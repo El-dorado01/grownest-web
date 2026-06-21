@@ -29,6 +29,7 @@ export default function AffiliateApplyPage() {
   const [socialEntries, setSocialEntries] = useState<Record<SocialPlatform, SocialEntry>>({} as Record<SocialPlatform, SocialEntry>);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Gate: no token → send to login with redirect back to /apply
   // If already has affiliate record → send to dashboard
@@ -72,6 +73,7 @@ export default function AffiliateApplyPage() {
     try {
       const formData = new FormData();
       formData.append('promoNote', promoNote);
+      formData.append('agreedToTerms', 'true');
       const handles = selectedPlatforms.map((p) => {
         const e = socialEntries[p];
         return {
@@ -230,6 +232,28 @@ export default function AffiliateApplyPage() {
                   ))}
                 </ul>
               </div>
+              {/* T&C acceptance */}
+              <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/50 p-4">
+                <input
+                  id="terms"
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-border text-primary accent-primary cursor-pointer shrink-0"
+                />
+                <label htmlFor="terms" className="text-sm text-foreground cursor-pointer leading-relaxed">
+                  I have read and agree to the{' '}
+                  <a
+                    href="https://grownest.africa/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline underline-offset-4 font-medium"
+                  >
+                    GrowNest Affiliate Terms &amp; Conditions
+                  </a>
+                  . I confirm that the information I have provided is accurate.
+                </label>
+              </div>
               {error && (
                 <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                   {error}
@@ -246,7 +270,7 @@ export default function AffiliateApplyPage() {
                 </Button>
                 <Button
                   onClick={handleSubmit}
-                  disabled={submitting}
+                  disabled={submitting || !agreedToTerms}
                   className="flex-1 min-h-[44px]"
                 >
                   {submitting ? 'Submitting...' : 'Submit Application'}
