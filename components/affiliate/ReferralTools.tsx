@@ -44,6 +44,21 @@ export const ReferralTools = ({ affiliateCode }: ReferralToolsProps) => {
           </Button>
         </div>
       </div>
+      <div>
+        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-1">Short Referral Link</p>
+        <div className="flex gap-2">
+          <Input value={`${BASE_URL}/ref/${affiliateCode}`} readOnly className="text-sm font-mono" />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => { navigator.clipboard.writeText(`${BASE_URL}/ref/${affiliateCode}`); }}
+            aria-label="Copy short referral link"
+            className="min-h-[44px] min-w-[44px] shrink-0"
+          >
+            <Copy className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
       <div className="flex gap-2 flex-wrap">
         <Button variant="outline" onClick={shareWhatsApp} className="min-h-[44px] gap-2">
           <Share2 className="w-4 h-4" aria-hidden="true" /> Share on WhatsApp

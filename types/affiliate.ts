@@ -68,4 +68,6 @@ export interface EarningsSummary {
   nextPayoutDate: string;
   totalReferrals: number;
   qualifiedReferrals: number;
+  tier: 'STARTER' | 'GROWTH' | 'PROFESSIONAL' | 'ELITE';
+  totalClicks: number;
 }

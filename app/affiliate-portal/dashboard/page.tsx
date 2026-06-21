@@ -14,6 +14,24 @@ import { formatDistanceToNow } from 'date-fns';
 const formatNaira = (n: number) =>
   new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(n);
 
+const TIER_CONFIG = {
+  STARTER:      { label: 'Starter',      className: 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400' },
+  GROWTH:       { label: 'Growth',       className: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-400' },
+  PROFESSIONAL: { label: 'Professional', className: 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-900/50 dark:bg-purple-950/40 dark:text-purple-400' },
+  ELITE:        { label: 'Elite',        className: 'border-primary/30 bg-primary/10 text-primary' },
+} as const;
+
+type Tier = keyof typeof TIER_CONFIG;
+
+function TierBadge({ tier }: { tier: Tier }) {
+  const cfg = TIER_CONFIG[tier] ?? TIER_CONFIG.STARTER;
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cfg.className}`}>
+      {cfg.label}
+    </span>
+  );
+}
+
 export default function AffiliateDashboardPage() {
   const { data: meData, isLoading: meLoading } = useSWR('affiliate/me', () => affiliateApi.getMe());
   const { data: summaryData, isLoading: summaryLoading } = useSWR(
@@ -53,7 +71,10 @@ export default function AffiliateDashboardPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Affiliate Dashboard</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground">Affiliate Dashboard</h1>
+          {summary?.tier && <TierBadge tier={summary.tier as Tier} />}
+        </div>
         <AffiliateStatusBadge status={affiliate.status} />
       </div>
 
@@ -86,6 +107,35 @@ export default function AffiliateDashboardPage() {
                       })
                     : '—'}
                 </p>
+              )}
+            </div>
+          </div>
+
+          {/* Clicks + Tier info row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-border bg-card p-4 flex flex-col gap-1">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Total Clicks</p>
+              {summaryLoading ? (
+                <Skeleton className="h-8 w-24 mt-1" />
+              ) : (
+                <p className="text-2xl font-bold tabular-nums text-foreground">
+                  {(summary?.totalClicks ?? 0).toLocaleString()}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">on your referral link</p>
+            </div>
+
+            <div className="rounded-xl border border-border bg-card p-4 flex flex-col gap-1">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Your Tier</p>
+              {summaryLoading ? (
+                <Skeleton className="h-8 w-28 mt-1" />
+              ) : (
+                <div className="mt-1">
+                  {summary?.tier && <TierBadge tier={summary.tier as Tier} />}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {summary?.totalReferrals ?? 0} active referral{(summary?.totalReferrals ?? 0) !== 1 ? 's' : ''}
+                  </p>
+                </div>
               )}
             </div>
           </div>
