@@ -1,9 +1,4 @@
-// app/affiliate-portal/login/verify/page.tsx
-// 2FA verification page for the affiliate portal.
-// The auth context's login() calls router.push("/login/verify") which the middleware
-// rewrites to /affiliate-portal/login/verify on the affiliate subdomain.
-// We call authApi.verify2FA() directly so we can redirect to /dashboard
-// instead of the "/" that the auth context's verify2FA() hardcodes.
+
 "use client";
 
 import { useState, useEffect } from "react";
