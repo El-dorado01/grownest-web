@@ -176,8 +176,8 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
       const res = await nestPurseApi.lookupElectricity({ disco, customerId: meterNumber.trim() })
       if (res.error) {
         setVerifyError(res.error)
-      } else if (res.data?.customerName) {
-        setVerifiedName(res.data.customerName)
+      } else if (res.data?.customerName || res.data?.name) {
+        setVerifiedName(res.data.customerName || res.data.name || "")
         setVerifiedAddress(res.data.customerAddress || null)
       } else {
         setVerifyError("Meter number could not be verified. Please check and try again.")
