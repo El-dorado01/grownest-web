@@ -28,10 +28,10 @@ export const affiliateApi = {
 
   deleteMe: () => apiFetch('/api/affiliate/me', { method: 'DELETE' }),
 
-  editMe: (data: { promoNote: string }) =>
+  editMe: (formData: FormData) =>
     apiFetch<{ affiliate: Affiliate }>('/api/affiliate/me/edit', {
       method: 'PATCH',
-      body: JSON.stringify(data),
-      headers: { 'Content-Type': 'application/json' },
+      body: formData,
+      // No Content-Type — browser sets multipart/form-data with boundary
     }),
 };

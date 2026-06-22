@@ -6,7 +6,6 @@ import { affiliateApi } from '@/lib/affiliate-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -16,6 +15,7 @@ import {
   AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { EditApplicationSheet } from '@/components/affiliate/EditApplicationSheet';
 import {
   CheckCircle2, ShieldX, Calendar, FileText,
   ExternalLink, ImageIcon, Users, Megaphone,
@@ -216,11 +216,9 @@ export default function ApplicationStatusPage() {
   const { data, isLoading } = useSWR('affiliate/me', () => affiliateApi.getMe());
   const affiliate = data?.data?.affiliate;
 
-  const [deleteOpen,  setDeleteOpen]  = useState(false);
-  const [deleting,    setDeleting]    = useState(false);
-  const [editOpen,    setEditOpen]    = useState(false);
-  const [editNote,    setEditNote]    = useState('');
-  const [saving,      setSaving]      = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting,   setDeleting]   = useState(false);
+  const [editOpen,   setEditOpen]   = useState(false);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -234,19 +232,6 @@ export default function ApplicationStatusPage() {
     }
     setDeleting(false);
     setDeleteOpen(false);
-  };
-
-  const handleEdit = async () => {
-    setSaving(true);
-    const res = await affiliateApi.editMe({ promoNote: editNote });
-    if (res.error) {
-      toast.error(typeof res.error === 'string' ? res.error : 'Failed to save changes');
-    } else {
-      toast.success('Application updated successfully');
-      await mutate('affiliate/me');
-      setEditOpen(false);
-    }
-    setSaving(false);
   };
 
   if (isLoading) {
@@ -297,7 +282,7 @@ export default function ApplicationStatusPage() {
               variant="outline"
               size="sm"
               className="gap-1.5 h-8 text-xs"
-              onClick={() => { setEditNote(affiliate.promoNote ?? ''); setEditOpen(true); }}
+              onClick={() => setEditOpen(true)}
             >
               <Pencil className="w-3.5 h-3.5" /> Edit
             </Button>
@@ -446,32 +431,15 @@ export default function ApplicationStatusPage() {
       </AlertDialogContent>
     </AlertDialog>
 
-    {/* ── Edit promo note dialog ────────────────────────────────────── */}
-    <AlertDialog open={editOpen} onOpenChange={setEditOpen}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Edit your application</AlertDialogTitle>
-          <AlertDialogDescription>
-            You can update your promotion note while your application is still under review.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <div className="px-1 pb-2">
-          <Textarea
-            value={editNote}
-            onChange={e => setEditNote(e.target.value.slice(0, 300))}
-            placeholder="How will you promote GrowNest?"
-            className="min-h-[120px] resize-none text-sm"
-          />
-          <p className="text-xs text-muted-foreground text-right mt-1">{editNote.length}/300</p>
-        </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleEdit} disabled={saving}>
-            {saving ? 'Saving…' : 'Save Changes'}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    {/* ── Edit application sheet ────────────────────────────────────── */}
+    {editOpen && (
+      <EditApplicationSheet
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        onSaved={() => mutate('affiliate/me')}
+        affiliate={affiliate}
+      />
+    )}
     </>
   );
 }
