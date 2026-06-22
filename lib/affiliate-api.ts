@@ -25,4 +25,13 @@ export const affiliateApi = {
       body: formData,
       // Do not set Content-Type — browser sets it with boundary for multipart
     }),
+
+  deleteMe: () => apiFetch('/api/affiliate/me', { method: 'DELETE' }),
+
+  editMe: (data: { promoNote: string }) =>
+    apiFetch<{ affiliate: Affiliate }>('/api/affiliate/me/edit', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' },
+    }),
 };

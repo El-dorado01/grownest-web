@@ -434,6 +434,35 @@ export function Dashboard() {
             </Card>
           )}
 
+          {/* Affiliate Portal Banner */}
+          <Card className="border-muted bg-gradient-to-r from-primary/10 to-primary/5 shadow-none">
+            <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                  <ArrowUpRight className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground leading-none">Affiliate Program</h3>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-xl leading-relaxed">
+                    Earn monthly commission by referring new GrowNest users
+                  </p>
+                </div>
+              </div>
+              <Button
+                className="w-full md:w-auto rounded-xl h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground dark:text-white whitespace-nowrap font-bold text-sm"
+                onClick={() => {
+                  const url =
+                    typeof window !== 'undefined' && window.location.hostname.includes('localhost')
+                      ? 'http://affiliate.localhost:5173'
+                      : 'https://affiliate.grownest.africa'
+                  window.open(url, '_blank', 'noopener,noreferrer')
+                }}
+              >
+                Go to Affiliate Portal <ArrowUpRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Recent Activity Section */}
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
