@@ -375,11 +375,11 @@ export default function AffiliateDashboardPage() {
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-lg font-bold text-foreground">Affiliate Dashboard</h1>
-                <AffiliateStatusBadge status={affiliate.status} />
+                <AffiliateStatusBadge status={affiliate?.status} />
               </div>
               <p className="text-sm text-muted-foreground">
                 Code:{' '}
-                <span className="font-mono font-bold text-foreground tracking-wider">{affiliate.affiliateCode}</span>
+                <span className="font-mono font-bold text-foreground tracking-wider">{affiliate?.affiliateCode}</span>
               </p>
             </div>
             {!isPending && (
@@ -597,7 +597,7 @@ export default function AffiliateDashboardPage() {
                 <CardContent className="px-4 pb-4 space-y-2.5">
                   {[
                     { label: 'Full link',  text: referralLink },
-                    { label: 'Short link', text: `${BASE_URL}/ref/${affiliate.affiliateCode}` },
+                    { label: 'Short link', text: `${BASE_URL}/ref/${affiliate?.affiliateCode ?? ''}` },
                   ].map(({ label, text }) => (
                     <div key={label} className="space-y-1">
                       <p className="text-[10px] text-muted-foreground uppercase font-medium tracking-wide">{label}</p>
@@ -616,17 +616,17 @@ export default function AffiliateDashboardPage() {
               </Card>
 
               {/* Campaign */}
-              {affiliate.campaign && (
+              {affiliate?.campaign && (
                 <Card className="bg-card border-border">
                   <CardHeader className="px-4 pt-4 pb-2 space-y-0">
                     <CardTitle className="text-sm font-semibold text-foreground">Active Campaign</CardTitle>
                   </CardHeader>
                   <CardContent className="px-4 pb-4 space-y-2">
-                    <p className="text-sm font-bold text-primary">{affiliate.campaign.name}</p>
+                    <p className="text-sm font-bold text-primary">{affiliate?.campaign?.name}</p>
                     {[
-                      { label: 'Your rate',   value: affiliate.campaign.commissionType === 'FIXED' ? fmt(affiliate.campaign.commissionValue) : `${affiliate.campaign.commissionValue}%` },
-                      { label: 'Min deposit', value: fmt(affiliate.campaign.minDepositAmount) },
-                      { label: 'Hold',        value: `${affiliate.campaign.holdDays} days` },
+                      { label: 'Your rate',   value: affiliate?.campaign?.commissionType === 'FIXED' ? fmt(affiliate?.campaign?.commissionValue) : `${affiliate?.campaign?.commissionValue}%` },
+                      { label: 'Min deposit', value: fmt(affiliate?.campaign?.minDepositAmount) },
+                      { label: 'Hold',        value: `${affiliate?.campaign?.holdDays} days` },
                     ].map(({ label, value }) => (
                       <div key={label} className="flex justify-between text-xs">
                         <span className="text-muted-foreground">{label}</span>
@@ -652,7 +652,7 @@ export default function AffiliateDashboardPage() {
       )}
 
       {/* Share modal */}
-      <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} affiliateCode={affiliate.affiliateCode} referralLink={referralLink} />
+      <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} affiliateCode={affiliate?.affiliateCode} referralLink={referralLink} />
 
       {/* Payout history sheet */}
       <Sheet open={payoutOpen} onOpenChange={setPayoutOpen}>

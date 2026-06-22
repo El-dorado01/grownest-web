@@ -32,13 +32,13 @@ type Step = 1 | 2 | 3;
 // ─── Platform config ──────────────────────────────────────────────────────────
 
 const PLATFORMS: { id: SocialPlatform; label: string; placeholder: string; followersLabel: string }[] = [
-  { id: 'INSTAGRAM',        label: 'Instagram',         placeholder: '@yourhandle',            followersLabel: 'Approx. followers' },
-  { id: 'FACEBOOK',         label: 'Facebook',           placeholder: 'https://facebook.com/…', followersLabel: 'Approx. followers' },
-  { id: 'X',                label: 'X (Twitter)',        placeholder: '@yourhandle',            followersLabel: 'Approx. followers' },
+  { id: 'INSTAGRAM',        label: 'Instagram',         placeholder: '@yourhandle',            followersLabel: 'followers' },
+  { id: 'FACEBOOK',         label: 'Facebook',           placeholder: 'https://facebook.com/…', followersLabel: 'followers' },
+  { id: 'X',                label: 'X (Twitter)',        placeholder: '@yourhandle',            followersLabel: 'followers' },
   { id: 'WHATSAPP_CHANNEL', label: 'WhatsApp Channel',  placeholder: 'https://wa.me/channel/…', followersLabel: 'Subscriber count' },
   { id: 'WHATSAPP_STATUS',  label: 'WhatsApp Status',   placeholder: 'Your display name',      followersLabel: 'Avg. status views' },
   { id: 'YOUTUBE',          label: 'YouTube',            placeholder: 'https://youtube.com/…',  followersLabel: 'Subscriber count' },
-  { id: 'TIKTOK',           label: 'TikTok',             placeholder: '@yourhandle',            followersLabel: 'Approx. followers' },
+  { id: 'TIKTOK',           label: 'TikTok',             placeholder: '@yourhandle',            followersLabel: 'followers' },
 ];
 
 const EMPTY_ENTRY: SocialEntry = { handle: '', platformLink: '', followersCount: '', screenshots: [] };
@@ -74,6 +74,38 @@ function StepBar({ step, labels }: { step: Step; labels: string[] }) {
   );
 }
 
+// ─── Image lightbox ───────────────────────────────────────────────────────────
+
+function ImageLightbox({ url, onClose }: { url: string; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150"
+      onClick={onClose}
+    >
+      <div className="relative max-w-2xl w-full" onClick={e => e.stopPropagation()}>
+        <img
+          src={url}
+          alt="Screenshot preview"
+          className="w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl"
+        />
+        <button
+          onClick={onClose}
+          className="absolute -top-3 -right-3 h-8 w-8 rounded-full bg-white text-black flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+          aria-label="Close preview"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Screenshot upload zone ───────────────────────────────────────────────────
 
 function ScreenshotZone({
@@ -85,6 +117,7 @@ function ScreenshotZone({
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const min = minScreenshots(platform);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const addFiles = useCallback((incoming: FileList | null) => {
     if (!incoming) return;
@@ -94,7 +127,10 @@ function ScreenshotZone({
     onChange([...screenshots, ...valid].slice(0, 3));
   }, [screenshots, onChange]);
 
-  const remove = (i: number) => onChange(screenshots.filter((_, idx) => idx !== i));
+  const remove = (e: React.MouseEvent, i: number) => {
+    e.stopPropagation();
+    onChange(screenshots.filter((_, idx) => idx !== i));
+  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -102,64 +138,79 @@ function ScreenshotZone({
   };
 
   return (
-    <div className="space-y-3">
-      {/* Drop zone */}
-      <div
-        onClick={() => screenshots.length < 3 && ref.current?.click()}
-        onDrop={handleDrop}
-        onDragOver={e => e.preventDefault()}
-        className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center gap-2 text-center transition-colors duration-200 ${
-          screenshots.length >= 3
-            ? 'border-border bg-muted/20 cursor-not-allowed opacity-60'
-            : 'border-muted-foreground/30 bg-muted/10 cursor-pointer hover:border-primary/50 hover:bg-primary/5'
-        }`}
-      >
-        <Upload className="w-8 h-8 text-muted-foreground/50" />
-        <div>
-          <p className="text-sm font-medium text-foreground">
-            {screenshots.length >= 3 ? 'Maximum 3 screenshots uploaded' : 'Click or drag screenshots here'}
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Minimum {min} · Max 3 · JPG, PNG, WEBP · 5 MB each
-          </p>
+    <>
+      {previewUrl && <ImageLightbox url={previewUrl} onClose={() => setPreviewUrl(null)} />}
+
+      <div className="space-y-3">
+        {/* Drop zone */}
+        <div
+          onClick={() => screenshots.length < 3 && ref.current?.click()}
+          onDrop={handleDrop}
+          onDragOver={e => e.preventDefault()}
+          className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center gap-2 text-center transition-colors duration-200 ${
+            screenshots.length >= 3
+              ? 'border-border bg-muted/20 cursor-not-allowed opacity-60'
+              : 'border-muted-foreground/30 bg-muted/10 cursor-pointer hover:border-primary/50 hover:bg-primary/5'
+          }`}
+        >
+          <Upload className="w-8 h-8 text-muted-foreground/50" />
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {screenshots.length >= 3 ? 'Maximum 3 screenshots uploaded' : 'Click or drag screenshots here'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Minimum {min} · Max 3 · JPG, PNG, WEBP · 5 MB each
+            </p>
+          </div>
+          {screenshots.length > 0 && screenshots.length < min && (
+            <p className="text-xs text-amber-600 font-medium mt-1">
+              {min - screenshots.length} more screenshot{min - screenshots.length !== 1 ? 's' : ''} required
+            </p>
+          )}
         </div>
-        {screenshots.length > 0 && screenshots.length < min && (
-          <p className="text-xs text-amber-600 font-medium mt-1">
-            {min - screenshots.length} more screenshot{min - screenshots.length !== 1 ? 's' : ''} required
-          </p>
+        <input
+          ref={ref}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          multiple
+          className="hidden"
+          onChange={e => addFiles(e.target.files)}
+        />
+        {/* Thumbnail grid */}
+        {screenshots.length > 0 && (
+          <div className="grid grid-cols-3 gap-2">
+            {screenshots.map((file, i) => {
+              const url = URL.createObjectURL(file);
+              return (
+                <div
+                  key={i}
+                  className="relative aspect-square animate-in fade-in zoom-in-95 duration-200 group cursor-zoom-in"
+                  onClick={() => setPreviewUrl(url)}
+                >
+                  <img
+                    src={url}
+                    alt={`Screenshot ${i + 1}`}
+                    className="w-full h-full object-cover rounded-lg border border-border transition-opacity group-hover:opacity-80"
+                  />
+                  {/* Hover hint */}
+                  <div className="absolute inset-0 flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+                    <span className="text-white text-xs font-medium bg-black/40 px-2 py-1 rounded-full">Preview</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => remove(e, i)}
+                    className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-destructive text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform z-10"
+                    aria-label={`Remove screenshot ${i + 1}`}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
-      <input
-        ref={ref}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        multiple
-        className="hidden"
-        onChange={e => addFiles(e.target.files)}
-      />
-      {/* Thumbnail grid */}
-      {screenshots.length > 0 && (
-        <div className="grid grid-cols-3 gap-2">
-          {screenshots.map((file, i) => (
-            <div key={i} className="relative aspect-square animate-in fade-in zoom-in-95 duration-200">
-              <img
-                src={URL.createObjectURL(file)}
-                alt={`Screenshot ${i + 1}`}
-                className="w-full h-full object-cover rounded-lg border border-border"
-              />
-              <button
-                type="button"
-                onClick={() => remove(i)}
-                className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-destructive text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform"
-                aria-label={`Remove screenshot ${i + 1}`}
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    </>
   );
 }
 
@@ -231,7 +282,7 @@ function PlatformSheet({
             <div className="space-y-1.5">
               <Label htmlFor="followers">
                 {cfg.followersLabel}
-                <span className="text-muted-foreground text-xs ml-1">(optional)</span>
+                {/* <span className="text-muted-foreground text-xs ml-1">(optional)</span> */}
               </Label>
               <Input
                 id="followers"
@@ -247,7 +298,7 @@ function PlatformSheet({
               <div className="space-y-1.5">
                 <Label htmlFor="link">
                   Profile link
-                  <span className="text-muted-foreground text-xs ml-1">(optional)</span>
+                  {/* <span className="text-muted-foreground text-xs ml-1">(optional)</span> */}
                 </Label>
                 <Input
                   id="link"
@@ -402,18 +453,52 @@ export default function AffiliateApplyPage() {
     try {
       const formData = new FormData();
       formData.append('promoNote', promoNote);
-      formData.append('agreedToTerms', 'true');
+      formData.append('agreedToTerms', '1'); // coerced to true by backend
       const handles = selectedPlatforms.map(p => {
         const e = socialEntries[p]!;
-        return { platform: p, handle: e.handle, platformLink: e.platformLink || null, followersCount: e.followersCount ? parseInt(e.followersCount) : null };
+        // Only include optional fields when they have a value — never send null
+        const entry: Record<string, unknown> = { platform: p, handle: e.handle.trim() };
+        if (e.platformLink?.trim()) entry.platformLink = e.platformLink.trim();
+        if (e.followersCount?.trim()) entry.followersCount = parseInt(e.followersCount, 10);
+        return entry;
       });
-      formData.append('socialHandles', JSON.stringify(handles));
+      const handlesJson = JSON.stringify(handles);
+      console.log('[Affiliate Apply] socialHandles being sent:', handles);
+      console.log('[Affiliate Apply] socialHandles JSON:', handlesJson);
+      formData.append('socialHandles', handlesJson);
       for (const platform of selectedPlatforms) {
         for (const file of socialEntries[platform]?.screenshots ?? []) {
           formData.append(`screenshots_${platform}`, file);
         }
       }
-      await affiliateApi.apply(formData);
+      const res = await affiliateApi.apply(formData);
+
+      // Log full response to browser console for debugging
+      console.log('[Affiliate Apply] API response:', res);
+
+      if (res.error) {
+        console.error('[Affiliate Apply] Error:', res.error, '| HTTP status:', res.status);
+
+        // res.error can be a string or a Zod fieldErrors object — always extract a readable string
+        let msg: string;
+        if (typeof res.error === 'string') {
+          msg = res.error;
+        } else if (typeof res.error === 'object') {
+          // Zod validation error shape: { fieldErrors: { field: [msg] }, formErrors: [] }
+          const fe = (res.error as any).fieldErrors ?? {};
+          const fieldMsgs = Object.entries(fe)
+            .flatMap(([field, msgs]) => (msgs as string[]).map(m => `${field}: ${m}`));
+          const formMsgs = ((res.error as any).formErrors ?? []) as string[];
+          msg = [...fieldMsgs, ...formMsgs].join(' · ') || 'Submission failed. Please try again.';
+        } else {
+          msg = 'Submission failed. Please try again.';
+        }
+
+        setError(msg);
+        return;
+      }
+
+      console.log('[Affiliate Apply] Success — affiliate created:', res.data?.affiliate?.affiliateCode);
       window.location.href = '/apply/success';
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -683,7 +768,7 @@ export default function AffiliateApplyPage() {
                 />
                 <label htmlFor="terms" className="text-sm text-foreground cursor-pointer leading-relaxed">
                   I have read and agree to the{' '}
-                  <a href="https://grownest.africa/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
+                  <a href="https://app.grownest.africa/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
                     GrowNest Affiliate Terms &amp; Conditions
                   </a>
                   . I confirm that the information I have provided is accurate.

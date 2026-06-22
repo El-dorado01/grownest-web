@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight, LogOut, LayoutDashboard } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { getAuthToken, clearAuthTokens } from "@/lib/api";
+import { useProfile } from "@/hooks/use-profile";
 
 const NAV_LINKS = [
   { label: "How it works", href: "/#how-it-works" },
@@ -15,8 +17,17 @@ const NAV_LINKS = [
 ];
 
 export function AffiliateNavbar() {
-  const [scrolled, setScrolled]     = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled,    setScrolled]    = useState(false);
+  const [mobileOpen,  setMobileOpen]  = useState(false);
+  const [isLoggedIn,  setIsLoggedIn]  = useState(false);
+
+  const { profile } = useProfile();
+  const firstName = profile?.fullName?.split(" ")[0] ?? profile?.email?.split("@")[0] ?? null;
+
+  // Check auth token on mount (client-only)
+  useEffect(() => {
+    setIsLoggedIn(!!getAuthToken());
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -29,6 +40,11 @@ export function AffiliateNavbar() {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  const handleLogout = () => {
+    clearAuthTokens();
+    window.location.href = "/login";
+  };
 
   return (
     <header className="fixed top-0 right-0 left-0 z-50 flex justify-center px-4 pt-4">
@@ -66,48 +82,81 @@ export function AffiliateNavbar() {
             </Badge>
           </Link>
 
-          {/* Desktop links */}
-          <nav className="hidden md:flex items-center gap-6">
-            {NAV_LINKS.map(({ label, href }) => (
-              <Link
-                key={label}
-                href={href}
-                className={cn(
-                  "text-sm font-medium transition-colors duration-200",
-                  scrolled
-                    ? "text-foreground/70 hover:text-foreground"
-                    : "text-white/80 hover:text-white drop-shadow"
-                )}
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
+          {/* Desktop links — only show on public pages */}
+          {!isLoggedIn && (
+            <nav className="hidden md:flex items-center gap-6">
+              {NAV_LINKS.map(({ label, href }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  className={cn(
+                    "text-sm font-medium transition-colors duration-200",
+                    scrolled ? "text-foreground/70 hover:text-foreground" : "text-white/80 hover:text-white drop-shadow"
+                  )}
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          )}
 
-          {/* Desktop CTAs */}
+          {/* Desktop right side */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/login?redirect=/dashboard"
-              className={cn(
-                "text-sm font-medium transition-colors duration-200",
-                scrolled
-                  ? "text-foreground/70 hover:text-foreground"
-                  : "text-white/80 hover:text-white drop-shadow"
-              )}
-            >
-              Log in
-            </Link>
-            <Link
-              href="/login?redirect=/apply"
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold shadow-md transition-all duration-150 active:scale-95",
-                scrolled
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                  : "bg-white text-primary hover:bg-white/90"
-              )}
-            >
-              Apply Now <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            {isLoggedIn ? (
+              // Logged-in state: show name + dashboard link + sign out
+              <>
+                {firstName && (
+                  <span className={cn("text-sm font-medium transition-colors duration-200",
+                    scrolled ? "text-foreground/80" : "text-white/90 drop-shadow")}>
+                    Hi, {firstName}
+                  </span>
+                )}
+                <Link
+                  href="/dashboard"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150 active:scale-95",
+                    scrolled
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "bg-white text-primary hover:bg-white/90"
+                  )}
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5" /> Dashboard
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className={cn(
+                    "text-sm font-medium transition-colors duration-200",
+                    scrolled ? "text-foreground/50 hover:text-foreground" : "text-white/60 hover:text-white"
+                  )}
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              // Logged-out state: Log in + Apply Now
+              <>
+                <Link
+                  href="/login?redirect=/dashboard"
+                  className={cn(
+                    "text-sm font-medium transition-colors duration-200",
+                    scrolled ? "text-foreground/70 hover:text-foreground" : "text-white/80 hover:text-white drop-shadow"
+                  )}
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/login?redirect=/dashboard"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold shadow-md transition-all duration-150 active:scale-95",
+                    scrolled
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "bg-white text-primary hover:bg-white/90"
+                  )}
+                >
+                  Apply Now <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile hamburger */}
@@ -133,7 +182,7 @@ export function AffiliateNavbar() {
             className="absolute top-[4.5rem] right-4 left-4 rounded-2xl border border-border p-4 shadow-xl bg-card"
           >
             <nav className="flex flex-col gap-1">
-              {NAV_LINKS.map(({ label, href }) => (
+              {!isLoggedIn && NAV_LINKS.map(({ label, href }) => (
                 <Link
                   key={label}
                   href={href}
@@ -143,21 +192,45 @@ export function AffiliateNavbar() {
                   {label}
                 </Link>
               ))}
+
               <div className="mt-2 flex flex-col gap-2 border-t border-border pt-2">
-                <Link
-                  href="/login?redirect=/dashboard"
-                  onClick={() => setMobileOpen(false)}
-                  className="rounded-xl px-4 py-2.5 text-sm font-medium text-foreground/80 hover:bg-muted hover:text-foreground transition-colors"
-                >
-                  Log in
-                </Link>
-                <Link
-                  href="/login?redirect=/apply"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-center gap-1.5 rounded-full bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-                >
-                  Apply Now <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                {isLoggedIn ? (
+                  <>
+                    {firstName && (
+                      <p className="px-4 py-1 text-sm font-semibold text-foreground">Hi, {firstName} 👋</p>
+                    )}
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center justify-center gap-1.5 rounded-full bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                    >
+                      <LayoutDashboard className="w-3.5 h-3.5" /> Go to Dashboard
+                    </Link>
+                    <button
+                      onClick={() => { setMobileOpen(false); handleLogout(); }}
+                      className="rounded-xl px-4 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors text-center"
+                    >
+                      Sign out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login?redirect=/dashboard"
+                      onClick={() => setMobileOpen(false)}
+                      className="rounded-xl px-4 py-2.5 text-sm font-medium text-foreground/80 hover:bg-muted hover:text-foreground transition-colors"
+                    >
+                      Log in
+                    </Link>
+                    <Link
+                      href="/login?redirect=/dashboard"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center justify-center gap-1.5 rounded-full bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                    >
+                      Apply Now <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </>
+                )}
               </div>
             </nav>
           </motion.div>

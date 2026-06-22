@@ -1,20 +1,54 @@
 // app/affiliate-portal/dashboard/layout.tsx
-// Auth guard — redirects unauthenticated users to login.
-// Uses window.location.replace (full page navigation) so the proxy
-// correctly routes /login → /affiliate-portal/login on the affiliate subdomain.
+// Auth + affiliate guard:
+//   No token → /login?redirect=/dashboard
+//   Token but no affiliate → /apply  (new user, needs to apply first)
+//   Token + affiliate → render dashboard
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { getAuthToken } from '@/lib/api';
+import { affiliateApi } from '@/lib/affiliate-api';
 import { AffiliateSidebar } from '@/components/affiliate/AffiliateSidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
+import { Loader2 } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const [checking, setChecking] = useState(true);
+
   useEffect(() => {
-    if (!getAuthToken()) {
+    const token = getAuthToken();
+
+    // Gate 1: no token → login
+    if (!token) {
       window.location.replace('/login?redirect=/dashboard');
+      return;
     }
+
+    // Gate 2: token exists but no affiliate → apply
+    affiliateApi.getMe()
+      .then((res) => {
+        if (!res.data?.affiliate) {
+          window.location.replace('/apply');
+        } else {
+          setChecking(false); // affiliate found — show dashboard
+        }
+      })
+      .catch(() => {
+        // Network error or 404 — treat as no affiliate
+        window.location.replace('/apply');
+      });
   }, []);
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading your dashboard…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
