@@ -2,14 +2,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import {
-  LayoutDashboard,
-  Users,
-  Receipt,
-  ClipboardList,
-  LogOut,
-  ChevronRight,
-} from 'lucide-react';
+import { LayoutDashboard, Users, Receipt, FileSearch, ChevronRight } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -21,26 +14,28 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { cn } from '@/lib/utils';
+import { NavUser } from '@/components/nav-user';
+import { useProfile } from '@/hooks/use-profile';
 
 const NAV = [
-  { label: 'Dashboard',   href: '/dashboard',            icon: LayoutDashboard },
-  { label: 'Referrals',   href: '/dashboard/referrals',  icon: Users },
-  { label: 'Commissions', href: '/dashboard/commissions', icon: Receipt },
-  { label: 'Apply',       href: '/apply',                 icon: ClipboardList },
+  { label: 'Dashboard',      href: '/dashboard',             icon: LayoutDashboard },
+  { label: 'Referrals',      href: '/dashboard/referrals',   icon: Users },
+  { label: 'Commissions',    href: '/dashboard/commissions',  icon: Receipt },
+  { label: 'My Application', href: '/dashboard/application',  icon: FileSearch },
 ];
 
 export function AffiliateSidebar() {
   const pathname = usePathname();
+  const { profile } = useProfile();
 
-  // Normalise pathname — strip the /affiliate-portal prefix that the proxy adds
   const clean = pathname.replace(/^\/affiliate-portal/, '') || '/';
+  const isActive = (href: string) => href === '/dashboard' ? clean === '/dashboard' : clean.startsWith(href);
 
-  const isActive = (href: string) => {
-    if (href === '/dashboard') return clean === '/dashboard';
-    return clean.startsWith(href);
+  const user = {
+    name:   profile?.fullName  ?? profile?.email ?? 'Affiliate',
+    email:  profile?.email     ?? '',
+    avatar: (profile as any)?.profilePhoto ?? '',
   };
 
   return (
@@ -48,13 +43,7 @@ export function AffiliateSidebar() {
       {/* Header */}
       <SidebarHeader className="border-b border-sidebar-border py-4 px-3">
         <Link href="/" className="flex items-center gap-2.5 min-w-0">
-          <Image
-            src="/d_icon.png"
-            alt="GrowNest"
-            width={32}
-            height={32}
-            className="rounded-lg shrink-0"
-          />
+          <Image src="/d_icon.png" alt="GrowNest" width={32} height={32} className="rounded-lg shrink-0" />
           <div className="min-w-0 overflow-hidden">
             <p className="text-sm font-bold text-sidebar-foreground truncate leading-tight">GrowNest</p>
             <p className="text-[10px] text-sidebar-foreground/60 truncate leading-tight">Affiliate Portal</p>
@@ -70,19 +59,13 @@ export function AffiliateSidebar() {
             <SidebarMenu>
               {NAV.map(({ label, href, icon: Icon }) => (
                 <SidebarMenuItem key={href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(href)}
-                    tooltip={label}
-                  >
+                  <SidebarMenuButton asChild isActive={isActive(href)} tooltip={label}>
                     <Link href={href} className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
                         <Icon className="size-4" />
                         <span>{label}</span>
                       </span>
-                      {isActive(href) && (
-                        <ChevronRight className="size-3.5 text-sidebar-primary opacity-70" />
-                      )}
+                      {isActive(href) && <ChevronRight className="size-3.5 text-sidebar-primary opacity-70" />}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -92,22 +75,9 @@ export function AffiliateSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* Footer */}
-      <SidebarFooter className="border-t border-sidebar-border py-3 px-3">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Sign out"
-              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            >
-              <Link href="/login">
-                <LogOut className="size-4" />
-                <span>Sign out</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      {/* Footer — reuses main NavUser (calls logout API, shows avatar + name) */}
+      <SidebarFooter className="border-t border-sidebar-border">
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   );
