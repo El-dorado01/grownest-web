@@ -339,9 +339,11 @@ export function ElectricityDialog({ open, onOpenChange }: ElectricityDialogProps
                 </span>
                 <span className={cn(
                   "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0",
-                  isSuccess
-                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
-                    : "bg-destructive/10 text-destructive dark:bg-destructive/20"
+                  tx.status.toLowerCase() === "pending"
+                    ? "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
+                    : isSuccess
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                      : "bg-destructive/10 text-destructive dark:bg-destructive/20"
                 )}>
                   {tx.status}
                 </span>

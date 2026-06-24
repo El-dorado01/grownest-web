@@ -504,7 +504,9 @@ export default function SubscriptionDetailsPage() {
                               "px-1.5 py-0.2 rounded uppercase text-[8px] tracking-tight font-black",
                               pay.status === "success" || pay.status === "paid"
                                 ? "bg-emerald-500/10 text-emerald-600"
-                                : "bg-destructive/10 text-destructive"
+                                : pay.status === "pending"
+                                  ? "bg-amber-500/10 text-amber-600"
+                                  : "bg-destructive/10 text-destructive"
                             )}
                           >
                             {pay.status}
