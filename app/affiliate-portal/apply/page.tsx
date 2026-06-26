@@ -118,6 +118,8 @@ function ScreenshotZone({
   const ref = useRef<HTMLInputElement>(null);
   const min = minScreenshots(platform);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const dragCounter = useRef(0);
 
   const addFiles = useCallback((incoming: FileList | null) => {
     if (!incoming) return;
@@ -134,7 +136,21 @@ function ScreenshotZone({
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    dragCounter.current = 0;
+    setIsDragOver(false);
     addFiles(e.dataTransfer.files);
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current++;
+    if (screenshots.length < 3) setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current--;
+    if (dragCounter.current === 0) setIsDragOver(false);
   };
 
   return (
@@ -147,10 +163,14 @@ function ScreenshotZone({
           onClick={() => screenshots.length < 3 && ref.current?.click()}
           onDrop={handleDrop}
           onDragOver={e => e.preventDefault()}
-          className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center gap-2 text-center transition-colors duration-200 ${
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center gap-2 text-center transition-all duration-200 ${
             screenshots.length >= 3
               ? 'border-border bg-muted/20 cursor-not-allowed opacity-60'
-              : 'border-muted-foreground/30 bg-muted/10 cursor-pointer hover:border-primary/50 hover:bg-primary/5'
+              : isDragOver
+                ? 'border-primary bg-primary/10 cursor-copy scale-[1.01]'
+                : 'border-muted-foreground/30 bg-muted/10 cursor-pointer hover:border-primary/50 hover:bg-primary/5'
           }`}
         >
           <Upload className="w-8 h-8 text-muted-foreground/50" />
@@ -415,6 +435,9 @@ export default function AffiliateApplyPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [noCampaignDialog, setNoCampaignDialog] = useState(false);
+  const [waitlistJoining, setWaitlistJoining] = useState(false);
+  const [waitlistJoined, setWaitlistJoined] = useState(false);
   const router = useRouter();
 
   // Auth gate: redirect to login if no token, redirect to dashboard if already an affiliate
@@ -479,12 +502,17 @@ export default function AffiliateApplyPage() {
       if (res.error) {
         console.error('[Affiliate Apply] Error:', res.error, '| HTTP status:', res.status);
 
+        // No active campaign — show opt-in dialog instead of a generic error
+        if ((res as any).canJoinWaitlist || (res as any).code === 'NO_ACTIVE_CAMPAIGN' || res.status === 503) {
+          setNoCampaignDialog(true);
+          return;
+        }
+
         // res.error can be a string or a Zod fieldErrors object — always extract a readable string
         let msg: string;
         if (typeof res.error === 'string') {
           msg = res.error;
         } else if (typeof res.error === 'object') {
-          // Zod validation error shape: { fieldErrors: { field: [msg] }, formErrors: [] }
           const fe = (res.error as any).fieldErrors ?? {};
           const fieldMsgs = Object.entries(fe)
             .flatMap(([field, msgs]) => (msgs as string[]).map(m => `${field}: ${m}`));
@@ -802,6 +830,69 @@ export default function AffiliateApplyPage() {
         onSave={saveEntry}
         onClose={() => setOpenPlatform(null)}
       />
+
+      {/* ── No Campaign — waitlist opt-in dialog ───────────────────────── */}
+      {noCampaignDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card border border-border rounded-2xl p-7 max-w-sm w-full shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+            {/* Icon */}
+            <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto">
+              <Sparkles className="w-7 h-7 text-amber-500" />
+            </div>
+
+            {/* Copy */}
+            <div className="text-center space-y-2">
+              <h2 className="text-lg font-bold text-foreground">No open campaigns right now</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                GrowNest affiliate campaigns open periodically. Want us to notify you the moment a new campaign launches so you can apply immediately?
+              </p>
+            </div>
+
+            {/* Success state */}
+            {waitlistJoined ? (
+              <div className="flex flex-col items-center gap-3 py-2">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
+                </div>
+                <p className="text-sm font-semibold text-foreground text-center">
+                  You're on the list! We'll notify you when a campaign opens.
+                </p>
+                <button
+                  onClick={() => setNoCampaignDialog(false)}
+                  className="text-sm text-primary hover:underline font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                <Button
+                  onClick={async () => {
+                    setWaitlistJoining(true);
+                    const res = await affiliateApi.joinCampaignWaitlist();
+                    setWaitlistJoining(false);
+                    if (res.error) {
+                      // Already on waitlist or error — just show success
+                    }
+                    setWaitlistJoined(true);
+                  }}
+                  disabled={waitlistJoining}
+                  className="w-full h-11 gap-2"
+                >
+                  {waitlistJoining ? 'Saving…' : '🔔 Yes, notify me when a campaign opens'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setNoCampaignDialog(false)}
+                  className="w-full h-11 text-muted-foreground"
+                >
+                  No thanks
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
