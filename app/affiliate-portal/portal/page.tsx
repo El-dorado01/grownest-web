@@ -384,7 +384,7 @@ export default function AffiliateDashboardPage() {
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-lg font-bold text-foreground">Affiliate Dashboard</h1>
-                <AffiliateStatusBadge status={affiliate?.status} />
+                {affiliate?.status && <AffiliateStatusBadge status={affiliate.status} />}
               </div>
               <p className="text-sm text-muted-foreground">
                 Code:{' '}
@@ -669,7 +669,7 @@ export default function AffiliateDashboardPage() {
       )}
 
       {/* Share modal */}
-      <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} affiliateCode={affiliate?.affiliateCode} referralLink={referralLink} />
+      <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} affiliateCode={affiliate?.affiliateCode ?? ''} referralLink={referralLink} />
 
       {/* Payout history sheet */}
       <Sheet open={payoutOpen} onOpenChange={setPayoutOpen}>

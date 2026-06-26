@@ -9,6 +9,7 @@ const CONFIG: Record<Status, { label: string; icon: React.ElementType; className
   PENDING:   { label: 'Pending',   icon: Clock,        className: 'bg-amber-100 text-amber-800 border-amber-200' },
   ACTIVE:    { label: 'Active',    icon: CheckCircle,  className: 'bg-green-100 text-green-800 border-green-200' },
   SUSPENDED: { label: 'Suspended', icon: XCircle,      className: 'bg-red-100 text-red-800 border-red-200' },
+  REJECTED:  { label: 'Rejected',  icon: XCircle,      className: 'bg-red-100 text-red-800 border-red-200' },
   AVAILABLE: { label: 'Available', icon: CheckCircle,  className: 'bg-green-100 text-green-800 border-green-200' },
   PAID:      { label: 'Paid',      icon: CheckCircle,  className: 'bg-muted text-muted-foreground border-border' },
   REVERSED:  { label: 'Reversed',  icon: XCircle,      className: 'bg-red-100 text-red-800 border-red-200' },

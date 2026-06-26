@@ -1,6 +1,6 @@
 // types/affiliate.ts
 
-export type AffiliateStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED';
+export type AffiliateStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'REJECTED';
 export type CommissionStatus = 'PENDING' | 'AVAILABLE' | 'PAID' | 'REVERSED';
 export type CommissionType = 'FIXED' | 'PERCENTAGE';
 export type SocialPlatform =
@@ -25,6 +25,7 @@ export interface AffiliateSocialHandle {
   handle: string;
   platformLink: string | null;
   followersCount: number | null;
+  screenshotUrls: string[];
   verifiedByAdmin: boolean;
 }
 

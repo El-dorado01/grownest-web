@@ -440,7 +440,7 @@ export default function ApplicationStatusPage() {
       <EditApplicationSheet
         open={editOpen}
         onClose={() => setEditOpen(false)}
-        onSaved={() => mutate('affiliate/me')}
+        onSaved={() => mutate()}
         affiliate={affiliate}
       />
     )}
