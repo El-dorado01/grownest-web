@@ -127,6 +127,8 @@ function BasketsPageContent() {
   >("monthly")
   const [directPin, setDirectPin] = useState("")
   const [isDirectSubmitting, setIsDirectSubmitting] = useState(false)
+  const [directDeliveryOption, setDirectDeliveryOption] = useState<"delivery" | "pickup">("delivery")
+  const [directPickupBranchId, setDirectPickupBranchId] = useState<string>("")
 
   // Fetch Delivery Profiles for Direct Subscription
   const { data: profilesRes } = useSWR(
@@ -136,6 +138,13 @@ function BasketsPageContent() {
   const profiles = profilesRes?.data?.data ?? []
   const defaultProfile = profilesRes?.data?.default ?? null
   const [selectedDirectProfileId, setSelectedDirectProfileId] = useState<string>("")
+
+  // Fetch Pickup Branches for Direct Subscription
+  const { data: branchesRes } = useSWR(
+    isAuthenticated ? "pickup-branches" : null,
+    () => nestBasketsApi.getPickupBranches()
+  )
+  const branches = branchesRes?.data?.data ?? []
 
   useEffect(() => {
     if (isDirectCheckoutOpen) {
@@ -148,6 +157,12 @@ function BasketsPageContent() {
       }
     }
   }, [isDirectCheckoutOpen, defaultProfile, profiles])
+
+  useEffect(() => {
+    if (isDirectCheckoutOpen && branches.length > 0 && !directPickupBranchId) {
+      setDirectPickupBranchId(branches[0].id)
+    }
+  }, [isDirectCheckoutOpen, branches, directPickupBranchId])
 
   // 1. Fetch Predefined Plans & User Custom Drafts
   const {
@@ -189,11 +204,21 @@ function BasketsPageContent() {
 
   const handleDirectSubmit = async () => {
     if (!directSubPlan) return
-    const activeProfile = profiles.find((p: any) => p.id === selectedDirectProfileId) || defaultProfile
-    if (!activeProfile) {
+
+    if (directDeliveryOption === "pickup" && !directPickupBranchId) {
+      toast.error("Please select a pickup branch.")
+      return
+    }
+
+    const activeProfile = directDeliveryOption === "delivery"
+      ? (profiles.find((p: any) => p.id === selectedDirectProfileId) || defaultProfile)
+      : null
+
+    if (directDeliveryOption === "delivery" && !activeProfile) {
       toast.error("Please add a delivery address first.")
       return
     }
+
     if (directPin.length !== 4) {
       toast.error("Please enter your 4-digit security PIN")
       return
@@ -201,24 +226,28 @@ function BasketsPageContent() {
 
     setIsDirectSubmitting(true)
     try {
-      const isDefaultSelected = defaultProfile?.id === activeProfile.id
-      
       const payload: SubscribeRequest = {
         predefinedPlanId: directSubPlan.id,
         frequency: directFreq,
-        useDefaultDelivery: isDefaultSelected,
         pin: directPin,
+        deliveryOption: directDeliveryOption,
       }
 
-      if (!isDefaultSelected) {
-        payload.deliveryOverride = {
-          fullName: activeProfile.fullName,
-          phone: activeProfile.phone,
-          address: activeProfile.address,
-          city: activeProfile.city,
-          state: activeProfile.state,
-          landmark: activeProfile.landmark || undefined,
-          notes: activeProfile.notes || undefined,
+      if (directDeliveryOption === "pickup") {
+        payload.pickupBranchId = directPickupBranchId
+      } else if (activeProfile) {
+        const isDefaultSelected = defaultProfile?.id === activeProfile.id
+        payload.useDefaultDelivery = isDefaultSelected
+        if (!isDefaultSelected) {
+          payload.deliveryOverride = {
+            fullName: activeProfile.fullName,
+            phone: activeProfile.phone,
+            address: activeProfile.address,
+            city: activeProfile.city,
+            state: activeProfile.state,
+            landmark: activeProfile.landmark || undefined,
+            notes: activeProfile.notes || undefined,
+          }
         }
       }
 
@@ -237,6 +266,8 @@ function BasketsPageContent() {
       setDirectSubPlan(null)
       setDirectPin("")
       setDirectFreq("monthly")
+      setDirectDeliveryOption("delivery")
+      setDirectPickupBranchId("")
 
       // Refresh subscriptions list
       await mutateSubs()
@@ -255,6 +286,8 @@ function BasketsPageContent() {
   const renderDirectCheckoutForm = () => {
     if (!directSubPlan) return null
     const activeProfile = profiles.find((p: any) => p.id === selectedDirectProfileId) || defaultProfile
+    const selectedBranch = branches.find((b: any) => b.id === directPickupBranchId)
+
     return (
       <div className="space-y-5 text-left">
         {/* Cost Summary */}
@@ -302,114 +335,185 @@ function BasketsPageContent() {
           </p>
         </div>
 
-        {/* Delivery Address */}
+        {/* Delivery Option Selector */}
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-              Delivery Address
-            </label>
-            {profiles.length > 0 && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="h-auto p-0 text-xs font-bold text-primary hover:no-underline"
-                  >
-                    Change
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-3 bg-popover border border-border/60 rounded-xl shadow-lg" align="end">
-                  <div className="space-y-2">
-                    <p className="text-xs font-bold text-muted-foreground px-1">Select Delivery Address</p>
-                    <div className="max-h-60 overflow-y-auto space-y-1.5 custom-scrollbar pr-1">
-                      {profiles.map((p: any) => {
-                        const isSelected = p.id === activeProfile?.id;
-                        return (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() => setSelectedDirectProfileId(p.id)}
-                            className={`w-full text-left flex items-start gap-2.5 rounded-lg border p-2.5 transition-all text-xs ${
-                              isSelected
-                                ? "border-primary bg-primary/5 font-semibold text-foreground"
-                                : "border-border/60 hover:bg-muted/50 text-muted-foreground hover:text-foreground"
-                            }`}
-                          >
-                            <div className="mt-0.5 shrink-0">
-                              {isSelected ? (
-                                <CheckCircle2 className="size-4 text-primary" />
-                              ) : (
-                                <div className="size-4 rounded-full border border-muted-foreground/30" />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-1 font-bold">
-                                <span className="truncate">{p.fullName}</span>
-                                {p.isDefault && (
-                                  <Badge className="bg-primary/10 text-primary text-[9px] hover:bg-primary/10 px-1 py-0 h-auto font-bold uppercase shrink-0">
-                                    Default
-                                  </Badge>
+          <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+            Delivery Option
+          </label>
+          <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
+            <button
+              type="button"
+              onClick={() => setDirectDeliveryOption("delivery")}
+              className={`rounded-lg py-1.5 text-xs font-bold transition-all ${
+                directDeliveryOption === "delivery"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Delivery
+            </button>
+            <button
+              type="button"
+              onClick={() => setDirectDeliveryOption("pickup")}
+              className={`rounded-lg py-1.5 text-xs font-bold transition-all ${
+                directDeliveryOption === "pickup"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Pick Up
+            </button>
+          </div>
+        </div>
+
+        {/* Conditional Address or Branch Selection */}
+        {directDeliveryOption === "delivery" ? (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                Delivery Address
+              </label>
+              {profiles.length > 0 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 text-xs font-bold text-primary hover:no-underline"
+                    >
+                      Change
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-3 bg-popover border border-border/60 rounded-xl shadow-lg" align="end">
+                    <div className="space-y-2">
+                      <p className="text-xs font-bold text-muted-foreground px-1">Select Delivery Address</p>
+                      <div className="max-h-60 overflow-y-auto space-y-1.5 custom-scrollbar pr-1">
+                        {profiles.map((p: any) => {
+                          const isSelected = p.id === activeProfile?.id;
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => setSelectedDirectProfileId(p.id)}
+                              className={`w-full text-left flex items-start gap-2.5 rounded-lg border p-2.5 transition-all text-xs ${
+                                isSelected
+                                  ? "border-primary bg-primary/5 font-semibold text-foreground"
+                                  : "border-border/60 hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              <div className="mt-0.5 shrink-0">
+                                {isSelected ? (
+                                  <CheckCircle2 className="size-4 text-primary" />
+                                ) : (
+                                  <div className="size-4 rounded-full border border-muted-foreground/30" />
                                 )}
                               </div>
-                              <p className="truncate text-[11px] mt-0.5">{p.address}</p>
-                              <p className="text-[10px] text-muted-foreground/80 mt-0.5">
-                                {p.city}, {p.state}
-                              </p>
-                            </div>
-                          </button>
-                        );
-                      })}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-1 font-bold">
+                                  <span className="truncate">{p.fullName}</span>
+                                  {p.isDefault && (
+                                    <Badge className="bg-primary/10 text-primary text-[9px] hover:bg-primary/10 px-1 py-0 h-auto font-bold uppercase shrink-0">
+                                      Default
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="truncate text-[11px] mt-0.5">{p.address}</p>
+                                <p className="text-[10px] text-muted-foreground/80 mt-0.5">
+                                  {p.city}, {p.state}
+                                </p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      
+                      <Separator className="my-1 border-border/40" />
+                      
+                      <div className="pt-1.5 text-center">
+                        <Link
+                          href="/settings?tab=addresses"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                          onClick={() => {
+                            setIsDirectCheckoutOpen(false);
+                          }}
+                        >
+                          <Plus className="size-3.5" />
+                          Add new address
+                        </Link>
+                      </div>
                     </div>
-                    
-                    <Separator className="my-1 border-border/40" />
-                    
-                    <div className="pt-1.5 text-center">
-                      <Link
-                        href="/settings?tab=addresses"
-                        className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
-                        onClick={() => {
-                          setIsDirectCheckoutOpen(false);
-                        }}
-                      >
-                        <Plus className="size-3.5" />
-                        Add new address
-                      </Link>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+            {activeProfile ? (
+              <div className="space-y-2 rounded-xl border border-border/50 bg-background p-3.5">
+                <div className="flex items-center justify-between text-xs font-bold text-foreground">
+                  <span>{activeProfile.fullName}</span>
+                  <span className="font-mono text-muted-foreground">
+                    {activeProfile.phone}
+                  </span>
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {activeProfile.address}, {activeProfile.city},{" "}
+                  {activeProfile.state}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 rounded-xl border border-destructive/20 bg-destructive/5 p-3.5 text-center">
+                <p className="text-xs font-medium text-destructive">
+                  No delivery address found. Please configure an address in settings to continue.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-lg border-destructive/30 text-destructive hover:bg-destructive/10"
+                  asChild
+                >
+                  <Link href="/settings?tab=addresses">Add New Address</Link>
+                </Button>
+              </div>
             )}
           </div>
-          {activeProfile ? (
-            <div className="space-y-2 rounded-xl border border-border/50 bg-background p-3.5">
-              <div className="flex items-center justify-between text-xs font-bold text-foreground">
-                <span>{activeProfile.fullName}</span>
-                <span className="font-mono text-muted-foreground">
-                  {activeProfile.phone}
-                </span>
-              </div>
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                {activeProfile.address}, {activeProfile.city},{" "}
-                {activeProfile.state}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2 rounded-xl border border-destructive/20 bg-destructive/5 p-3.5 text-center">
-              <p className="text-xs font-medium text-destructive">
-                No delivery address found. Please configure an address in settings to continue.
-              </p>
-              <Button
-                size="sm"
-                variant="outline"
-                className="rounded-lg border-destructive/30 text-destructive hover:bg-destructive/10"
-                asChild
+        ) : (
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+              Select Pickup Branch
+            </label>
+            {branches.length > 0 ? (
+              <Select
+                value={directPickupBranchId}
+                onValueChange={(val) => setDirectPickupBranchId(val)}
               >
-                <Link href="/settings?tab=addresses">Add New Address</Link>
-              </Button>
-            </div>
-          )}
-        </div>
+                <SelectTrigger className="w-full rounded-xl border-border bg-background">
+                  <SelectValue placeholder="Select a branch location" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-border bg-popover text-popover-foreground">
+                  {branches.map((branch: any) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name} ({branch.city})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="text-xs text-amber-600 font-semibold bg-amber-500/10 p-3 rounded-xl border border-amber-500/20">
+                No active pickup branches are currently configured. Please contact support.
+              </p>
+            )}
+            {selectedBranch && (
+              <div className="space-y-1.5 rounded-xl border border-border/50 bg-background p-3.5">
+                <div className="flex items-center justify-between text-xs font-bold text-foreground">
+                  <span>{selectedBranch.name}</span>
+                  <span className="font-mono text-muted-foreground">{selectedBranch.phone}</span>
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {selectedBranch.address}, {selectedBranch.city}, {selectedBranch.state}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* PIN Entry */}
         <div className="flex flex-col gap-2">
@@ -1287,7 +1391,8 @@ function BasketsPageContent() {
                     disabled={
                       isDirectSubmitting ||
                       directPin.length !== 4 ||
-                      !selectedDirectProfileId
+                      (directDeliveryOption === "delivery" && !selectedDirectProfileId) ||
+                      (directDeliveryOption === "pickup" && !directPickupBranchId)
                     }
                     onClick={handleDirectSubmit}
                   >
@@ -1329,7 +1434,8 @@ function BasketsPageContent() {
                     disabled={
                       isDirectSubmitting ||
                       directPin.length !== 4 ||
-                      !selectedDirectProfileId
+                      (directDeliveryOption === "delivery" && !selectedDirectProfileId) ||
+                      (directDeliveryOption === "pickup" && !directPickupBranchId)
                     }
                     onClick={handleDirectSubmit}
                   >

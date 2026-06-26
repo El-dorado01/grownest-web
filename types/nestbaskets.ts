@@ -29,6 +29,18 @@ export interface DeliveryProfilesResponse {
   total: number;
 }
 
+export interface Branch {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  phone: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateDeliveryProfileRequest {
   fullName: string;
   phone: string;
@@ -121,6 +133,8 @@ export interface CustomPlan {
   autoPayPaused: boolean;
   deliveryFee: number;
   deliveryProfileId: string | null;
+  deliveryOption?: "delivery" | "pickup";
+  pickupBranchId?: string | null;
   savingDurationMonths: number | null;
   savingExpiresAt: string | null;
   createdAt: string;
@@ -128,6 +142,7 @@ export interface CustomPlan {
   status: string;
   items: CustomPlanItem[];
   deliveryProfile?: DeliveryProfile | null;
+  pickupBranch?: Branch | null;
   // Unified view enrichments
   type?: "custom_subscription" | "custom_flexible" | "custom";
   isCustom?: boolean;
@@ -168,6 +183,8 @@ export interface UserSubscription {
   status: "active" | "paused" | "cancelled";
   paymentStatus: string;
   deliveryProfileId: string | null;
+  deliveryOption?: "delivery" | "pickup";
+  pickupBranchId?: string | null;
   deliveryOverride?: any;
   pausedAt: string | null;
   cancelledAt: string | null;
@@ -177,6 +194,7 @@ export interface UserSubscription {
   payments?: SubscriptionPayment[];
   deliveries?: Delivery[];
   deliveryProfile?: DeliveryProfile | null;
+  pickupBranch?: Branch | null;
   predefinedPlan?: PredefinedPlan | null;
   customPlan?: CustomPlan | null;
 }
@@ -204,6 +222,9 @@ export interface Delivery {
   isRecurring: boolean;
   deliveryFee: number;
   deliveryProfileId: string | null;
+  deliveryOption?: "delivery" | "pickup";
+  pickupBranchId?: string | null;
+  pickupBranch?: Branch | null;
   addressSnapshot?: any;
   itemsSnapshot?: DeliveryItem[];
 }
@@ -217,6 +238,8 @@ export interface CreateCustomPlanRequest {
   }[];
   paymentType: "subscription" | "flexible";
   deliveryProfileId?: string;
+  deliveryOption?: "delivery" | "pickup";
+  pickupBranchId?: string;
   savingExpiresAt?: string; // Datetime string
 }
 
@@ -225,6 +248,8 @@ export interface SubscribeRequest {
   customPlanId?: string;
   frequency: "weekly" | "monthly" | "quarterly" | "yearly";
   useDefaultDelivery?: boolean;
+  deliveryOption?: "delivery" | "pickup";
+  pickupBranchId?: string;
   deliveryOverride?: {
     fullName?: string;
     phone?: string;

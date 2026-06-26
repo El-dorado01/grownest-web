@@ -29,7 +29,7 @@ import {
   Check,
 } from "lucide-react"
 import { nestBasketsApi } from "@/lib/nestbaskets-api"
-import { FoodItem } from "@/types/nestbaskets"
+import { FoodItem, CreateCustomPlanRequest, SubscribeRequest } from "@/types/nestbaskets"
 import useSWR from "swr"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -98,6 +98,8 @@ function CustomBasketBuilderPageContent() {
     "full"
   )
   const [initialDepositAmount, setInitialDepositAmount] = React.useState("")
+  const [deliveryOption, setDeliveryOption] = React.useState<"delivery" | "pickup">("delivery")
+  const [pickupBranchId, setPickupBranchId] = React.useState("")
 
   // Success dialog states
   const [isSuccessOpen, setIsSuccessOpen] = React.useState(false)
@@ -107,16 +109,6 @@ function CustomBasketBuilderPageContent() {
     "subscription" | "flexible"
   >("flexible")
   const [actualFundedAmount, setActualFundedAmount] = React.useState(0)
-
-  // Reset/Clear PIN and Option B states when the checkout dialog is loaded/opened
-  React.useEffect(() => {
-    if (isCheckoutOpen) {
-      setPinValue("")
-      setFundNow(false)
-      setFundingMode("full")
-      setInitialDepositAmount("")
-    }
-  }, [isCheckoutOpen])
 
   // Security Verification
   const [pinValue, setPinValue] = React.useState("")
@@ -141,6 +133,12 @@ function CustomBasketBuilderPageContent() {
   const { data: profilesRes } = useSWR("delivery-profiles", () =>
     nestBasketsApi.getDeliveryProfiles()
   )
+
+  // SWR for Pickup branches
+  const { data: branchesRes } = useSWR("pickup-branches", () =>
+    nestBasketsApi.getPickupBranches()
+  )
+  const branches = branchesRes?.data?.data ?? []
 
   // SWR for Delivery zones
   const { data: zonesRes } = useSWR("delivery-zones", () =>
@@ -213,6 +211,22 @@ function CustomBasketBuilderPageContent() {
     }
   }, [profilesRes, defaultProfile, profiles])
 
+  // Reset/Clear PIN and Option B states when the checkout dialog is loaded/opened
+  React.useEffect(() => {
+    if (isCheckoutOpen) {
+      setPinValue("")
+      setFundNow(false)
+      setFundingMode("full")
+      setInitialDepositAmount("")
+      setDeliveryOption("delivery")
+      if (branches.length > 0) {
+        setPickupBranchId(branches[0].id)
+      } else {
+        setPickupBranchId("")
+      }
+    }
+  }, [isCheckoutOpen, branches])
+
   // Calculate live statistics
   const selectedItemsList = React.useMemo(() => {
     return Object.entries(quantities)
@@ -244,6 +258,10 @@ function CustomBasketBuilderPageContent() {
 
   React.useEffect(() => {
     const fetchFee = async () => {
+      if (deliveryOption === "pickup") {
+        setDeliveryFee(0)
+        return
+      }
       const activeProfile = profiles.find((p) => p.id === selectedProfileId)
       if (selectedItemsList.length === 0) {
         setDeliveryFee(0)
@@ -294,7 +312,7 @@ function CustomBasketBuilderPageContent() {
     }
 
     fetchFee()
-  }, [selectedProfileId, selectedItemsList, profiles, zones])
+  }, [selectedProfileId, selectedItemsList, profiles, zones, deliveryOption])
 
   const totalCost = subtotal + deliveryFee
 
@@ -378,8 +396,12 @@ function CustomBasketBuilderPageContent() {
       toast.error("Please add at least one item to your basket")
       return
     }
-    if (!selectedProfileId) {
+    if (deliveryOption === "delivery" && !selectedProfileId) {
       toast.error("Please select a delivery address")
+      return
+    }
+    if (deliveryOption === "pickup" && !pickupBranchId) {
+      toast.error("Please select a pickup branch")
       return
     }
     if (pinValue.length !== 4) {
@@ -398,13 +420,21 @@ function CustomBasketBuilderPageContent() {
       const expiresDate = new Date()
       expiresDate.setMonth(expiresDate.getMonth() + flexibleMonths)
 
-      const createPayload = {
+      const createPayload: CreateCustomPlanRequest = {
         title: basketTitle,
         items: planItems,
         paymentType,
-        deliveryProfileId: selectedProfileId,
-        savingExpiresAt:
-          paymentType === "flexible" ? expiresDate.toISOString() : undefined,
+        deliveryOption,
+      }
+
+      if (deliveryOption === "delivery") {
+        createPayload.deliveryProfileId = selectedProfileId
+      } else {
+        createPayload.pickupBranchId = pickupBranchId
+      }
+
+      if (paymentType === "flexible") {
+        createPayload.savingExpiresAt = expiresDate.toISOString()
       }
 
       const createRes = await nestBasketsApi.createCustomPlan(createPayload)
@@ -434,12 +464,34 @@ function CustomBasketBuilderPageContent() {
 
       // 2. Perform Transaction Checkout depending on Payment Type
       if (paymentType === "subscription") {
-        const subRes = await nestBasketsApi.subscribeToPlan({
+        const subscribePayload: SubscribeRequest = {
           customPlanId: customPlan.id,
           frequency: subFreq,
-          useDefaultDelivery: true,
           pin: pinValue,
-        })
+          deliveryOption,
+        }
+
+        if (deliveryOption === "delivery") {
+          subscribePayload.useDefaultDelivery = (selectedProfileId === defaultProfile?.id)
+          if (!subscribePayload.useDefaultDelivery) {
+            const activeProfile = profiles.find((p) => p.id === selectedProfileId)
+            if (activeProfile) {
+              subscribePayload.deliveryOverride = {
+                fullName: activeProfile.fullName,
+                phone: activeProfile.phone,
+                address: activeProfile.address,
+                city: activeProfile.city,
+                state: activeProfile.state,
+                landmark: activeProfile.landmark || undefined,
+                notes: activeProfile.notes || undefined,
+              }
+            }
+          }
+        } else {
+          subscribePayload.pickupBranchId = pickupBranchId
+        }
+
+        const subRes = await nestBasketsApi.subscribeToPlan(subscribePayload)
 
         if (subRes.error || !subRes.data?.success) {
           throw new Error(
@@ -690,6 +742,11 @@ function CustomBasketBuilderPageContent() {
           profiles={profiles}
           selectedProfileId={selectedProfileId}
           setSelectedProfileId={setSelectedProfileId}
+          branches={branches}
+          deliveryOption={deliveryOption}
+          setDeliveryOption={setDeliveryOption}
+          pickupBranchId={pickupBranchId}
+          setPickupBranchId={setPickupBranchId}
           isFeeLoading={isFeeLoading}
           deliveryFee={deliveryFee}
           subtotal={subtotal}
