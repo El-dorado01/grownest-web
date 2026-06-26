@@ -19,9 +19,9 @@ const NAV_LINKS = [
 export function AffiliateNavbar() {
   const [scrolled,    setScrolled]    = useState(false);
   const [mobileOpen,  setMobileOpen]  = useState(false);
-  const [isLoggedIn,  setIsLoggedIn]  = useState(false);
+  const [isLoggedIn,  setIsLoggedIn]  = useState<boolean>(() => !!getAuthToken());
 
-  const { profile } = useProfile();
+  const { profile } = useProfile(isLoggedIn);
   const firstName = profile?.fullName?.split(" ")[0] ?? profile?.email?.split("@")[0] ?? null;
 
   // Check auth token on mount (client-only)

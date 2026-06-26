@@ -3,9 +3,9 @@
 import useSWR from "swr"
 import { authApi } from "@/lib/auth-api"
 
-export function useProfile() {
+export function useProfile(enabled: boolean = true) {
   const { data: res, error: swrError, isLoading, mutate } = useSWR(
-    "user-profile",
+    enabled ? "user-profile" : null,
     () => authApi.getProfile(),
     {
       revalidateOnFocus: true,
