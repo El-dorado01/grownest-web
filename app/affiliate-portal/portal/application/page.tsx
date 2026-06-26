@@ -1,4 +1,4 @@
-// app/affiliate-portal/dashboard/application/page.tsx
+// app/affiliate-portal/portal/application/page.tsx
 'use client';
 import useSWR from 'swr';
 import { useState } from 'react';
@@ -169,7 +169,7 @@ function PlatformCard({ handle }: { handle: any }) {
           {/* C. Proof gallery — large images, 2-col grid, lightbox on click */}
           {screenshots.length > 0 ? (
             <div className="space-y-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
                 <ImageIcon className="w-3 h-3" />
                 Screenshots ({screenshots.length})
               </p>
@@ -273,8 +273,8 @@ export default function ApplicationStatusPage() {
       {/* Page title + actions */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-foreground">My Application</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Full details of your affiliate program application.</p>
+          <h1 className="text-2xl font-bold text-foreground">My Application</h1>
+          <p className="text-base text-muted-foreground mt-1">Full details of your affiliate program application.</p>
         </div>
         <RefreshButton isRefreshing={isValidating && !isLoading} onRefresh={() => mutate()} />
       </div>
@@ -336,20 +336,20 @@ export default function ApplicationStatusPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">Affiliate Code</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1.5">Affiliate Code</p>
             <p className="text-lg font-mono font-bold text-primary tracking-wider">{affiliate.affiliateCode}</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">Applied</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1.5">Applied</p>
             <p className="text-base font-semibold text-foreground">{format(new Date(affiliate.createdAt), 'dd MMM yyyy')}</p>
           </CardContent>
         </Card>
         {affiliate.campaign ? (
           <Card className="bg-card border-border">
             <CardContent className="p-4">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 flex items-center gap-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1.5 flex items-center gap-1">
                 <Megaphone className="w-2.5 h-2.5" /> Campaign
               </p>
               <p className="text-sm font-bold text-primary truncate">{affiliate.campaign.name}</p>
@@ -374,7 +374,7 @@ export default function ApplicationStatusPage() {
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div>
-              <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
                 <Users className="w-4 h-4 text-muted-foreground" />
                 Social Presence
                 <span className="text-xs font-normal text-muted-foreground">({affiliate.socialHandles.length} platform{affiliate.socialHandles.length !== 1 ? 's' : ''})</span>
@@ -394,7 +394,7 @@ export default function ApplicationStatusPage() {
       {affiliate.promoNote && affiliate.socialHandles?.length > 0 && (
         <div className="flex items-center gap-4">
           <Separator className="flex-1 bg-border/50" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">Strategy</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/50">Strategy</span>
           <Separator className="flex-1 bg-border/50" />
         </div>
       )}
@@ -402,7 +402,7 @@ export default function ApplicationStatusPage() {
       {/* ── 4. THE STRATEGY (Promo note) ─────────────────────────────────── */}
       {affiliate.promoNote && (
         <div className="space-y-2">
-          <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+          <h2 className="text-base font-bold text-foreground flex items-center gap-2">
             <FileText className="w-4 h-4 text-muted-foreground" />
             How you plan to promote
           </h2>

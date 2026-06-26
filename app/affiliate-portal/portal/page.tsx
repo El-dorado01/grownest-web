@@ -1,4 +1,4 @@
-// app/affiliate-portal/dashboard/page.tsx
+// app/affiliate-portal/portal/page.tsx
 'use client';
 import useSWR from 'swr';
 import Link from 'next/link';
@@ -92,7 +92,7 @@ function ShareSheet({ open, onClose, affiliateCode, referralLink }: { open: bool
           {/* Referral link row */}
           <div className="flex items-center justify-between gap-3 rounded-xl bg-muted/60 border border-border px-4 py-3">
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] text-muted-foreground mb-0.5">Your referral link</p>
+              <p className="text-xs text-muted-foreground mb-0.5">Your referral link</p>
               <p className="text-sm font-mono text-foreground truncate">{referralLink}</p>
             </div>
             <button
@@ -116,7 +116,7 @@ function ShareSheet({ open, onClose, affiliateCode, referralLink }: { open: bool
                 className="flex flex-col items-center justify-center gap-1.5 rounded-xl border border-border bg-muted/40 py-4 hover:bg-muted transition-all duration-150 active:scale-95"
               >
                 <Icon size={22} style={{ color: iconColor }} />
-                <span className="text-[11px] font-medium text-foreground leading-tight text-center">{label}</span>
+                <span className="text-sm font-medium text-foreground leading-tight text-center">{label}</span>
                 {copyOnly && <span className="text-[9px] text-muted-foreground">Copy link</span>}
               </button>
             ))}
@@ -146,13 +146,13 @@ function TierProgress({ tier, referrals }: { tier: string; referrals: number }) 
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center gap-1.5">
-          <Badge variant="outline" className={`text-[10px] px-2 py-0.5 ${TIER_STYLE[tier]}`}>{tier}</Badge>
+          <Badge variant="outline" className={`text-xs px-2 py-0.5 ${TIER_STYLE[tier]}`}>{tier}</Badge>
           <span className="text-muted-foreground">{referrals} referrals</span>
         </div>
         {nextTier && (
           <div className="flex items-center gap-1.5">
             <span className="text-muted-foreground">{remaining} to go</span>
-            <Badge variant="outline" className={`text-[10px] px-2 py-0.5 ${TIER_STYLE[nextTier]}`}>{nextTier}</Badge>
+            <Badge variant="outline" className={`text-xs px-2 py-0.5 ${TIER_STYLE[nextTier]}`}>{nextTier}</Badge>
           </div>
         )}
         {isElite && <span className="text-primary font-semibold text-xs">🏆 Maximum tier</span>}
@@ -164,7 +164,7 @@ function TierProgress({ tier, referrals }: { tier: string; referrals: number }) 
         />
       </div>
       {!isElite && (
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Reach <span className="font-semibold text-foreground">{TIER_STYLE[nextTier!] ? nextTier : ''}</span> tier to unlock higher commission rates
         </p>
       )}
@@ -367,11 +367,11 @@ export default function AffiliateDashboardPage() {
     <div className="w-full px-4 md:px-6 py-6 space-y-5">
 
       {/* ── Greeting ────────────────────────────────────────────────────── */}
-      <div className="space-y-0.5">
-        <h2 className="text-xl font-bold text-foreground">
+      <div className="space-y-1">
+        <h2 className="text-2xl font-bold text-foreground">
           {greeting}, {firstName}!
         </h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           Welcome back to your affiliate dashboard.
         </p>
       </div>
@@ -383,7 +383,7 @@ export default function AffiliateDashboardPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg font-bold text-foreground">Affiliate Dashboard</h1>
+                <h1 className="text-xl font-bold text-foreground">Affiliate Dashboard</h1>
                 {affiliate?.status && <AffiliateStatusBadge status={affiliate.status} />}
               </div>
               <p className="text-sm text-muted-foreground">
@@ -393,10 +393,10 @@ export default function AffiliateDashboardPage() {
             </div>
             {!isPending && (
               <div className="flex gap-2 shrink-0">
-                <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={() => setShareOpen(true)}>
+                <Button variant="outline" size="sm" className="gap-1.5 h-9 text-sm" onClick={() => setShareOpen(true)}>
                   <Share2 className="w-3.5 h-3.5" /> Share
                 </Button>
-                <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={() => setPayoutOpen(true)}>
+                <Button variant="outline" size="sm" className="gap-1.5 h-9 text-sm" onClick={() => setPayoutOpen(true)}>
                   <Receipt className="w-3.5 h-3.5" /> Payout History
                 </Button>
               </div>
@@ -434,11 +434,11 @@ export default function AffiliateDashboardPage() {
                   <Card key={label} className={`border-border ${highlight ? 'border-primary/50 bg-primary/5' : 'bg-card'}`}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{label}</p>
+                        <p className="text-sm text-muted-foreground font-medium uppercase tracking-wide">{label}</p>
                         <Icon className={`w-3.5 h-3.5 ${highlight ? 'text-primary' : 'text-muted-foreground'}`} />
                       </div>
-                      <p className={`text-xl font-bold tabular-nums ${highlight ? 'text-primary' : 'text-foreground'}`}>{value}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{sub}</p>
+                      <p className={`text-2xl font-bold tabular-nums ${highlight ? 'text-primary' : 'text-foreground'}`}>{value}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -447,12 +447,12 @@ export default function AffiliateDashboardPage() {
               {/* Trend chart */}
               <Card className="bg-card border-border">
                 <CardHeader className="px-5 pt-4 pb-0 flex-row items-center justify-between space-y-0">
-                  <CardTitle className="text-sm font-semibold text-foreground">Performance Trend</CardTitle>
+                  <CardTitle className="text-base font-semibold text-foreground">Performance Trend</CardTitle>
                   <Tabs value={chartRange} onValueChange={v => setChartRange(v as '7' | '30' | '90')}>
                     <TabsList className="h-7 text-xs">
-                      <TabsTrigger value="7"  className="h-5 text-[11px] px-2">7D</TabsTrigger>
-                      <TabsTrigger value="30" className="h-5 text-[11px] px-2">30D</TabsTrigger>
-                      <TabsTrigger value="90" className="h-5 text-[11px] px-2">90D</TabsTrigger>
+                      <TabsTrigger value="7"  className="h-5 text-sm px-2">7D</TabsTrigger>
+                      <TabsTrigger value="30" className="h-5 text-sm px-2">30D</TabsTrigger>
+                      <TabsTrigger value="90" className="h-5 text-sm px-2">90D</TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </CardHeader>
@@ -482,8 +482,8 @@ export default function AffiliateDashboardPage() {
                     </AreaChart>
                   </ResponsiveContainer>
                   <div className="flex items-center gap-4 justify-end mt-1 px-2">
-                    <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 rounded-full bg-primary" /><span className="text-[10px] text-muted-foreground">Referrals</span></div>
-                    <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 rounded-full bg-secondary" /><span className="text-[10px] text-muted-foreground">Clicks</span></div>
+                    <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 rounded-full bg-primary" /><span className="text-xs text-muted-foreground">Referrals</span></div>
+                    <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 rounded-full bg-secondary" /><span className="text-xs text-muted-foreground">Clicks</span></div>
                   </div>
                 </CardContent>
               </Card>
@@ -507,8 +507,8 @@ export default function AffiliateDashboardPage() {
               ) : (
                 <Card className="bg-card border-border">
                   <CardHeader className="px-5 py-4 pb-0 flex-row items-center justify-between space-y-0">
-                    <CardTitle className="text-sm font-semibold text-foreground">Recent Referrals</CardTitle>
-                    <Link href="/dashboard/referrals" className="text-xs text-primary hover:underline flex items-center gap-0.5 font-medium">
+                    <CardTitle className="text-base font-semibold text-foreground">Recent Referrals</CardTitle>
+                    <Link href="/portal/referrals" className="text-xs text-primary hover:underline flex items-center gap-0.5 font-medium">
                       View all <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                   </CardHeader>
@@ -539,7 +539,7 @@ export default function AffiliateDashboardPage() {
                       ))}
                     </div>
                     <div className="border-t border-border px-5 py-3">
-                      <Link href="/dashboard/referrals" className="flex items-center justify-center gap-1.5 text-sm text-primary hover:underline font-medium">
+                      <Link href="/portal/referrals" className="flex items-center justify-center gap-1.5 text-sm text-primary hover:underline font-medium">
                         View all {summary?.totalReferrals ?? 0} referrals <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                     </div>
@@ -554,7 +554,7 @@ export default function AffiliateDashboardPage() {
               {/* Next Steps */}
               <Card className="bg-primary/5 border-primary/20">
                 <CardHeader className="px-4 pt-4 pb-2 space-y-0">
-                  <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <CardTitle className="text-base font-semibold text-foreground flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-primary" /> Next Steps
                   </CardTitle>
                 </CardHeader>
@@ -565,7 +565,7 @@ export default function AffiliateDashboardPage() {
                     { num: 3, text: 'Earn commission once they deposit' },
                   ].map(({ num, text }) => (
                     <div key={num} className="flex items-start gap-2.5">
-                      <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">{num}</div>
+                      <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{num}</div>
                       <p className="text-xs text-foreground/80 leading-relaxed">{text}</p>
                     </div>
                   ))}
@@ -578,7 +578,7 @@ export default function AffiliateDashboardPage() {
               {/* Quick metrics */}
               <Card className="bg-card border-border">
                 <CardHeader className="px-4 pt-4 pb-2 space-y-0">
-                  <CardTitle className="text-sm font-semibold text-foreground">Quick Metrics</CardTitle>
+                  <CardTitle className="text-base font-semibold text-foreground">Quick Metrics</CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4 space-y-3">
                   {[
@@ -590,9 +590,9 @@ export default function AffiliateDashboardPage() {
                     <div key={label} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">{label}</span>
+                        <span className="text-sm text-muted-foreground">{label}</span>
                       </div>
-                      <span className="text-xs font-semibold tabular-nums text-foreground">{value}</span>
+                      <span className="text-base font-semibold tabular-nums text-foreground">{value}</span>
                     </div>
                   ))}
                 </CardContent>
@@ -601,7 +601,7 @@ export default function AffiliateDashboardPage() {
               {/* Referral links */}
               <Card className="bg-card border-border">
                 <CardHeader className="px-4 pt-4 pb-2 space-y-0">
-                  <CardTitle className="text-sm font-semibold text-foreground">Your Links</CardTitle>
+                  <CardTitle className="text-base font-semibold text-foreground">Your Links</CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4 space-y-2.5">
                   {[
@@ -609,9 +609,9 @@ export default function AffiliateDashboardPage() {
                     { label: 'Short link', text: `${BASE_URL}/ref/${affiliate?.affiliateCode ?? ''}` },
                   ].map(({ label, text }) => (
                     <div key={label} className="space-y-1">
-                      <p className="text-[10px] text-muted-foreground uppercase font-medium tracking-wide">{label}</p>
-                      <div className="flex items-center justify-between gap-2 rounded-lg bg-muted/60 border border-border px-3 py-1.5">
-                        <p className="text-[11px] font-mono text-foreground truncate">{text}</p>
+                      <p className="text-xs text-muted-foreground uppercase font-medium tracking-wide">{label}</p>
+                      <div className="flex items-center justify-between gap-2 rounded-lg bg-muted/60 border border-border px-3 py-2">
+                        <p className="text-sm font-mono text-foreground truncate">{text}</p>
                         <button
                           onClick={() => { navigator.clipboard.writeText(text); toast.success(`${label} copied!`); }}
                           className="shrink-0 text-primary hover:text-primary/80 transition-colors"
@@ -628,7 +628,7 @@ export default function AffiliateDashboardPage() {
               {affiliate?.campaign && (
                 <Card className="bg-card border-border">
                   <CardHeader className="px-4 pt-4 pb-2 space-y-0 flex-row items-center justify-between">
-                    <CardTitle className="text-sm font-semibold text-foreground">Active Campaign</CardTitle>
+                    <CardTitle className="text-base font-semibold text-foreground">Active Campaign</CardTitle>
                     {availableCampaigns.length > 1 && (
                       <button
                         onClick={() => setSwitcherOpen(true)}
@@ -661,7 +661,7 @@ export default function AffiliateDashboardPage() {
             <p className="text-sm text-muted-foreground">
               {summary?.available ? <><span className="font-semibold text-primary">{fmt(summary.available)}</span> available for next payout</> : 'No commissions available yet'}
             </p>
-            <Link href="/dashboard/commissions" className="text-sm text-primary hover:underline flex items-center gap-1 font-medium">
+            <Link href="/portal/commissions" className="text-sm text-primary hover:underline flex items-center gap-1 font-medium">
               Commission history <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
@@ -687,7 +687,7 @@ export default function AffiliateDashboardPage() {
               Payout history is shown in your full commission history.
             </p>
             <Link
-              href="/dashboard/commissions"
+              href="/portal/commissions"
               className="text-sm text-primary hover:underline font-medium flex items-center gap-1"
               onClick={() => setPayoutOpen(false)}
             >

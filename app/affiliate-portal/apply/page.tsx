@@ -448,7 +448,7 @@ export default function AffiliateApplyPage() {
       return;
     }
     affiliateApi.getMe().then((res) => {
-      if (res.data?.affiliate) router.replace('/dashboard');
+      if (res.data?.affiliate) router.replace('/portal');
     }).catch(() => {});
   }, [router]);
 

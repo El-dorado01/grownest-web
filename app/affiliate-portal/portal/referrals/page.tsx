@@ -1,4 +1,4 @@
-// app/affiliate-portal/dashboard/referrals/page.tsx
+// app/affiliate-portal/portal/referrals/page.tsx
 'use client';
 import { useState } from 'react';
 import useSWR from 'swr';
@@ -29,8 +29,8 @@ export default function ReferralsPage() {
     <div className="w-full px-4 md:px-6 py-6 space-y-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-foreground">Your Referrals</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Everyone who signed up using your affiliate link.</p>
+          <h1 className="text-2xl font-bold text-foreground">Your Referrals</h1>
+          <p className="text-base text-muted-foreground mt-1">Everyone who signed up using your affiliate link.</p>
         </div>
         <RefreshButton isRefreshing={isValidating && !isLoading} onRefresh={() => mutate()} />
       </div>
@@ -57,7 +57,7 @@ export default function ReferralsPage() {
       {/* Table */}
       <Card className="bg-card border-border overflow-hidden">
         <CardHeader className="px-5 py-4 border-b border-border space-y-0">
-          <CardTitle className="text-sm font-semibold text-foreground">All Referrals</CardTitle>
+          <CardTitle className="text-base font-semibold text-foreground">All Referrals</CardTitle>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
           {isLoading ? (
@@ -89,10 +89,10 @@ export default function ReferralsPage() {
                           <div className="w-7 h-7 rounded-full bg-accent flex items-center justify-center text-xs font-bold text-primary shrink-0">
                             {r.displayName.charAt(0)}
                           </div>
-                          <span className="font-medium text-foreground">{r.displayName}</span>
+                          <span className="font-medium text-foreground text-base">{r.displayName}</span>
                         </div>
                       </td>
-                      <td className="px-5 py-3 text-muted-foreground text-xs">
+                      <td className="px-5 py-3.5 text-muted-foreground text-sm">
                         {formatDistanceToNow(new Date(r.signedUpAt), { addSuffix: true })}
                       </td>
                       <td className="px-5 py-3">

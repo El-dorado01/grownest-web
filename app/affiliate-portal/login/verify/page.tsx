@@ -31,8 +31,8 @@ function Verify2FAContent() {
   const { requires2FA, pendingUserId } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Honour ?redirect= if present, otherwise default to /dashboard
-  const redirectTo = searchParams.get("redirect") || "/dashboard";
+  // Honour ?redirect= if present, otherwise default to /portal
+  const redirectTo = searchParams.get("redirect") || "/portal";
 
   const [code, setCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);

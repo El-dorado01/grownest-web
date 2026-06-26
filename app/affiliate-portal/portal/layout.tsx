@@ -1,4 +1,4 @@
-// app/affiliate-portal/dashboard/layout.tsx
+// app/affiliate-portal/portal/layout.tsx
 // Auth + affiliate guard:
 //   No token → /login?redirect=/dashboard
 //   Token but no affiliate → /apply  (new user, needs to apply first)

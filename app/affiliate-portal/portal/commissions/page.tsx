@@ -1,4 +1,4 @@
-// app/affiliate-portal/dashboard/commissions/page.tsx
+// app/affiliate-portal/portal/commissions/page.tsx
 'use client';
 import useSWR from 'swr';
 import { useState } from 'react';
@@ -44,8 +44,8 @@ export default function CommissionsPage() {
     <div className="w-full px-4 md:px-6 py-6 space-y-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-foreground">Commission History</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">A record of every commission you've earned.</p>
+          <h1 className="text-2xl font-bold text-foreground">Commission History</h1>
+          <p className="text-base text-muted-foreground mt-1">A record of every commission you've earned.</p>
         </div>
         <RefreshButton isRefreshing={isValidating && !isLoading} onRefresh={() => mutate()} />
       </div>
@@ -120,13 +120,13 @@ export default function CommissionsPage() {
                           {cfg.label}
                         </Badge>
                       </td>
-                      <td className="px-5 py-3 text-muted-foreground text-xs">
+                      <td className="px-5 py-4 text-muted-foreground text-sm">
                         {format(new Date(c.pendingSince), 'dd MMM yyyy')}
                       </td>
-                      <td className="px-5 py-3 text-muted-foreground text-xs">
+                      <td className="px-5 py-4 text-muted-foreground text-sm">
                         {format(new Date(c.availableAt), 'dd MMM yyyy')}
                       </td>
-                      <td className="px-5 py-3 text-muted-foreground text-xs">
+                      <td className="px-5 py-4 text-muted-foreground text-sm">
                         {c.paidAt ? format(new Date(c.paidAt), 'dd MMM yyyy') : '—'}
                       </td>
                     </tr>

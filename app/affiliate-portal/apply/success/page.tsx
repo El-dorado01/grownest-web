@@ -14,7 +14,7 @@ export default function AffiliateApplySuccessPage() {
           and get back to you within 48 hours.
         </p>
         <Button asChild className="w-full min-h-[44px]">
-          <Link href="/dashboard/application">View My Application</Link>
+          <Link href="/portal/application">View My Application</Link>
         </Button>
       </div>
     </div>

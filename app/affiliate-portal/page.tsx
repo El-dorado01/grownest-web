@@ -115,7 +115,7 @@ export default function AffiliateLandingPage() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/15 hover:text-white min-h-13 px-8 bg-white/10 backdrop-blur-sm">
-                <Link href="/login?redirect=/dashboard">
+                <Link href="/login?redirect=/portal">
                   Get Started
                 </Link>
               </Button>
@@ -338,7 +338,7 @@ export default function AffiliateLandingPage() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 hover:text-white min-h-13 px-8 bg-transparent">
-              <Link href="/login?redirect=/dashboard">
+              <Link href="/login?redirect=/portal">
                 Log in first
               </Link>
             </Button>

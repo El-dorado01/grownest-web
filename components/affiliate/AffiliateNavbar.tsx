@@ -136,7 +136,7 @@ export function AffiliateNavbar() {
               // Logged-out state: Log in + Apply Now
               <>
                 <Link
-                  href="/login?redirect=/dashboard"
+                  href="/login?redirect=/portal"
                   className={cn(
                     "text-sm font-medium transition-colors duration-200",
                     scrolled ? "text-foreground/70 hover:text-foreground" : "text-white/80 hover:text-white drop-shadow"
@@ -145,7 +145,7 @@ export function AffiliateNavbar() {
                   Log in
                 </Link>
                 <Link
-                  href="/login?redirect=/dashboard"
+                  href="/login?redirect=/portal"
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold shadow-md transition-all duration-150 active:scale-95",
                     scrolled
@@ -200,7 +200,7 @@ export function AffiliateNavbar() {
                       <p className="px-4 py-1 text-sm font-semibold text-foreground">Hi, {firstName} 👋</p>
                     )}
                     <Link
-                      href="/dashboard"
+                      href="/portal"
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center justify-center gap-1.5 rounded-full bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
                     >
@@ -216,14 +216,14 @@ export function AffiliateNavbar() {
                 ) : (
                   <>
                     <Link
-                      href="/login?redirect=/dashboard"
+                      href="/login?redirect=/portal"
                       onClick={() => setMobileOpen(false)}
                       className="rounded-xl px-4 py-2.5 text-sm font-medium text-foreground/80 hover:bg-muted hover:text-foreground transition-colors"
                     >
                       Log in
                     </Link>
                     <Link
-                      href="/login?redirect=/dashboard"
+                      href="/login?redirect=/portal"
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center justify-center gap-1.5 rounded-full bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
                     >

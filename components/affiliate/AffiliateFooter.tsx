@@ -6,7 +6,7 @@ const LINKS = {
   Affiliate: [
     { label: "How it works",       href: "/#how-it-works" },
     { label: "Apply Now",          href: "/login?redirect=/apply" },
-    { label: "Affiliate Dashboard",href: "/login?redirect=/dashboard" },
+    { label: "Affiliate Dashboard",href: "/login?redirect=/portal" },
     { label: "Partner Tiers",      href: "/#tiers" },
   ],
   GrowNest: [
