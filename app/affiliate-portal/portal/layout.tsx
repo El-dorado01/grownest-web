@@ -20,7 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     // Gate 1: no token → login
     if (!token) {
-      window.location.replace('/login?redirect=/dashboard');
+      window.location.replace('/login?redirect=/portal');
       return;
     }
 

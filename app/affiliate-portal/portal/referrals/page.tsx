@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, TrendingUp, CheckCircle2, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { RefreshButton } from '@/components/affiliate/RefreshButton';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(n);
@@ -16,7 +17,7 @@ const fmt = (n: number) =>
 
 export default function ReferralsPage() {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useSWR(`affiliate/referrals/${page}`, () => affiliateApi.getReferrals(page));
+  const { data, isLoading, isValidating, mutate } = useSWR(`affiliate/referrals/${page}`, () => affiliateApi.getReferrals(page));
 
   const referrals = data?.data?.referrals ?? [];
   const total     = data?.data?.total     ?? 0;
@@ -26,9 +27,12 @@ export default function ReferralsPage() {
 
   return (
     <div className="w-full px-4 md:px-6 py-6 space-y-5">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Your Referrals</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Everyone who signed up using your affiliate link.</p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Your Referrals</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Everyone who signed up using your affiliate link.</p>
+        </div>
+        <RefreshButton isRefreshing={isValidating && !isLoading} onRefresh={() => mutate()} />
       </div>
 
       {/* Summary cards */}

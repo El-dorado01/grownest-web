@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Banknote, Clock, CheckCircle2, Receipt } from 'lucide-react';
 import { format } from 'date-fns';
+import { RefreshButton } from '@/components/affiliate/RefreshButton';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(n);
@@ -26,7 +27,7 @@ const [filterOptions] = [['all', 'Pending', 'Available', 'Paid', 'Reversed']];
 
 export default function CommissionsPage() {
   const [filter, setFilter] = useState('all');
-  const { data, isLoading } = useSWR('affiliate/commissions', () => affiliateApi.getCommissions());
+  const { data, isLoading, isValidating, mutate } = useSWR('affiliate/commissions', () => affiliateApi.getCommissions());
 
   const allCommissions = data?.data?.commissions ?? [];
   const commissions = filter === 'all'
@@ -41,9 +42,12 @@ export default function CommissionsPage() {
 
   return (
     <div className="w-full px-4 md:px-6 py-6 space-y-5">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Commission History</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">A record of every commission you've earned.</p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Commission History</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">A record of every commission you've earned.</p>
+        </div>
+        <RefreshButton isRefreshing={isValidating && !isLoading} onRefresh={() => mutate()} />
       </div>
 
       {/* Summary cards */}

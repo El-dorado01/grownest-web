@@ -1,6 +1,6 @@
 // app/affiliate-portal/dashboard/application/page.tsx
 'use client';
-import useSWR, { mutate } from 'swr';
+import useSWR from 'swr';
 import { useState } from 'react';
 import { affiliateApi } from '@/lib/affiliate-api';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { EditApplicationSheet } from '@/components/affiliate/EditApplicationSheet';
+import { RefreshButton } from '@/components/affiliate/RefreshButton';
 import {
   CheckCircle2, ShieldX, Calendar, FileText,
   ExternalLink, ImageIcon, Users, Megaphone,
@@ -213,7 +214,7 @@ function PlatformCard({ handle }: { handle: any }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function ApplicationStatusPage() {
-  const { data, isLoading } = useSWR('affiliate/me', () => affiliateApi.getMe());
+  const { data, isLoading, isValidating, mutate } = useSWR('affiliate/me', () => affiliateApi.getMe());
   const affiliate = data?.data?.affiliate;
 
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -227,7 +228,7 @@ export default function ApplicationStatusPage() {
       toast.error(typeof res.error === 'string' ? res.error : 'Failed to delete application');
     } else {
       toast.success('Application deleted. You may re-apply at any time.');
-      await mutate('affiliate/me');
+      await mutate();
       window.location.replace('/apply');
     }
     setDeleting(false);
@@ -275,6 +276,8 @@ export default function ApplicationStatusPage() {
           <h1 className="text-xl font-bold text-foreground">My Application</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Full details of your affiliate program application.</p>
         </div>
+        <RefreshButton isRefreshing={isValidating && !isLoading} onRefresh={() => mutate()} />
+      </div>
         {/* Only PENDING applications can be edited or deleted */}
         {isPending && (
           <div className="flex gap-2 shrink-0">
@@ -297,7 +300,7 @@ export default function ApplicationStatusPage() {
           </div>
         )}
         {/* REJECTED — offer to re-apply */}
-        {affiliate.status === 'REJECTED' && (
+        {affiliate?.status === 'REJECTED' && (
           <Button size="sm" className="h-8 text-xs" onClick={() => window.location.replace('/apply')}>
             Re-apply
           </Button>
