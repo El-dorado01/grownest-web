@@ -1354,7 +1354,7 @@ function BasketsPageContent() {
           ))}
 
         {directSubPlan &&
-          (isDirectCheckoutOpen ? (
+          (!isMobile ? (
             <Dialog
               open={isDirectCheckoutOpen}
               onOpenChange={setIsDirectCheckoutOpen}
