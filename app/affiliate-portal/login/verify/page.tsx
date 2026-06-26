@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { authApi } from "@/lib/auth-api";
@@ -20,6 +20,14 @@ import { toast } from "sonner";
 import Image from "next/image";
 
 export default function AffiliateVerify2FAPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[calc(100vh-57px)] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+      <Verify2FAContent />
+    </Suspense>
+  );
+}
+
+function Verify2FAContent() {
   const { requires2FA, pendingUserId } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
