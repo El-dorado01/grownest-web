@@ -26,6 +26,7 @@ import { FaWhatsapp, FaTwitter, FaFacebook, FaInstagram, FaTiktok, FaTelegram } 
 import { toast } from 'sonner';
 import { format, subDays } from 'date-fns';
 import { useProfile } from '@/hooks/use-profile';
+import { CampaignUpgradeDialog, CampaignSwitcherSheet } from '@/components/affiliate/CampaignSwitcher';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 const fmt = (n: number) =>
@@ -173,15 +174,17 @@ function TierProgress({ tier, referrals }: { tier: string; referrals: number }) 
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function AffiliateDashboardPage() {
-  const { data: meData,      isLoading: meLoading }      = useSWR('affiliate/me',             () => affiliateApi.getMe());
-  const { data: summaryData, isLoading: summaryLoading } = useSWR('affiliate/earnings-summary', () => affiliateApi.getEarningsSummary());
-  const { data: referralsData }                          = useSWR('affiliate/referrals/1',     () => affiliateApi.getReferrals(1));
+  const { data: meData,         isLoading: meLoading,  mutate: mutateMe }   = useSWR('affiliate/me',             () => affiliateApi.getMe());
+  const { data: summaryData,    isLoading: summaryLoading }                   = useSWR('affiliate/earnings-summary', () => affiliateApi.getEarningsSummary());
+  const { data: referralsData }                                              = useSWR('affiliate/referrals/1',     () => affiliateApi.getReferrals(1));
+  const { data: campaignsData, mutate: mutateCampaigns }                    = useSWR('affiliate/campaigns/available', () => affiliateApi.getAvailableCampaigns());
 
   const { profile } = useProfile();
   const isMobile = useIsMobile();
-  const [shareOpen,  setShareOpen]  = useState(false);
-  const [payoutOpen, setPayoutOpen] = useState(false);
-  const [chartRange, setChartRange] = useState<'7' | '30' | '90'>('30');
+  const [shareOpen,     setShareOpen]     = useState(false);
+  const [payoutOpen,    setPayoutOpen]    = useState(false);
+  const [switcherOpen,  setSwitcherOpen]  = useState(false);
+  const [chartRange,    setChartRange]    = useState<'7' | '30' | '90'>('30');
 
   // Time-based greeting
   const greeting = (() => {
@@ -195,10 +198,16 @@ export default function AffiliateDashboardPage() {
   // First name from fullName (e.g. "Taiwo Sunday" → "Taiwo")
   const firstName = profile?.fullName?.split(' ')[0] ?? profile?.email?.split('@')[0] ?? 'there';
 
-  const affiliate = meData?.data?.affiliate;
-  const summary   = summaryData?.data;
-  const referrals = referralsData?.data?.referrals ?? [];
-  const isPending = affiliate?.status === 'PENDING';
+  const affiliate         = meData?.data?.affiliate;
+  const summary           = summaryData?.data;
+  const referrals         = referralsData?.data?.referrals ?? [];
+  const availableCampaigns = campaignsData?.data?.campaigns ?? [];
+  const isPending         = affiliate?.status === 'PENDING';
+
+  const handleCampaignSwitched = () => {
+    void mutateMe();
+    void mutateCampaigns();
+  };
 
   const BASE_URL     = process.env.NEXT_PUBLIC_APP_URL ?? 'https://grownest.africa';
   const referralLink = `${BASE_URL}/signup?ref=${affiliate?.affiliateCode ?? ''}`;
@@ -618,8 +627,16 @@ export default function AffiliateDashboardPage() {
               {/* Campaign */}
               {affiliate?.campaign && (
                 <Card className="bg-card border-border">
-                  <CardHeader className="px-4 pt-4 pb-2 space-y-0">
+                  <CardHeader className="px-4 pt-4 pb-2 space-y-0 flex-row items-center justify-between">
                     <CardTitle className="text-sm font-semibold text-foreground">Active Campaign</CardTitle>
+                    {availableCampaigns.length > 1 && (
+                      <button
+                        onClick={() => setSwitcherOpen(true)}
+                        className="text-xs text-primary hover:underline font-medium flex items-center gap-0.5"
+                      >
+                        Change <ChevronRight className="w-3 h-3" />
+                      </button>
+                    )}
                   </CardHeader>
                   <CardContent className="px-4 pb-4 space-y-2">
                     <p className="text-sm font-bold text-primary">{affiliate?.campaign?.name}</p>
@@ -679,6 +696,26 @@ export default function AffiliateDashboardPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Campaign upgrade dialog — auto-shown when a better campaign is available */}
+      {affiliate && !isPending && (
+        <CampaignUpgradeDialog
+          affiliate={affiliate}
+          availableCampaigns={availableCampaigns}
+          onSwitched={handleCampaignSwitched}
+        />
+      )}
+
+      {/* Campaign switcher sheet — manual, triggered by "Change" in campaign card */}
+      {affiliate && !isPending && (
+        <CampaignSwitcherSheet
+          open={switcherOpen}
+          onClose={() => setSwitcherOpen(false)}
+          affiliate={affiliate}
+          availableCampaigns={availableCampaigns}
+          onSwitched={handleCampaignSwitched}
+        />
+      )}
     </div>
   );
 }
