@@ -1,7 +1,3 @@
-// app/affiliate-portal/login/page.tsx
-// Affiliate portal login — reuses the main LoginForm (Google OAuth, 2FA, forgot password).
-// All entry points to this page include ?redirect=/dashboard so LoginForm always
-// sends users to the dashboard after a successful login, not the landing page.
 import { LoginForm } from "@/components/login-form";
 import Image from "next/image";
 import Link from "next/link";
@@ -27,9 +23,6 @@ export default function AffiliateLoginPage() {
         </p>
       </div>
 
-      {/* Full LoginForm — Google OAuth, 2FA, forgot password all wired in.
-          ?redirect=/dashboard is set by all entry links so LoginForm routes
-          users to the dashboard (not the landing page) after login. */}
       <LoginForm />
 
       <p className="text-center text-xs text-muted-foreground mt-6">

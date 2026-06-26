@@ -112,7 +112,7 @@ export function AffiliateNavbar() {
                   </span>
                 )}
                 <Link
-                  href="/dashboard"
+                  href="/portal"
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150 active:scale-95",
                     scrolled

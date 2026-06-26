@@ -278,6 +278,7 @@ export default function ApplicationStatusPage() {
         </div>
         <RefreshButton isRefreshing={isValidating && !isLoading} onRefresh={() => mutate()} />
       </div>
+      <div className="flex items-center justify-between gap-3">
         {/* Only PENDING applications can be edited or deleted */}
         {isPending && (
           <div className="flex gap-2 shrink-0">

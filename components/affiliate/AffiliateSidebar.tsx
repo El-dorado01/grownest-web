@@ -19,10 +19,10 @@ import { NavUser } from '@/components/nav-user';
 import { useProfile } from '@/hooks/use-profile';
 
 const NAV = [
-  { label: 'Dashboard',      href: '/dashboard',             icon: LayoutDashboard },
-  { label: 'Referrals',      href: '/dashboard/referrals',   icon: Users },
-  { label: 'Commissions',    href: '/dashboard/commissions',  icon: Receipt },
-  { label: 'My Application', href: '/dashboard/application',  icon: FileSearch },
+  { label: 'Dashboard',      href: '/portal',             icon: LayoutDashboard },
+  { label: 'Referrals',      href: '/portal/referrals',   icon: Users },
+  { label: 'Commissions',    href: '/portal/commissions',  icon: Receipt },
+  { label: 'My Application', href: '/portal/application',  icon: FileSearch },
 ];
 
 export function AffiliateSidebar() {
@@ -30,7 +30,7 @@ export function AffiliateSidebar() {
   const { profile } = useProfile();
 
   const clean = pathname.replace(/^\/affiliate-portal/, '') || '/';
-  const isActive = (href: string) => href === '/dashboard' ? clean === '/dashboard' : clean.startsWith(href);
+  const isActive = (href: string) => href === '/portal' ? clean === '/portal' : clean.startsWith(href);
 
   const user = {
     name:   profile?.fullName  ?? profile?.email ?? 'Affiliate',
