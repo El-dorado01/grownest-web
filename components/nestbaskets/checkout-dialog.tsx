@@ -765,7 +765,7 @@ export function CheckoutDialog({
                 <div className="border-t border-border/40 px-5 pt-3 pb-2 shrink-0">
                   <Button
                     onClick={() => setStep("checkout")}
-                    disabled={isDeliveryInvalid || isPickupInvalid}
+                    disabled={isFeeLoading || isDeliveryInvalid || isPickupInvalid}
                     className="w-full h-11 rounded-xl font-bold"
                   >
                     Proceed to Checkout

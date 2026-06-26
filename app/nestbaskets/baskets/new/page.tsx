@@ -688,6 +688,11 @@ function CustomBasketBuilderPageContent() {
             setSelectedProfileId={setSelectedProfileId}
             updateQuantity={updateQuantity}
             onProceedToCheckout={() => setIsCheckoutOpen(true)}
+            branches={branches}
+            deliveryOption={deliveryOption}
+            setDeliveryOption={setDeliveryOption}
+            pickupBranchId={pickupBranchId}
+            setPickupBranchId={setPickupBranchId}
           />
         </div>
 
