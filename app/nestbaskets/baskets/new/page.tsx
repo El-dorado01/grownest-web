@@ -29,14 +29,26 @@ import {
   Check,
 } from "lucide-react"
 import { nestBasketsApi } from "@/lib/nestbaskets-api"
-import { FoodItem } from "@/types/nestbaskets"
+import { FoodItem, CreateCustomPlanRequest, SubscribeRequest } from "@/types/nestbaskets"
 import useSWR from "swr"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer"
 import { useIsMobile } from "@/hooks/use-mobile"
 
 // Sub-components
@@ -44,8 +56,10 @@ import { CatalogHeader } from "@/components/nestbaskets/catalog-header"
 import { FoodItemCard } from "@/components/nestbaskets/food-item-card"
 import { BasketSummary } from "@/components/nestbaskets/basket-summary"
 import { CheckoutDialog } from "@/components/nestbaskets/checkout-dialog"
-import { getCategoryForFoodItem, formatCurrency } from "@/components/nestbaskets/utils"
-
+import {
+  getCategoryForFoodItem,
+  formatCurrency,
+} from "@/components/nestbaskets/utils"
 
 const CUSTOM_CART_STORAGE_KEY = "nestbaskets-custom-cart"
 
@@ -62,37 +76,39 @@ function CustomBasketBuilderPageContent() {
   const [selectedCategory, setSelectedCategory] = React.useState<string>("all")
   const [isCheckoutOpen, setIsCheckoutOpen] = React.useState(false)
   const [basketTitle, setBasketTitle] = React.useState("")
-  const [paymentType, setPaymentType] = React.useState<"subscription" | "flexible">("subscription")
-  
+  const [paymentType, setPaymentType] = React.useState<
+    "subscription" | "flexible"
+  >("subscription")
+
   // Checkout configurations
   const [selectedProfileId, setSelectedProfileId] = React.useState("")
-  const [subFreq, setSubFreq] = React.useState<"weekly" | "monthly" | "quarterly" | "yearly">("monthly")
+  const [subFreq, setSubFreq] = React.useState<
+    "weekly" | "monthly" | "quarterly" | "yearly"
+  >("monthly")
   const [flexibleMonths, setFlexibleMonths] = React.useState(3)
   const [enableAutoPay, setEnableAutoPay] = React.useState(false)
-  const [autoPayFreq, setAutoPayFreq] = React.useState<"daily" | "weekly" | "biweekly" | "monthly">("monthly")
+  const [autoPayFreq, setAutoPayFreq] = React.useState<
+    "daily" | "weekly" | "biweekly" | "monthly"
+  >("monthly")
   const [autoPayAmount, setAutoPayAmount] = React.useState("")
 
   // Option B states
   const [fundNow, setFundNow] = React.useState(false)
-  const [fundingMode, setFundingMode] = React.useState<"full" | "custom">("full")
+  const [fundingMode, setFundingMode] = React.useState<"full" | "custom">(
+    "full"
+  )
   const [initialDepositAmount, setInitialDepositAmount] = React.useState("")
+  const [deliveryOption, setDeliveryOption] = React.useState<"delivery" | "pickup">("delivery")
+  const [pickupBranchId, setPickupBranchId] = React.useState("")
 
   // Success dialog states
   const [isSuccessOpen, setIsSuccessOpen] = React.useState(false)
   const [createdPlanId, setCreatedPlanId] = React.useState("")
   const [createdPlanTitle, setCreatedPlanTitle] = React.useState("")
-  const [createdPlanType, setCreatedPlanType] = React.useState<"subscription" | "flexible">("flexible")
+  const [createdPlanType, setCreatedPlanType] = React.useState<
+    "subscription" | "flexible"
+  >("flexible")
   const [actualFundedAmount, setActualFundedAmount] = React.useState(0)
-
-  // Reset/Clear PIN and Option B states when the checkout dialog is loaded/opened
-  React.useEffect(() => {
-    if (isCheckoutOpen) {
-      setPinValue("")
-      setFundNow(false)
-      setFundingMode("full")
-      setInitialDepositAmount("")
-    }
-  }, [isCheckoutOpen])
 
   // Security Verification
   const [pinValue, setPinValue] = React.useState("")
@@ -102,8 +118,9 @@ function CustomBasketBuilderPageContent() {
   const [visibleCount, setVisibleCount] = React.useState(12)
 
   // SWR for Inventory
-  const { data: foodRes, isLoading: isInventoryLoading } = useSWR("food-items", () =>
-    nestBasketsApi.getFoodItems()
+  const { data: foodRes, isLoading: isInventoryLoading } = useSWR(
+    "food-items",
+    () => nestBasketsApi.getFoodItems()
   )
 
   // SWR for Predefined plan when cloning
@@ -113,15 +130,19 @@ function CustomBasketBuilderPageContent() {
   )
 
   // SWR for Delivery profiles
-  const { data: profilesRes } = useSWR(
-    "delivery-profiles",
-    () => nestBasketsApi.getDeliveryProfiles()
+  const { data: profilesRes } = useSWR("delivery-profiles", () =>
+    nestBasketsApi.getDeliveryProfiles()
   )
 
+  // SWR for Pickup branches
+  const { data: branchesRes } = useSWR("pickup-branches", () =>
+    nestBasketsApi.getPickupBranches()
+  )
+  const branches = branchesRes?.data?.data ?? []
+
   // SWR for Delivery zones
-  const { data: zonesRes } = useSWR(
-    "delivery-zones",
-    () => nestBasketsApi.getDeliveryZones()
+  const { data: zonesRes } = useSWR("delivery-zones", () =>
+    nestBasketsApi.getDeliveryZones()
   )
 
   const foodItems = foodRes?.data?.data ?? []
@@ -154,7 +175,10 @@ function CustomBasketBuilderPageContent() {
       if (Object.keys(quantities).length === 0) {
         localStorage.removeItem(CUSTOM_CART_STORAGE_KEY)
       } else {
-        localStorage.setItem(CUSTOM_CART_STORAGE_KEY, JSON.stringify(quantities))
+        localStorage.setItem(
+          CUSTOM_CART_STORAGE_KEY,
+          JSON.stringify(quantities)
+        )
       }
     } catch {
       // Ignore storage errors (e.g. private browsing quota)
@@ -187,6 +211,22 @@ function CustomBasketBuilderPageContent() {
     }
   }, [profilesRes, defaultProfile, profiles])
 
+  // Reset/Clear PIN and Option B states when the checkout dialog is loaded/opened
+  React.useEffect(() => {
+    if (isCheckoutOpen) {
+      setPinValue("")
+      setFundNow(false)
+      setFundingMode("full")
+      setInitialDepositAmount("")
+      setDeliveryOption("delivery")
+      if (branches.length > 0) {
+        setPickupBranchId(branches[0].id)
+      } else {
+        setPickupBranchId("")
+      }
+    }
+  }, [isCheckoutOpen, branches])
+
   // Calculate live statistics
   const selectedItemsList = React.useMemo(() => {
     return Object.entries(quantities)
@@ -194,7 +234,10 @@ function CustomBasketBuilderPageContent() {
         const item = foodItems.find((f) => f.id === id)
         return item ? { item, quantity: qty } : null
       })
-      .filter((i): i is { item: typeof foodItems[0]; quantity: number } => i !== null)
+      .filter(
+        (i): i is { item: (typeof foodItems)[0]; quantity: number } =>
+          i !== null
+      )
   }, [quantities, foodItems])
 
   const subtotal = React.useMemo(() => {
@@ -215,6 +258,10 @@ function CustomBasketBuilderPageContent() {
 
   React.useEffect(() => {
     const fetchFee = async () => {
+      if (deliveryOption === "pickup") {
+        setDeliveryFee(0)
+        return
+      }
       const activeProfile = profiles.find((p) => p.id === selectedProfileId)
       if (selectedItemsList.length === 0) {
         setDeliveryFee(0)
@@ -227,10 +274,14 @@ function CustomBasketBuilderPageContent() {
         const cityName = (activeProfile?.city || "").toLowerCase().trim()
         const matchedZone = zones.find((z) => {
           const zn = z.name.toLowerCase()
-          return (cityName && (zn.includes(cityName) || cityName.includes(zn))) ||
-                 (stateName && (zn.includes(stateName) || stateName.includes(zn)))
+          return (
+            (cityName && (zn.includes(cityName) || cityName.includes(zn))) ||
+            (stateName && (zn.includes(stateName) || stateName.includes(zn)))
+          )
         })
-        const otherStateZone = zones.find((z) => z.name.toLowerCase().includes("other"))
+        const otherStateZone = zones.find((z) =>
+          z.name.toLowerCase().includes("other")
+        )
         zoneId = matchedZone?.id || otherStateZone?.id || zones[0]?.id
       }
 
@@ -261,7 +312,7 @@ function CustomBasketBuilderPageContent() {
     }
 
     fetchFee()
-  }, [selectedProfileId, selectedItemsList, profiles, zones])
+  }, [selectedProfileId, selectedItemsList, profiles, zones, deliveryOption])
 
   const totalCost = subtotal + deliveryFee
 
@@ -280,7 +331,9 @@ function CustomBasketBuilderPageContent() {
 
   // Curation Filters
   const uniqueBrands = React.useMemo<string[]>(() => {
-    const brands = new Set(foodItems.map((f) => f.brand).filter((b): b is string => !!b))
+    const brands = new Set(
+      foodItems.map((f) => f.brand).filter((b): b is string => !!b)
+    )
     return ["all", ...Array.from(brands)]
   }, [foodItems])
 
@@ -288,12 +341,15 @@ function CustomBasketBuilderPageContent() {
     return foodItems.filter((item: FoodItem) => {
       const matchesSearch =
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.brand && item.brand.toLowerCase().includes(searchQuery.toLowerCase()))
-      const matchesBrand = selectedBrand === "all" || item.brand === selectedBrand
-      
+        (item.brand &&
+          item.brand.toLowerCase().includes(searchQuery.toLowerCase()))
+      const matchesBrand =
+        selectedBrand === "all" || item.brand === selectedBrand
+
       const itemCategory = getCategoryForFoodItem(item)
-      const matchesCategory = selectedCategory === "all" || itemCategory === selectedCategory
-      
+      const matchesCategory =
+        selectedCategory === "all" || itemCategory === selectedCategory
+
       return matchesSearch && matchesBrand && matchesCategory && item.isActive
     })
   }, [foodItems, searchQuery, selectedBrand, selectedCategory])
@@ -315,7 +371,9 @@ function CustomBasketBuilderPageContent() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + 12, filteredFoodItems.length))
+          setVisibleCount((prev) =>
+            Math.min(prev + 12, filteredFoodItems.length)
+          )
         }
       },
       { threshold: 0.1, rootMargin: "100px" }
@@ -338,8 +396,12 @@ function CustomBasketBuilderPageContent() {
       toast.error("Please add at least one item to your basket")
       return
     }
-    if (!selectedProfileId) {
+    if (deliveryOption === "delivery" && !selectedProfileId) {
       toast.error("Please select a delivery address")
+      return
+    }
+    if (deliveryOption === "pickup" && !pickupBranchId) {
+      toast.error("Please select a pickup branch")
       return
     }
     if (pinValue.length !== 4) {
@@ -358,18 +420,35 @@ function CustomBasketBuilderPageContent() {
       const expiresDate = new Date()
       expiresDate.setMonth(expiresDate.getMonth() + flexibleMonths)
 
-      const createPayload = {
+      const createPayload: CreateCustomPlanRequest = {
         title: basketTitle,
         items: planItems,
         paymentType,
-        deliveryProfileId: selectedProfileId,
-        savingExpiresAt: paymentType === "flexible" ? expiresDate.toISOString() : undefined,
+        deliveryOption,
+      }
+
+      if (deliveryOption === "delivery") {
+        createPayload.deliveryProfileId = selectedProfileId
+      } else {
+        createPayload.pickupBranchId = pickupBranchId
+      }
+
+      if (paymentType === "flexible") {
+        createPayload.savingExpiresAt = expiresDate.toISOString()
       }
 
       const createRes = await nestBasketsApi.createCustomPlan(createPayload)
 
-      if (createRes.error || !createRes.data?.success || !createRes.data?.data?.customPlan) {
-        throw new Error(createRes.data?.message || createRes.error || "Failed to establish custom plan configuration")
+      if (
+        createRes.error ||
+        !createRes.data?.success ||
+        !createRes.data?.data?.customPlan
+      ) {
+        throw new Error(
+          createRes.data?.message ||
+            createRes.error ||
+            "Failed to establish custom plan configuration"
+        )
       }
 
       const customPlan = createRes.data.data.customPlan
@@ -385,15 +464,41 @@ function CustomBasketBuilderPageContent() {
 
       // 2. Perform Transaction Checkout depending on Payment Type
       if (paymentType === "subscription") {
-        const subRes = await nestBasketsApi.subscribeToPlan({
+        const subscribePayload: SubscribeRequest = {
           customPlanId: customPlan.id,
           frequency: subFreq,
-          useDefaultDelivery: true,
           pin: pinValue,
-        })
+          deliveryOption,
+        }
+
+        if (deliveryOption === "delivery") {
+          subscribePayload.useDefaultDelivery = (selectedProfileId === defaultProfile?.id)
+          if (!subscribePayload.useDefaultDelivery) {
+            const activeProfile = profiles.find((p) => p.id === selectedProfileId)
+            if (activeProfile) {
+              subscribePayload.deliveryOverride = {
+                fullName: activeProfile.fullName,
+                phone: activeProfile.phone,
+                address: activeProfile.address,
+                city: activeProfile.city,
+                state: activeProfile.state,
+                landmark: activeProfile.landmark || undefined,
+                notes: activeProfile.notes || undefined,
+              }
+            }
+          }
+        } else {
+          subscribePayload.pickupBranchId = pickupBranchId
+        }
+
+        const subRes = await nestBasketsApi.subscribeToPlan(subscribePayload)
 
         if (subRes.error || !subRes.data?.success) {
-          throw new Error(subRes.data?.message || subRes.error || "Failed to activate subscription")
+          throw new Error(
+            subRes.data?.message ||
+              subRes.error ||
+              "Failed to activate subscription"
+          )
         }
 
         toast.success(`Successfully subscribed to custom plan: ${basketTitle}`)
@@ -407,12 +512,17 @@ function CustomBasketBuilderPageContent() {
             pin: pinValue,
           })
           if (autoPaySetupRes.error || !autoPaySetupRes.data?.success) {
-            toast.warning("Goal created, but Auto-Pay setup failed. You can re-enable it in your goal details page.")
+            toast.warning(
+              "Goal created, but Auto-Pay setup failed. You can re-enable it in your goal details page."
+            )
           }
         }
 
         if (fundNow) {
-          const depositVal = fundingMode === "full" ? totalCost : parseFloat(initialDepositAmount)
+          const depositVal =
+            fundingMode === "full"
+              ? totalCost
+              : parseFloat(initialDepositAmount)
           try {
             const payRes = await nestBasketsApi.makeFlexiblePayment({
               customPlanId: customPlan.id,
@@ -421,15 +531,26 @@ function CustomBasketBuilderPageContent() {
             })
             if (payRes.data?.success) {
               funded = depositVal
-              toast.success(`Deposit of ${formatCurrency(depositVal)} successful!`)
+              toast.success(
+                `Deposit of ${formatCurrency(depositVal)} successful!`
+              )
             } else {
-              toast.error(payRes.data?.message || payRes.error || "Initial deposit transaction failed")
+              toast.error(
+                payRes.data?.message ||
+                  payRes.error ||
+                  "Initial deposit transaction failed"
+              )
             }
           } catch (payErr: any) {
-            toast.error(payErr.message || "Failed to process initial deposit. Check wallet PIN and balance.")
+            toast.error(
+              payErr.message ||
+                "Failed to process initial deposit. Check wallet PIN and balance."
+            )
           }
         }
-        toast.success(`Successfully established flexible savings goal: ${basketTitle}`)
+        toast.success(
+          `Successfully established flexible savings goal: ${basketTitle}`
+        )
       }
 
       // Record success details and trigger dialog
@@ -440,7 +561,10 @@ function CustomBasketBuilderPageContent() {
       setIsCheckoutOpen(false)
       setIsSuccessOpen(true)
     } catch (err: any) {
-      toast.error(err.message || "Transaction failed. Please verify your PIN and NestPurse balance.")
+      toast.error(
+        err.message ||
+          "Transaction failed. Please verify your PIN and NestPurse balance."
+      )
       setPinValue("")
     } finally {
       setIsSubmitting(false)
@@ -452,20 +576,30 @@ function CustomBasketBuilderPageContent() {
       <AppSidebar />
       <SidebarInset>
         <DashboardHeader>
-          <Breadcrumb className="flex-1 min-w-0">
-            <BreadcrumbList className="flex-nowrap whitespace-nowrap overflow-hidden">
+          <Breadcrumb className="min-w-0 flex-1">
+            <BreadcrumbList className="flex-nowrap overflow-hidden whitespace-nowrap">
               <BreadcrumbItem className="min-w-0">
-                <BreadcrumbLink href="/dashboard" className="truncate max-w-[80px] sm:max-w-[120px] md:max-w-none">Dashboard</BreadcrumbLink>
+                <BreadcrumbLink
+                  href="/dashboard"
+                  className="max-w-[80px] truncate sm:max-w-[120px] md:max-w-none"
+                >
+                  Dashboard
+                </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="shrink-0" />
               <BreadcrumbItem className="min-w-0">
-                <BreadcrumbLink href="/nestbaskets/baskets" className="truncate max-w-[90px] sm:max-w-[150px] md:max-w-none">
+                <BreadcrumbLink
+                  href="/nestbaskets/baskets"
+                  className="max-w-[90px] truncate sm:max-w-[150px] md:max-w-none"
+                >
                   Food Baskets
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="shrink-0" />
               <BreadcrumbItem className="min-w-0">
-                <BreadcrumbPage className="truncate max-w-[100px] sm:max-w-[150px] md:max-w-none">Custom Builder</BreadcrumbPage>
+                <BreadcrumbPage className="max-w-[100px] truncate sm:max-w-[150px] md:max-w-none">
+                  Custom Builder
+                </BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -485,10 +619,10 @@ function CustomBasketBuilderPageContent() {
               setSelectedCategory={setSelectedCategory}
             />
 
-             {/* Scrolling item grid */}
+            {/* Scrolling item grid */}
             <div className="space-y-6 p-5 md:p-6">
               {isInventoryLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {[...Array(6)].map((_, i) => (
                     <Skeleton key={i} className="h-44 rounded-2xl" />
                   ))}
@@ -514,7 +648,7 @@ function CustomBasketBuilderPageContent() {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {visibleFoodItems.map((item) => {
                     const qty = quantities[item.id] || 0
                     return (
@@ -554,9 +688,12 @@ function CustomBasketBuilderPageContent() {
             setSelectedProfileId={setSelectedProfileId}
             updateQuantity={updateQuantity}
             onProceedToCheckout={() => setIsCheckoutOpen(true)}
+            branches={branches}
+            deliveryOption={deliveryOption}
+            setDeliveryOption={setDeliveryOption}
+            pickupBranchId={pickupBranchId}
+            setPickupBranchId={setPickupBranchId}
           />
-
-
         </div>
 
         {/* Floating Mobile Checkout Bar */}
@@ -610,6 +747,11 @@ function CustomBasketBuilderPageContent() {
           profiles={profiles}
           selectedProfileId={selectedProfileId}
           setSelectedProfileId={setSelectedProfileId}
+          branches={branches}
+          deliveryOption={deliveryOption}
+          setDeliveryOption={setDeliveryOption}
+          pickupBranchId={pickupBranchId}
+          setPickupBranchId={setPickupBranchId}
           isFeeLoading={isFeeLoading}
           deliveryFee={deliveryFee}
           subtotal={subtotal}
@@ -682,35 +824,45 @@ function CheckoutSuccessDialog({
   }
 
   const overviewCard = (
-    <div className="w-full rounded-xl border bg-muted/20 p-4 text-xs font-semibold space-y-2.5 text-left">
-      <div className="flex justify-between items-center">
+    <div className="w-full space-y-2.5 rounded-xl border bg-muted/20 p-4 text-left text-xs font-semibold">
+      <div className="flex items-center justify-between">
         <span className="text-muted-foreground">Plan Name:</span>
-        <span className="text-foreground max-w-[200px] truncate">{planTitle}</span>
+        <span className="max-w-[200px] truncate text-foreground">
+          {planTitle}
+        </span>
       </div>
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <span className="text-muted-foreground">Plan Type:</span>
-        <span className="text-foreground capitalize">{planType === "flexible" ? "Flexible Target" : "Subscription"}</span>
+        <span className="text-foreground capitalize">
+          {planType === "flexible" ? "Flexible Target" : "Subscription"}
+        </span>
       </div>
       {planType === "subscription" ? (
         <>
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Billing Cycle:</span>
             <span className="text-foreground capitalize">{subFreq}</span>
           </div>
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Cycle Cost:</span>
-            <span className="text-foreground font-black">{formatCurrency(totalCost)}</span>
+            <span className="font-black text-foreground">
+              {formatCurrency(totalCost)}
+            </span>
           </div>
         </>
       ) : (
         <>
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Total Budget:</span>
-            <span className="text-foreground font-black">{formatCurrency(totalCost)}</span>
+            <span className="font-black text-foreground">
+              {formatCurrency(totalCost)}
+            </span>
           </div>
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Funded Amount:</span>
-            <span className="text-emerald-600 font-black">{formatCurrency(fundedAmount)}</span>
+            <span className="font-black text-emerald-600">
+              {formatCurrency(fundedAmount)}
+            </span>
           </div>
         </>
       )}
@@ -721,53 +873,61 @@ function CheckoutSuccessDialog({
     <>
       {planType === "flexible" && fundedAmount === 0 ? (
         <div className="w-full space-y-3 pt-2">
-          <div className="p-3 bg-primary/5 rounded-xl border border-primary/10 text-xs text-primary leading-normal font-semibold">
+          <div className="rounded-xl border border-primary/10 bg-primary/5 p-3 text-xs leading-normal font-semibold text-primary">
             Would you like to make a deposit to your plan now?
           </div>
           <div className="flex gap-3">
             <Button
               onClick={() => handleAction("/nestbaskets/baskets")}
               variant="outline"
-              className="flex-1 rounded-xl h-11 text-xs"
+              className="h-11 flex-1 rounded-xl text-xs"
             >
               Later
             </Button>
             <Button
-              onClick={() => handleAction(`/nestbaskets/baskets/flexible/${planId}?deposit=true`)}
-              className="flex-1 rounded-xl h-11 text-xs text-foreground font-bold"
+              onClick={() =>
+                handleAction(
+                  `/nestbaskets/baskets/flexible/${planId}?deposit=true`
+                )
+              }
+              className="h-11 flex-1 rounded-xl text-xs font-bold text-foreground"
             >
               Yes, Deposit Now
             </Button>
           </div>
         </div>
       ) : planType === "flexible" ? (
-        <div className="w-full flex gap-3 pt-2">
+        <div className="flex w-full gap-3 pt-2">
           <Button
             onClick={() => handleAction("/nestbaskets/baskets")}
             variant="outline"
-            className="flex-1 rounded-xl h-11 text-xs"
+            className="h-11 flex-1 rounded-xl text-xs"
           >
             Back to Baskets
           </Button>
           <Button
-            onClick={() => handleAction(`/nestbaskets/baskets/flexible/${planId}`)}
-            className="flex-1 rounded-xl h-11 text-xs text-foreground font-bold"
+            onClick={() =>
+              handleAction(`/nestbaskets/baskets/flexible/${planId}`)
+            }
+            className="h-11 flex-1 rounded-xl text-xs font-bold text-foreground"
           >
             View Goal Details
           </Button>
         </div>
       ) : (
-        <div className="w-full flex gap-3 pt-2">
+        <div className="flex w-full gap-3 pt-2">
           <Button
             onClick={() => handleAction("/nestbaskets/baskets")}
             variant="outline"
-            className="flex-1 rounded-xl h-11 text-xs"
+            className="h-11 flex-1 rounded-xl text-xs"
           >
             Back to Baskets
           </Button>
           <Button
-            onClick={() => handleAction(`/nestbaskets/baskets/subscription/${planId}`)}
-            className="flex-1 rounded-xl h-11 text-xs text-foreground font-bold"
+            onClick={() =>
+              handleAction(`/nestbaskets/baskets/subscription/${planId}`)
+            }
+            className="h-11 flex-1 rounded-xl text-xs font-bold text-foreground"
           >
             View Subscription Details
           </Button>
@@ -780,14 +940,14 @@ function CheckoutSuccessDialog({
     return (
       <Drawer open={isOpen} onOpenChange={() => {}}>
         <DrawerContent className="p-6 select-none">
-          <div className="flex flex-col items-center text-center space-y-4 pb-6">
+          <div className="flex flex-col items-center space-y-4 pb-6 text-center">
             {/* Animated check bubble */}
-            <div className="size-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 animate-bounce">
+            <div className="flex size-16 animate-bounce items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
               <Check className="size-8" strokeWidth={3} />
             </div>
 
-            <DrawerHeader className="space-y-1 text-center px-0">
-              <DrawerTitle className="text-xl font-black text-foreground tracking-tight">
+            <DrawerHeader className="space-y-1 px-0 text-center">
+              <DrawerTitle className="text-xl font-black tracking-tight text-foreground">
                 Basket Setup Successful!
               </DrawerTitle>
               <DrawerDescription className="text-xs text-muted-foreground">
@@ -805,15 +965,18 @@ function CheckoutSuccessDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="max-w-md rounded-2xl p-6 select-none" showCloseButton={false}>
-        <div className="flex flex-col items-center text-center space-y-4">
+      <DialogContent
+        className="max-w-md rounded-2xl p-6 select-none"
+        showCloseButton={false}
+      >
+        <div className="flex flex-col items-center space-y-4 text-center">
           {/* Animated check bubble */}
-          <div className="size-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 animate-bounce">
+          <div className="flex size-16 animate-bounce items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
             <Check className="size-8" strokeWidth={3} />
           </div>
 
           <DialogHeader className="space-y-1">
-            <DialogTitle className="text-xl font-black text-foreground tracking-tight">
+            <DialogTitle className="text-xl font-black tracking-tight text-foreground">
               Basket Setup Successful!
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">

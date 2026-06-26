@@ -5,6 +5,7 @@ import {
   UpdateDeliveryProfileRequest,
   DeliveryProfile,
   DeliveryZone,
+  Branch,
   FoodItem,
   PredefinedPlan,
   CustomPlan,
@@ -37,6 +38,9 @@ export const nestBasketsApi = {
 
   calculateDeliveryFee: (data: { deliveryZoneId: string; items: any[] }) =>
     api.post<{ success: boolean; fee: number }>("/api/nesttrails/calculate-delivery-fee", data),
+
+  getPickupBranches: () =>
+    api.get<{ success: boolean; data: Branch[] }>("/api/nesttrails/branches"),
 
   // ─── NESTBASKETS PLANS & ITEMS ───
   getPredefinedPlans: () =>

@@ -6,9 +6,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { FoodItem, DeliveryProfile } from "@/types/nestbaskets"
+import { FoodItem, DeliveryProfile, Branch } from "@/types/nestbaskets"
 import { formatCurrency } from "./utils"
 
 // === DESKTOP BASKET SUMMARY ===
@@ -24,6 +31,11 @@ interface BasketSummaryProps {
   setSelectedProfileId: (id: string) => void
   updateQuantity: (id: string, newQty: number) => void
   onProceedToCheckout: () => void
+  branches: Branch[]
+  deliveryOption: "delivery" | "pickup"
+  setDeliveryOption: (val: "delivery" | "pickup") => void
+  pickupBranchId: string
+  setPickupBranchId: (id: string) => void
 }
 
 export function BasketSummary({
@@ -38,6 +50,11 @@ export function BasketSummary({
   setSelectedProfileId,
   updateQuantity,
   onProceedToCheckout,
+  branches,
+  deliveryOption,
+  setDeliveryOption,
+  pickupBranchId,
+  setPickupBranchId,
 }: BasketSummaryProps) {
   return (
     <div className="sticky top-0 hidden h-screen w-full flex-col self-start border-l border-border/60 bg-muted/10 lg:flex">
@@ -101,99 +118,167 @@ export function BasketSummary({
               ))}
             </div>
 
-            {/* Address Summary Block */}
+            {/* Delivery Option / Address Selector */}
             <div className="space-y-3 rounded-2xl border border-border bg-card p-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex shrink-0 items-center gap-1.5">
                   <MapPin className="h-4.5 w-4.5 text-primary" />
                   <span className="text-xs font-black tracking-wider text-foreground uppercase">
-                    Destination
+                    Delivery Option
                   </span>
                 </div>
               </div>
-              {profiles.length === 0 ? (
-                <div className="flex flex-col gap-2 pt-1">
-                  <p className="text-xs leading-relaxed text-muted-foreground">
-                    No delivery addresses created. Create a default
-                    shipping address to calculate weight-based zones.
-                  </p>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    className="h-8 w-full text-xs"
-                    asChild
-                  >
-                    <Link href="?settings=true&tab=addresses">Create Address</Link>
-                  </Button>
-                </div>
-              ) : (
-                (() => {
-                  const activeProfile = profiles.find(
-                    (p) => p.id === selectedProfileId
-                  )
-                  return (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button className="w-full rounded-xl border border-border/60 bg-background p-3 text-left transition-colors hover:bg-muted/50 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
-                          <div className="flex flex-col gap-0.5 text-xs leading-relaxed text-muted-foreground">
-                            <span className="font-bold text-foreground">
-                              {activeProfile?.fullName} ({activeProfile?.phone})
-                            </span>
-                            <span className="truncate">
-                              {activeProfile?.address}, {activeProfile?.city},{" "}
-                              {activeProfile?.state}
-                            </span>
-                            <span className="mt-1 text-[10px] font-semibold text-primary">
-                              Tap to change destination ›
-                            </span>
+
+              {/* Delivery Option Selector Tabs */}
+              <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
+                <button
+                  type="button"
+                  onClick={() => setDeliveryOption("delivery")}
+                  className={cn(
+                    "rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer",
+                    deliveryOption === "delivery"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Delivery
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeliveryOption("pickup")}
+                  className={cn(
+                    "rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer",
+                    deliveryOption === "pickup"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Pick Up
+                </button>
+              </div>
+
+              {deliveryOption === "delivery" ? (
+                profiles.length === 0 ? (
+                  <div className="flex flex-col gap-2 pt-1">
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      No delivery addresses created. Create a default
+                      shipping address to calculate weight-based zones.
+                    </p>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      className="h-8 w-full text-xs"
+                      asChild
+                    >
+                      <Link href="?settings=true&tab=addresses">Create Address</Link>
+                    </Button>
+                  </div>
+                ) : (
+                  (() => {
+                    const activeProfile = profiles.find(
+                      (p) => p.id === selectedProfileId
+                    )
+                    return (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="w-full rounded-xl border border-border/60 bg-background p-3 text-left transition-colors hover:bg-muted/50 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
+                            <div className="flex flex-col gap-0.5 text-xs leading-relaxed text-muted-foreground">
+                              <span className="font-bold text-foreground">
+                                {activeProfile?.fullName} ({activeProfile?.phone})
+                              </span>
+                              <span className="truncate">
+                                {activeProfile?.address}, {activeProfile?.city},{" "}
+                                {activeProfile?.state}
+                              </span>
+                              <span className="mt-1 text-[10px] font-semibold text-primary">
+                                Tap to change destination ›
+                              </span>
+                            </div>
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-72 rounded-2xl p-3" align="end">
+                          <p className="mb-2.5 text-xs font-black tracking-wider text-muted-foreground uppercase">
+                            Select Destination
+                          </p>
+                          <div className="max-h-60 overflow-y-auto space-y-1.5 pr-1">
+                            {profiles.map((p) => (
+                              <button
+                                key={p.id}
+                                onClick={() => setSelectedProfileId(p.id)}
+                                className={cn(
+                                  "flex w-full items-start gap-2.5 rounded-xl border p-2.5 text-left text-xs transition-all",
+                                  selectedProfileId === p.id
+                                    ? "border-primary bg-primary/5 text-foreground font-semibold"
+                                    : "border-border/50 bg-background hover:bg-muted/50"
+                                )}
+                              >
+                                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                  <span className="font-bold text-foreground">
+                                    {p.fullName}
+                                  </span>
+                                  <span className="truncate text-muted-foreground">
+                                    {p.address}, {p.city}
+                                  </span>
+                                </div>
+                                {selectedProfileId === p.id && (
+                                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                                )}
+                              </button>
+                            ))}
                           </div>
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-72 rounded-2xl p-3" align="end">
-                        <p className="mb-2.5 text-xs font-black tracking-wider text-muted-foreground uppercase">
-                          Select Destination
-                        </p>
-                        <div className="max-h-60 overflow-y-auto space-y-1.5 pr-1">
-                          {profiles.map((p) => (
-                            <button
-                              key={p.id}
-                              onClick={() => setSelectedProfileId(p.id)}
-                              className={cn(
-                                "flex w-full items-start gap-2.5 rounded-xl border p-2.5 text-left text-xs transition-all",
-                                selectedProfileId === p.id
-                                  ? "border-primary bg-primary/5 text-foreground font-semibold"
-                                  : "border-border/50 bg-background hover:bg-muted/50"
-                              )}
+                          <div className="mt-3 flex flex-col items-center justify-center border-t border-border/40 pt-2.5 text-center gap-1">
+                            <span className="text-[10px] text-muted-foreground">
+                              Your destination not listed?
+                            </span>
+                            <Link
+                              href="?settings=true&tab=addresses"
+                              className="text-xs font-bold text-primary hover:underline"
                             >
-                              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                                <span className="font-bold text-foreground">
-                                  {p.fullName}
-                                </span>
-                                <span className="truncate text-muted-foreground">
-                                  {p.address}, {p.city}
-                                </span>
-                              </div>
-                              {selectedProfileId === p.id && (
-                                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                              )}
-                            </button>
-                          ))}
+                              Add new destination
+                            </Link>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )
+                  })()
+                )
+              ) : (
+                <div className="flex flex-col gap-2 pt-1">
+                  {branches.length > 0 ? (
+                    <Select
+                      value={pickupBranchId}
+                      onValueChange={setPickupBranchId}
+                    >
+                      <SelectTrigger className="h-10 w-full rounded-xl border-border bg-background text-xs font-bold">
+                        <SelectValue placeholder="Select a branch location" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl">
+                        {branches.map((branch) => (
+                          <SelectItem key={branch.id} value={branch.id} className="rounded-lg text-xs">
+                            {branch.name} ({branch.city})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-[11px] text-amber-600 font-semibold bg-amber-500/10 p-2.5 rounded-xl border border-amber-500/20">
+                      No active pickup branches are currently configured. Please contact support.
+                    </p>
+                  )}
+                  {(() => {
+                    const selectedBranch = branches.find((b) => b.id === pickupBranchId)
+                    if (!selectedBranch) return null
+                    return (
+                      <div className="space-y-1 rounded-xl border border-border bg-background p-2.5 text-[11px] text-muted-foreground leading-relaxed">
+                        <div className="flex items-center justify-between text-xs font-bold text-foreground">
+                          <span>{selectedBranch.name}</span>
+                          <span className="font-mono text-muted-foreground">{selectedBranch.phone}</span>
                         </div>
-                        <div className="mt-3 flex flex-col items-center justify-center border-t border-border/40 pt-2.5 text-center gap-1">
-                          <span className="text-[10px] text-muted-foreground">
-                            Your destination not listed?
-                          </span>
-                          <Link
-                            href="?settings=true&tab=addresses"
-                            className="text-xs font-bold text-primary hover:underline"
-                          >
-                            Add new destination
-                          </Link>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  )
-                })()
+                        <p>{selectedBranch.address}, {selectedBranch.city}, {selectedBranch.state}</p>
+                      </div>
+                    )
+                  })()}
+                </div>
               )}
             </div>
           </div>
@@ -232,7 +317,12 @@ export function BasketSummary({
             </div>
             <Button
               onClick={onProceedToCheckout}
-              className="flex h-10 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold text-foreground shadow-lg shadow-primary/10 transition-transform active:scale-95"
+              disabled={
+                isFeeLoading ||
+                (deliveryOption === "delivery" && (!selectedProfileId || profiles.length === 0)) ||
+                (deliveryOption === "pickup" && (!pickupBranchId || branches.length === 0))
+              }
+              className="flex h-10 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold text-foreground shadow-lg shadow-primary/10 transition-transform active:scale-95 cursor-pointer"
             >
               <ShoppingCart className="h-4 w-4" />
               Proceed to Checkout

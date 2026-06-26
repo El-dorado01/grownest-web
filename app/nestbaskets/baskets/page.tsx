@@ -36,6 +36,7 @@ import {
   PredefinedPlanItem,
   UserSubscription,
   CustomPlan,
+  SubscribeRequest,
 } from "@/types/nestbaskets"
 import { toast } from "sonner"
 import {
@@ -73,6 +74,19 @@ import {
   DrawerFooter,
   DrawerClose,
 } from "@/components/ui/drawer"
+import { PinInput } from "@/components/ui/pin-input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 const toTitleCase = (str: string) => {
   if (!str) return ""
@@ -104,6 +118,51 @@ function BasketsPageContent() {
   const [selectedPlan, setSelectedPlan] = useState<any | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const isMobile = useIsMobile()
+
+  // Predefined Plan Direct Subscription States
+  const [directSubPlan, setDirectSubPlan] = useState<any | null>(null)
+  const [isDirectCheckoutOpen, setIsDirectCheckoutOpen] = useState(false)
+  const [directFreq, setDirectFreq] = useState<
+    "weekly" | "monthly" | "quarterly" | "yearly"
+  >("monthly")
+  const [directPin, setDirectPin] = useState("")
+  const [isDirectSubmitting, setIsDirectSubmitting] = useState(false)
+  const [directDeliveryOption, setDirectDeliveryOption] = useState<"delivery" | "pickup">("delivery")
+  const [directPickupBranchId, setDirectPickupBranchId] = useState<string>("")
+
+  // Fetch Delivery Profiles for Direct Subscription
+  const { data: profilesRes } = useSWR(
+    isAuthenticated ? "delivery-profiles" : null,
+    () => nestBasketsApi.getDeliveryProfiles()
+  )
+  const profiles = profilesRes?.data?.data ?? []
+  const defaultProfile = profilesRes?.data?.default ?? null
+  const [selectedDirectProfileId, setSelectedDirectProfileId] = useState<string>("")
+
+  // Fetch Pickup Branches for Direct Subscription
+  const { data: branchesRes } = useSWR(
+    isAuthenticated ? "pickup-branches" : null,
+    () => nestBasketsApi.getPickupBranches()
+  )
+  const branches = branchesRes?.data?.data ?? []
+
+  useEffect(() => {
+    if (isDirectCheckoutOpen) {
+      if (defaultProfile) {
+        setSelectedDirectProfileId(defaultProfile.id)
+      } else if (profiles.length > 0) {
+        setSelectedDirectProfileId(profiles[0].id)
+      } else {
+        setSelectedDirectProfileId("")
+      }
+    }
+  }, [isDirectCheckoutOpen, defaultProfile, profiles])
+
+  useEffect(() => {
+    if (isDirectCheckoutOpen && branches.length > 0 && !directPickupBranchId) {
+      setDirectPickupBranchId(branches[0].id)
+    }
+  }, [isDirectCheckoutOpen, branches, directPickupBranchId])
 
   // 1. Fetch Predefined Plans & User Custom Drafts
   const {
@@ -142,6 +201,341 @@ function BasketsPageContent() {
   const totalMonthlyCommitment = subscriptions
     .filter((sub: any) => sub.status === "active")
     .reduce((sum: number, sub: any) => sum + (sub.totalAmount || 0), 0)
+
+  const handleDirectSubmit = async () => {
+    if (!directSubPlan) return
+
+    if (directDeliveryOption === "pickup" && !directPickupBranchId) {
+      toast.error("Please select a pickup branch.")
+      return
+    }
+
+    const activeProfile = directDeliveryOption === "delivery"
+      ? (profiles.find((p: any) => p.id === selectedDirectProfileId) || defaultProfile)
+      : null
+
+    if (directDeliveryOption === "delivery" && !activeProfile) {
+      toast.error("Please add a delivery address first.")
+      return
+    }
+
+    if (directPin.length !== 4) {
+      toast.error("Please enter your 4-digit security PIN")
+      return
+    }
+
+    setIsDirectSubmitting(true)
+    try {
+      const payload: SubscribeRequest = {
+        predefinedPlanId: directSubPlan.id,
+        frequency: directFreq,
+        pin: directPin,
+        deliveryOption: directDeliveryOption,
+      }
+
+      if (directDeliveryOption === "pickup") {
+        payload.pickupBranchId = directPickupBranchId
+      } else if (activeProfile) {
+        const isDefaultSelected = defaultProfile?.id === activeProfile.id
+        payload.useDefaultDelivery = isDefaultSelected
+        if (!isDefaultSelected) {
+          payload.deliveryOverride = {
+            fullName: activeProfile.fullName,
+            phone: activeProfile.phone,
+            address: activeProfile.address,
+            city: activeProfile.city,
+            state: activeProfile.state,
+            landmark: activeProfile.landmark || undefined,
+            notes: activeProfile.notes || undefined,
+          }
+        }
+      }
+
+      const res = await nestBasketsApi.subscribeToPlan(payload)
+
+      if (res.error || !res.data?.success) {
+        throw new Error(res.data?.message || res.error || "Failed to subscribe")
+      }
+
+      toast.success(
+        `Successfully subscribed to predefined bundle: ${directSubPlan.name}`
+      )
+
+      // Reset states
+      setIsDirectCheckoutOpen(false)
+      setDirectSubPlan(null)
+      setDirectPin("")
+      setDirectFreq("monthly")
+      setDirectDeliveryOption("delivery")
+      setDirectPickupBranchId("")
+
+      // Refresh subscriptions list
+      await mutateSubs()
+
+      // Switch to subscriptions tab
+      setActiveTab("subscriptions")
+    } catch (err: any) {
+      toast.error(
+        err.message || "An unexpected error occurred during subscription"
+      )
+    } finally {
+      setIsDirectSubmitting(false)
+    }
+  }
+
+  const renderDirectCheckoutForm = () => {
+    if (!directSubPlan) return null
+    const activeProfile = profiles.find((p: any) => p.id === selectedDirectProfileId) || defaultProfile
+    const selectedBranch = branches.find((b: any) => b.id === directPickupBranchId)
+
+    return (
+      <div className="space-y-5 text-left">
+        {/* Cost Summary */}
+        <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-4 shadow-sm">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-semibold text-muted-foreground">
+              Predefined Bundle:
+            </span>
+            <span className="font-bold text-foreground capitalize">
+              {directSubPlan.name}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-semibold text-muted-foreground">
+              Total Cost:
+            </span>
+            <span className="font-extrabold text-primary">
+              ₦{directSubPlan.price.toLocaleString()}
+            </span>
+          </div>
+        </div>
+
+        {/* Frequency */}
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+            Subscription Frequency
+          </label>
+          <Select
+            value={directFreq}
+            onValueChange={(val: any) => setDirectFreq(val)}
+          >
+            <SelectTrigger className="w-full rounded-xl border-border bg-background">
+              <SelectValue placeholder="Select frequency" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-border bg-popover text-popover-foreground">
+              <SelectItem value="weekly">Weekly</SelectItem>
+              <SelectItem value="monthly">Monthly</SelectItem>
+              <SelectItem value="quarterly">Quarterly</SelectItem>
+              <SelectItem value="yearly">Yearly</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] leading-normal font-medium text-muted-foreground">
+            Your NestPurse wallet will be debited automatically every{" "}
+            {directFreq} for this subscription.
+          </p>
+        </div>
+
+        {/* Delivery Option Selector */}
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+            Delivery Option
+          </label>
+          <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
+            <button
+              type="button"
+              onClick={() => setDirectDeliveryOption("delivery")}
+              className={`rounded-lg py-1.5 text-xs font-bold transition-all ${
+                directDeliveryOption === "delivery"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Delivery
+            </button>
+            <button
+              type="button"
+              onClick={() => setDirectDeliveryOption("pickup")}
+              className={`rounded-lg py-1.5 text-xs font-bold transition-all ${
+                directDeliveryOption === "pickup"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Pick Up
+            </button>
+          </div>
+        </div>
+
+        {/* Conditional Address or Branch Selection */}
+        {directDeliveryOption === "delivery" ? (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                Delivery Address
+              </label>
+              {profiles.length > 0 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 text-xs font-bold text-primary hover:no-underline"
+                    >
+                      Change
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-3 bg-popover border border-border/60 rounded-xl shadow-lg" align="end">
+                    <div className="space-y-2">
+                      <p className="text-xs font-bold text-muted-foreground px-1">Select Delivery Address</p>
+                      <div className="max-h-60 overflow-y-auto space-y-1.5 custom-scrollbar pr-1">
+                        {profiles.map((p: any) => {
+                          const isSelected = p.id === activeProfile?.id;
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => setSelectedDirectProfileId(p.id)}
+                              className={`w-full text-left flex items-start gap-2.5 rounded-lg border p-2.5 transition-all text-xs ${
+                                isSelected
+                                  ? "border-primary bg-primary/5 font-semibold text-foreground"
+                                  : "border-border/60 hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              <div className="mt-0.5 shrink-0">
+                                {isSelected ? (
+                                  <CheckCircle2 className="size-4 text-primary" />
+                                ) : (
+                                  <div className="size-4 rounded-full border border-muted-foreground/30" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-1 font-bold">
+                                  <span className="truncate">{p.fullName}</span>
+                                  {p.isDefault && (
+                                    <Badge className="bg-primary/10 text-primary text-[9px] hover:bg-primary/10 px-1 py-0 h-auto font-bold uppercase shrink-0">
+                                      Default
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="truncate text-[11px] mt-0.5">{p.address}</p>
+                                <p className="text-[10px] text-muted-foreground/80 mt-0.5">
+                                  {p.city}, {p.state}
+                                </p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      
+                      <Separator className="my-1 border-border/40" />
+                      
+                      <div className="pt-1.5 text-center">
+                        <Link
+                          href="/settings?tab=addresses"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                          onClick={() => {
+                            setIsDirectCheckoutOpen(false);
+                          }}
+                        >
+                          <Plus className="size-3.5" />
+                          Add new address
+                        </Link>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+            {activeProfile ? (
+              <div className="space-y-2 rounded-xl border border-border/50 bg-background p-3.5">
+                <div className="flex items-center justify-between text-xs font-bold text-foreground">
+                  <span>{activeProfile.fullName}</span>
+                  <span className="font-mono text-muted-foreground">
+                    {activeProfile.phone}
+                  </span>
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {activeProfile.address}, {activeProfile.city},{" "}
+                  {activeProfile.state}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 rounded-xl border border-destructive/20 bg-destructive/5 p-3.5 text-center">
+                <p className="text-xs font-medium text-destructive">
+                  No delivery address found. Please configure an address in settings to continue.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-lg border-destructive/30 text-destructive hover:bg-destructive/10"
+                  asChild
+                >
+                  <Link href="/settings?tab=addresses">Add New Address</Link>
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+              Select Pickup Branch
+            </label>
+            {branches.length > 0 ? (
+              <Select
+                value={directPickupBranchId}
+                onValueChange={(val) => setDirectPickupBranchId(val)}
+              >
+                <SelectTrigger className="w-full rounded-xl border-border bg-background">
+                  <SelectValue placeholder="Select a branch location" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-border bg-popover text-popover-foreground">
+                  {branches.map((branch: any) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name} ({branch.city})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="text-xs text-amber-600 font-semibold bg-amber-500/10 p-3 rounded-xl border border-amber-500/20">
+                No active pickup branches are currently configured. Please contact support.
+              </p>
+            )}
+            {selectedBranch && (
+              <div className="space-y-1.5 rounded-xl border border-border/50 bg-background p-3.5">
+                <div className="flex items-center justify-between text-xs font-bold text-foreground">
+                  <span>{selectedBranch.name}</span>
+                  <span className="font-mono text-muted-foreground">{selectedBranch.phone}</span>
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {selectedBranch.address}, {selectedBranch.city}, {selectedBranch.state}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PIN Entry */}
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+            Confirm Wallet PIN
+          </label>
+          <div className="flex justify-center py-1">
+            <PinInput
+              value={directPin}
+              onChange={(val) => setDirectPin(val)}
+              length={4}
+              disabled={isDirectSubmitting}
+            />
+          </div>
+          <p className="text-center text-[10px] leading-normal font-medium text-muted-foreground">
+            Enter your 4-digit transaction security PIN to authorize this
+            recurring debit.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   const renderPlanDetails = (plan: any) => {
     if (!plan) return null
@@ -389,8 +783,8 @@ function BasketsPageContent() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="w-full border-b border-border/80 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-px">
-            <div className="flex flex-nowrap gap-6 min-w-max">
+          <div className="w-full overflow-x-auto border-b border-border/80 pb-px [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-max flex-nowrap gap-6">
               <button
                 onClick={() => setActiveTab("plans")}
                 className={`relative pb-3 text-sm font-semibold transition-all ${
@@ -554,14 +948,13 @@ function BasketsPageContent() {
                         </Button>
                         <Button
                           className="flex-1 bg-primary font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/95"
-                          asChild
+                          onClick={() => {
+                            setDirectSubPlan(plan)
+                            setIsDirectCheckoutOpen(true)
+                          }}
                         >
-                          <Link
-                            href={`/nestbaskets/baskets/new?predefinedId=${plan.id}`}
-                          >
-                            Subscribe
-                            <ArrowRight className="ml-1.5 size-4" />
-                          </Link>
+                          Subscribe
+                          <ArrowRight className="ml-1.5 size-4" />
                         </Button>
                       </CardFooter>
                     </Card>
@@ -763,7 +1156,7 @@ function BasketsPageContent() {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {flexiblePlans.map((plan: any) => {
                     const progress = plan.progress || 0
                     const isFullyPaid = plan.isPaid
@@ -778,17 +1171,20 @@ function BasketsPageContent() {
                       >
                         <CardHeader className="p-4 pb-2.5">
                           <div className="flex items-start justify-between gap-4">
-                            <div className="space-y-1 min-w-0 flex-1">
-                              <CardTitle className="text-base font-bold text-foreground truncate">
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <CardTitle className="truncate text-base font-bold text-foreground">
                                 {plan.title}
                               </CardTitle>
                               <CardDescription className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <TrendingUp className="size-3.5 text-secondary shrink-0" />
-                                <span className="truncate">Target Goal: ₦{plan.totalPrice.toLocaleString()}</span>
+                                <TrendingUp className="size-3.5 shrink-0 text-secondary" />
+                                <span className="truncate">
+                                  Target Goal: ₦
+                                  {plan.totalPrice.toLocaleString()}
+                                </span>
                               </CardDescription>
                             </div>
                             <Badge
-                              className={`text-xs font-semibold shrink-0 ${
+                              className={`shrink-0 text-xs font-semibold ${
                                 isFullyPaid
                                   ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400"
                                   : isPendingSelection
@@ -903,14 +1299,14 @@ function BasketsPageContent() {
                   </DialogClose>
                   <Button
                     className="flex-1 bg-primary font-semibold text-primary-foreground shadow-md shadow-primary/15 transition-all duration-200 hover:bg-primary/95 hover:shadow-primary/20"
-                    asChild
+                    onClick={() => {
+                      setIsDetailsOpen(false)
+                      setDirectSubPlan(selectedPlan)
+                      setIsDirectCheckoutOpen(true)
+                    }}
                   >
-                    <Link
-                      href={`/nestbaskets/baskets/new?predefinedId=${selectedPlan?.id}`}
-                    >
-                      Subscribe Now
-                      <ArrowRight className="ml-1.5 size-4" />
-                    </Link>
+                    Subscribe Now
+                    <ArrowRight className="ml-1.5 size-4" />
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -935,14 +1331,14 @@ function BasketsPageContent() {
                 <DrawerFooter className="flex shrink-0 flex-col gap-2 border-t border-border/40 p-0 pt-4">
                   <Button
                     className="w-full bg-primary py-3.5 font-bold text-primary-foreground shadow-md transition-all hover:bg-primary/95"
-                    asChild
+                    onClick={() => {
+                      setIsDetailsOpen(false)
+                      setDirectSubPlan(selectedPlan)
+                      setIsDirectCheckoutOpen(true)
+                    }}
                   >
-                    <Link
-                      href={`/nestbaskets/baskets/new?predefinedId=${selectedPlan?.id}`}
-                    >
-                      Subscribe Now
-                      <ArrowRight className="ml-1.5 size-4" />
-                    </Link>
+                    Subscribe Now
+                    <ArrowRight className="ml-1.5 size-4" />
                   </Button>
                   <DrawerClose asChild>
                     <Button
@@ -950,6 +1346,115 @@ function BasketsPageContent() {
                       className="w-full border-border py-3.5 font-semibold text-foreground"
                     >
                       Close
+                    </Button>
+                  </DrawerClose>
+                </DrawerFooter>
+              </DrawerContent>
+            </Drawer>
+          ))}
+
+        {directSubPlan &&
+          (isDirectCheckoutOpen ? (
+            <Dialog
+              open={isDirectCheckoutOpen}
+              onOpenChange={setIsDirectCheckoutOpen}
+            >
+              <DialogContent className="flex max-h-[85vh] max-w-md flex-col justify-between rounded-2xl border-border bg-card p-6 shadow-xl">
+                <div>
+                  <DialogHeader className="mb-4 p-0">
+                    <DialogTitle className="text-xl font-bold text-foreground">
+                      Direct Subscription
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-muted-foreground">
+                      Subscribe directly to this predefined bundle using your
+                      digital wallet.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="custom-scrollbar max-h-[50vh] overflow-y-auto pr-1 pb-2">
+                    {renderDirectCheckoutForm()}
+                  </div>
+                </div>
+
+                <DialogFooter className="mt-1 flex w-full shrink-0 items-center gap-3 border-t border-border/20 p-0 pt-3 sm:justify-between">
+                  <DialogClose asChild>
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-border font-semibold text-foreground transition-colors hover:bg-muted"
+                      disabled={isDirectSubmitting}
+                    >
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                  <Button
+                    className="flex-1 bg-primary font-semibold text-primary-foreground shadow-md shadow-primary/15 transition-all duration-200 hover:bg-primary/95 hover:shadow-primary/20"
+                    disabled={
+                      isDirectSubmitting ||
+                      directPin.length !== 4 ||
+                      (directDeliveryOption === "delivery" && !selectedDirectProfileId) ||
+                      (directDeliveryOption === "pickup" && !directPickupBranchId)
+                    }
+                    onClick={handleDirectSubmit}
+                  >
+                    {isDirectSubmitting ? (
+                      <>
+                        <Loader2 className="mr-1.5 size-4 animate-spin" />
+                        Subscribing...
+                      </>
+                    ) : (
+                      "Confirm & Pay"
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <Drawer
+              open={isDirectCheckoutOpen}
+              onOpenChange={setIsDirectCheckoutOpen}
+            >
+              <DrawerContent className="flex max-h-[90vh] flex-col justify-between rounded-t-2xl border-t border-border/60 bg-card p-6">
+                <DrawerHeader className="mb-4 shrink-0 p-0 text-left">
+                  <DrawerTitle className="text-lg font-bold text-foreground">
+                    Direct Subscription
+                  </DrawerTitle>
+                  <DrawerDescription className="text-xs text-muted-foreground">
+                    Subscribe directly to this predefined bundle using your
+                    digital wallet.
+                  </DrawerDescription>
+                </DrawerHeader>
+
+                <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1 pb-4">
+                  {renderDirectCheckoutForm()}
+                </div>
+
+                <DrawerFooter className="flex shrink-0 flex-col gap-2 border-t border-border/40 p-0 pt-4">
+                  <Button
+                    className="w-full bg-primary py-3.5 font-bold text-primary-foreground shadow-md transition-all hover:bg-primary/95"
+                    disabled={
+                      isDirectSubmitting ||
+                      directPin.length !== 4 ||
+                      (directDeliveryOption === "delivery" && !selectedDirectProfileId) ||
+                      (directDeliveryOption === "pickup" && !directPickupBranchId)
+                    }
+                    onClick={handleDirectSubmit}
+                  >
+                    {isDirectSubmitting ? (
+                      <>
+                        <Loader2 className="mr-1.5 size-4 animate-spin" />
+                        Subscribing...
+                      </>
+                    ) : (
+                      "Confirm & Pay"
+                    )}
+                  </Button>
+                  <DrawerClose asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full border-border py-3.5 font-semibold text-foreground"
+                      disabled={isDirectSubmitting}
+                    >
+                      Cancel
                     </Button>
                   </DrawerClose>
                 </DrawerFooter>
