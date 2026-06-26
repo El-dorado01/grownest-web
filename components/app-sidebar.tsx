@@ -96,7 +96,7 @@ const data = {
       icon: <ShoppingBasketIcon />,
       items: [
         {
-          title: "Explore Baskets",
+          title: "Explore Predefined Plans",
           url: "/nestbaskets/baskets",
         },
         {
