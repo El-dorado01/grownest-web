@@ -28,6 +28,22 @@ export const affiliateApi = {
 
   deleteMe: () => apiFetch('/api/affiliate/me', { method: 'DELETE' }),
 
+  joinCampaignWaitlist: () =>
+    apiFetch('/api/affiliate/campaign-waitlist', { method: 'POST' }),
+
+  leaveCampaignWaitlist: () =>
+    apiFetch('/api/affiliate/campaign-waitlist', { method: 'DELETE' }),
+
+  getAvailableCampaigns: () =>
+    apiFetch<{ campaigns: any[] }>('/api/affiliate/campaigns/available'),
+
+  switchCampaign: (campaignId: string) =>
+    apiFetch<{ affiliate: Affiliate }>('/api/affiliate/me/switch-campaign', {
+      method: 'POST',
+      body: JSON.stringify({ campaignId }),
+      headers: { 'Content-Type': 'application/json' },
+    }),
+
   editMe: (formData: FormData) =>
     apiFetch<{ affiliate: Affiliate }>('/api/affiliate/me/edit', {
       method: 'PATCH',
