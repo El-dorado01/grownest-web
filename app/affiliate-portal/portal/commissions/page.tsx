@@ -13,9 +13,6 @@ import { RefreshButton } from '@/components/affiliate/RefreshButton';
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(n);
 
-// ── MOCK DATA ─────────────────────────────────────────────────────────────────
-// ── END MOCK ──────────────────────────────────────────────────────────────────
-
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   PENDING:   { label: 'Pending',   className: 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400' },
   AVAILABLE: { label: 'Available', className: 'border-primary/40 bg-primary/5 text-primary' },

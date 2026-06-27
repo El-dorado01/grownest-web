@@ -825,6 +825,7 @@ export default function AffiliateApplyPage() {
 
       {/* ── Platform overlay sheet ─────────────────────────────────────── */}
       <PlatformSheet
+        key={openPlatform ?? 'none'}
         platform={openPlatform}
         entry={socialEntries[openPlatform!] ?? EMPTY_ENTRY}
         onSave={saveEntry}
