@@ -451,11 +451,15 @@ export function Dashboard() {
               <Button
                 className="w-full md:w-auto rounded-xl h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground dark:text-white whitespace-nowrap font-bold text-sm"
                 onClick={() => {
-                  const url =
+                  const base =
                     typeof window !== 'undefined' && window.location.hostname.includes('localhost')
                       ? 'http://affiliate.localhost:5173'
-                      : 'https://affiliate.grownest.africa'
-                  window.open(url, '_blank', 'noopener,noreferrer')
+                      : 'https://affiliate.grownest.africa';
+                  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+                  const url = token
+                    ? `${base}/portal?__t=${encodeURIComponent(token)}`
+                    : `${base}/login`;
+                  window.open(url, '_blank', 'noopener,noreferrer');
                 }}
               >
                 Go to Affiliate Portal <ArrowUpRight className="ml-2 h-4 w-4" />

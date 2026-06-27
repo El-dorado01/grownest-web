@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { useAuth } from "@/context/auth-context"
 import { toast } from "sonner"
-import { Loader2, Eye, EyeOff, Mail, Lock } from "lucide-react"
+import { Loader2, Eye, EyeOff, Mail, Lock, Tag } from "lucide-react"
 
 export function SignupForm({
   className,
@@ -17,7 +17,9 @@ export function SignupForm({
   const { register, isLoading: isAuthLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const referralCode = searchParams.get("ref") || undefined
+  const refFromUrl = searchParams.get("ref") || ""
+  const [referralCode, setReferralCode] = useState(refFromUrl)
+  const [showRefInput, setShowRefInput] = useState(!!refFromUrl)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -44,11 +46,16 @@ export function SignupForm({
     setIsSubmitting(true)
 
     try {
-      const result = await register({ email, password, dataConsent, referralCode })
+      const ref = referralCode.trim() || undefined;
+      const result = await register({ email, password, dataConsent, referralCode: ref })
 
       if (!result.success) {
         toast.error(result.error || "Registration failed")
       } else {
+        // Persist affiliate ref so track-signup can fire after the user logs in post-verification
+        if (ref) {
+          localStorage.setItem('pending_ref', ref);
+        }
         toast.success("Registration successful!")
         router.push("/signup/verify")
       }
@@ -62,6 +69,11 @@ export function SignupForm({
   const handleGoogleClick = async () => {
     setIsSubmitting(true)
     try {
+      // Persist referral code across OAuth redirect so the callback can call track-signup
+      const ref = referralCode.trim();
+      if (ref) {
+        sessionStorage.setItem('pending_ref', ref);
+      }
       const { supabase } = await import('@/lib/supabase');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -193,6 +205,49 @@ export function SignupForm({
             </div>
           </div>
         </div>
+
+        {/* Referral code */}
+        {showRefInput ? (
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label htmlFor="referral-code" className="text-sm font-medium text-foreground">
+                Referral Code <span className="text-muted-foreground font-normal">(optional)</span>
+              </label>
+              {!refFromUrl && (
+                <button
+                  type="button"
+                  onClick={() => { setShowRefInput(false); setReferralCode(""); }}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                id="referral-code"
+                type="text"
+                placeholder="e.g. GN-ABC123 or GROW-XXXX"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                disabled={isLoading || !!refFromUrl}
+                className="pl-9 h-11 bg-card font-mono tracking-wider"
+              />
+            </div>
+            {refFromUrl && (
+              <p className="text-xs text-primary">Referral link applied</p>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowRefInput(true)}
+            className="text-xs text-muted-foreground hover:text-primary transition-colors text-left"
+          >
+            Have a referral code? <span className="underline underline-offset-2">Enter it here</span>
+          </button>
+        )}
 
         {/* Terms checkbox */}
         <label className="flex items-start gap-2.5 cursor-pointer">

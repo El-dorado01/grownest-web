@@ -9,6 +9,7 @@ import { Loader2, Eye, EyeOff, Mail, Lock } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { useGoogleLogin } from '@react-oauth/google'
+import { affiliateApi } from "@/lib/affiliate-api"
 
 export function LoginForm({
   className,
@@ -37,6 +38,19 @@ export function LoginForm({
         toast.info("Verification code sent. Please check your messages.")
       } else {
         toast.success("Login successful!")
+
+        // Fire track-signup if user registered via an affiliate referral link
+        const pendingRef = localStorage.getItem('pending_ref');
+        if (pendingRef) {
+          localStorage.removeItem('pending_ref');
+          try {
+            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+            if (storedUser.userId) {
+              affiliateApi.trackSignup(pendingRef, storedUser.userId).catch(() => {});
+            }
+          } catch {}
+        }
+
         const searchParams = new URLSearchParams(window.location.search)
         const redirect = searchParams.get("redirect") || "/"
         window.location.href = redirect
@@ -63,10 +77,13 @@ export function LoginForm({
       // Instead of manual token exchange, we use Supabase's OAuth
       // which will redirect the user to Google.
       const { supabase } = await import('@/lib/supabase');
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get('redirect') || '/';
+      const origin = process.env.NEXT_PUBLIC_FRONTEND_URL || window.location.origin;
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_FRONTEND_URL || window.location.origin}/auth/callback`,
+          redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
         }
       });
       if (error) throw error;

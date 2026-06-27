@@ -50,4 +50,11 @@ export const affiliateApi = {
       body: formData,
       // No Content-Type — browser sets multipart/form-data with boundary
     }),
+
+  trackSignup: (affiliateCode: string, newUserId: string) =>
+    apiFetch('/api/affiliate/track-signup', {
+      method: 'POST',
+      body: JSON.stringify({ affiliateCode, newUserId }),
+      headers: { 'Content-Type': 'application/json' },
+    }),
 };

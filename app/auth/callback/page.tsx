@@ -8,6 +8,7 @@ import { useAuth } from "@/context/auth-context"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { setAuthToken } from "@/lib/api"
+import { affiliateApi } from "@/lib/affiliate-api"
 import type { User } from "@/types/auth"
 
 export default function AuthCallback() {
@@ -45,9 +46,20 @@ export default function AuthCallback() {
             email: session.user.email || "",
           }
           localStorage.setItem("user", JSON.stringify(user))
-          
+
           toast.success("Successfully logged in!")
-          window.location.href = "/" // Full reload to initialize auth context
+
+          // Fire track-signup if user arrived via a referral link and used Google signup
+          const pendingRef = sessionStorage.getItem('pending_ref');
+          if (pendingRef && data.userId) {
+            sessionStorage.removeItem('pending_ref');
+            affiliateApi.trackSignup(pendingRef, data.userId).catch(() => {});
+          }
+
+          // Respect the ?next= param passed through the OAuth redirectTo
+          const searchParams = new URLSearchParams(window.location.search);
+          const next = searchParams.get('next') || '/';
+          window.location.href = next
         } else {
           throw new Error("Invalid response from server")
         }

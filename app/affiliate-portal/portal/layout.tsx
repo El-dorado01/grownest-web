@@ -5,7 +5,7 @@
 //   Token + affiliate → render dashboard
 'use client';
 import { useEffect, useState } from 'react';
-import { getAuthToken } from '@/lib/api';
+import { getAuthToken, setAuthToken } from '@/lib/api';
 import { affiliateApi } from '@/lib/affiliate-api';
 import { AffiliateSidebar } from '@/components/affiliate/AffiliateSidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -16,6 +16,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    // Pick up token handed off from main dashboard via ?__t=
+    const params = new URLSearchParams(window.location.search);
+    const handoff = params.get('__t');
+    if (handoff) {
+      setAuthToken(handoff);
+      // Remove __t from URL so it's not visible or bookmarked
+      params.delete('__t');
+      const clean = window.location.pathname + (params.toString() ? `?${params.toString()}` : '');
+      window.history.replaceState({}, '', clean);
+    }
+
     const token = getAuthToken();
 
     // Gate 1: no token → login
