@@ -290,11 +290,13 @@ export function AffiliateOnboarding({ affiliate, firstName, referralLink, onDism
         </div>
 
         {/* Step content */}
-        <div className="px-6 py-5 min-h-[340px]">
-          {step === 0 && <StepWelcome firstName={firstName} affiliate={affiliate} />}
-          {step === 1 && <StepCampaign affiliate={affiliate} />}
-          {step === 2 && <StepHowItWorks affiliate={affiliate} />}
-          {step === 3 && <StepReferralLink referralLink={referralLink} />}
+        <div className="px-6 py-5 min-h-[340px] overflow-hidden">
+          <div key={step} className="animate-in fade-in slide-in-from-right-4 duration-300">
+            {step === 0 && <StepWelcome firstName={firstName} affiliate={affiliate} />}
+            {step === 1 && <StepCampaign affiliate={affiliate} />}
+            {step === 2 && <StepHowItWorks affiliate={affiliate} />}
+            {step === 3 && <StepReferralLink referralLink={referralLink} />}
+          </div>
         </div>
 
         {/* Footer */}

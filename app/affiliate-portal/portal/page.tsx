@@ -69,12 +69,19 @@ const SHARE_PLATFORMS = [
 // ─── Share sheet ──────────────────────────────────────────────────────────────
 function ShareSheet({ open, onClose, affiliateCode, referralLink }: { open: boolean; onClose: () => void; affiliateCode: string; referralLink: string }) {
   const isMobile = useIsMobile();
-  const [copied, setCopied] = useState(false);
+  const [copied,     setCopied]     = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
   const handleCopy = async () => {
     await navigator.clipboard.writeText(referralLink);
     setCopied(true);
     toast.success('Referral link copied!');
     setTimeout(() => setCopied(false), 2000);
+  };
+  const handleCodeCopy = async () => {
+    await navigator.clipboard.writeText(affiliateCode);
+    setCodeCopied(true);
+    toast.success('Affiliate code copied!');
+    setTimeout(() => setCodeCopied(false), 2000);
   };
   return (
     <Sheet open={open} onOpenChange={open => !open && onClose()}>
@@ -124,9 +131,18 @@ function ShareSheet({ open, onClose, affiliateCode, referralLink }: { open: bool
           </div>
 
           {/* Referral code */}
-          <div className="rounded-xl border border-border bg-primary/5 px-4 py-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">Or share your code directly</p>
-            <p className="text-2xl font-mono font-bold tracking-widest text-primary">{affiliateCode}</p>
+          <div className="rounded-xl border border-border bg-primary/5 px-4 py-4">
+            <p className="text-xs text-muted-foreground mb-2 text-center">Or share your code directly</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-2xl font-mono font-bold tracking-widest text-primary">{affiliateCode}</p>
+              <button
+                onClick={handleCodeCopy}
+                className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+              >
+                {codeCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {codeCopied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
           </div>
         </div>
       </SheetContent>
