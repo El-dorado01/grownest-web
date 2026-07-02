@@ -88,6 +88,10 @@ const data = {
           title: "Group Nest",
           url: "/savings/group",
         },
+        {
+          title: "Campaigns",
+          url: "/savings/campaigns",
+        },
       ],
     },
     {
