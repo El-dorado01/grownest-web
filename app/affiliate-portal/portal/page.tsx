@@ -2,7 +2,7 @@
 'use client';
 import useSWR from 'swr';
 import Link from 'next/link';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { affiliateApi } from '@/lib/affiliate-api';
 import { AffiliateStatusBadge } from '@/components/affiliate/AffiliateStatusBadge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { format, subDays } from 'date-fns';
 import { useProfile } from '@/hooks/use-profile';
 import { CampaignUpgradeDialog, CampaignSwitcherSheet } from '@/components/affiliate/CampaignSwitcher';
+import { AffiliateOnboarding } from '@/components/affiliate/AffiliateOnboarding';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 const fmt = (n: number) =>
@@ -181,10 +182,19 @@ export default function AffiliateDashboardPage() {
 
   const { profile } = useProfile();
   const isMobile = useIsMobile();
-  const [shareOpen,     setShareOpen]     = useState(false);
-  const [payoutOpen,    setPayoutOpen]    = useState(false);
-  const [switcherOpen,  setSwitcherOpen]  = useState(false);
-  const [chartRange,    setChartRange]    = useState<'7' | '30' | '90'>('30');
+  const [shareOpen,      setShareOpen]      = useState(false);
+  const [payoutOpen,     setPayoutOpen]     = useState(false);
+  const [switcherOpen,   setSwitcherOpen]   = useState(false);
+  const [chartRange,     setChartRange]     = useState<'7' | '30' | '90'>('30');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const a = meData?.data?.affiliate;
+    if (!a || a.status !== 'ACTIVE') return;
+    if (!localStorage.getItem(`onboarded_${a.affiliateCode}`)) {
+      setShowOnboarding(true);
+    }
+  }, [meData]);
 
   // Time-based greeting
   const greeting = (() => {
@@ -365,6 +375,16 @@ export default function AffiliateDashboardPage() {
 
   return (
     <div className="w-full px-4 md:px-6 py-6 space-y-5">
+
+      {/* ── Onboarding dialog ───────────────────────────────────────────── */}
+      {showOnboarding && affiliate && (
+        <AffiliateOnboarding
+          affiliate={affiliate}
+          firstName={firstName}
+          referralLink={referralLink}
+          onDismiss={() => setShowOnboarding(false)}
+        />
+      )}
 
       {/* ── Greeting ────────────────────────────────────────────────────── */}
       <div className="space-y-1">
@@ -604,23 +624,18 @@ export default function AffiliateDashboardPage() {
                   <CardTitle className="text-base font-semibold text-foreground">Your Links</CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4 space-y-2.5">
-                  {[
-                    { label: 'Full link',  text: referralLink },
-                    { label: 'Short link', text: `${BASE_URL}/ref/${affiliate?.affiliateCode ?? ''}` },
-                  ].map(({ label, text }) => (
-                    <div key={label} className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-medium tracking-wide">{label}</p>
-                      <div className="flex items-center justify-between gap-2 rounded-lg bg-muted/60 border border-border px-3 py-2">
-                        <p className="text-sm font-mono text-foreground truncate">{text}</p>
-                        <button
-                          onClick={() => { navigator.clipboard.writeText(text); toast.success(`${label} copied!`); }}
-                          className="shrink-0 text-primary hover:text-primary/80 transition-colors"
-                        >
-                          <Copy className="w-3 h-3" />
-                        </button>
-                      </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground uppercase font-medium tracking-wide">Full link</p>
+                    <div className="flex items-center justify-between gap-2 rounded-lg bg-muted/60 border border-border px-3 py-2">
+                      <p className="text-sm font-mono text-foreground truncate">{referralLink}</p>
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(referralLink); toast.success('Link copied!'); }}
+                        className="shrink-0 text-primary hover:text-primary/80 transition-colors"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
                     </div>
-                  ))}
+                  </div>
                 </CardContent>
               </Card>
 

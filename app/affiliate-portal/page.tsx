@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AffiliateNavbar } from '@/components/affiliate/AffiliateNavbar';
 import { AffiliateFooter } from '@/components/affiliate/AffiliateFooter';
+import { HeroCTA, BottomCTA } from '@/components/affiliate/AffiliateLandingCTA';
 
 export const metadata = { title: 'Affiliate Program | GrowNest Africa' };
 
@@ -109,11 +110,7 @@ export default function AffiliateLandingPage() {
               Share GrowNest with your audience and earn monthly commission for every person who joins and saves.
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
-              <Button asChild size="lg" className="bg-white text-black hover:bg-white/90 font-semibold min-h-13 px-8 shadow-xl">
-                <Link href="/affiliate-portal/apply">
-                  Apply Now <ArrowRight className="ml-2 w-4 h-4" />
-                </Link>
-              </Button>
+              <HeroCTA />
               <Button asChild size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/15 hover:text-white min-h-13 px-8 bg-white/10 backdrop-blur-sm">
                 <Link href="/login?redirect=/portal">
                   Get Started
@@ -332,16 +329,7 @@ export default function AffiliateLandingPage() {
             Log in with your GrowNest account and apply. Approval within 48 hours.
           </p>
           <div className="flex flex-wrap gap-3 justify-center pt-2">
-            <Button asChild size="lg" className="bg-white text-black hover:bg-white/90 font-semibold min-h-13 px-10 shadow-lg">
-              <Link href="/login?redirect=/apply">
-                Apply Now <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 hover:text-white min-h-13 px-8 bg-transparent">
-              <Link href="/login?redirect=/portal">
-                Log in first
-              </Link>
-            </Button>
+            <BottomCTA />
           </div>
         </div>
       </section>

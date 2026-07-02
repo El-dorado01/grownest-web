@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { affiliateApi } from '@/lib/affiliate-api';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -434,6 +435,7 @@ export default function AffiliateApplyPage() {
   const [openPlatform, setOpenPlatform] = useState<SocialPlatform | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [noCampaignDialog, setNoCampaignDialog] = useState(false);
   const [waitlistJoining, setWaitlistJoining] = useState(false);
@@ -527,7 +529,7 @@ export default function AffiliateApplyPage() {
       }
 
       console.log('[Affiliate Apply] Success — affiliate created:', res.data?.affiliate?.affiliateCode);
-      window.location.href = '/apply/success';
+      setShowSuccess(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
@@ -894,6 +896,33 @@ export default function AffiliateApplyPage() {
           </div>
         </div>
       )}
+
+      {/* ── Application submitted success dialog ───────────────────────── */}
+      <Dialog open={showSuccess} onOpenChange={() => {}}>
+        <DialogContent
+          className="max-w-sm text-center gap-0 p-8 [&>button]:hidden"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8 text-primary" />
+            </div>
+            <div className="space-y-1.5">
+              <h2 className="text-xl font-bold text-foreground">Application Submitted!</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Thank you for applying to the GrowNest Affiliate Program. Our team will review your
+                application and get back to you within 48 hours.
+              </p>
+            </div>
+            <Button
+              className="w-full h-11 mt-2"
+              onClick={() => { window.location.href = '/portal/application'; }}
+            >
+              View My Application
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
