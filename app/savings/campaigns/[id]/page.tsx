@@ -195,16 +195,87 @@ function LeaveDialog({
   );
 }
 
-// ─── Rule row ────────────────────────────────────────────────────────────────
+// ─── Rule tile ───────────────────────────────────────────────────────────────
 function RuleRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3 py-2.5">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/30 px-3.5 py-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
         <Icon className="h-4 w-4 text-primary" />
       </div>
-      <div className="flex flex-1 items-center justify-between">
-        <span className="text-sm text-muted-foreground">{label}</span>
-        <span className="text-sm font-medium text-foreground">{value}</span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] text-muted-foreground">{label}</p>
+        <p className="truncate text-sm font-semibold text-foreground">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── My savings card (joined) ────────────────────────────────────────────────
+function MembershipCard({
+  campaign, progressPct, graceDaysLeft, onLeave,
+}: {
+  campaign: NestEggCampaign; progressPct: number; graceDaysLeft: number | null; onLeave: () => void;
+}) {
+  const membership = campaign.myMembership!;
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/15 via-card to-card">
+      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/20 blur-2xl" aria-hidden />
+      <div className="relative flex flex-col gap-4 p-5">
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-border/60 bg-primary/10">
+            {campaign.coverImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={campaign.coverImage} alt={campaign.title} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                {campaign.payoutType === "GOODS" ? <Package className="h-5 w-5 text-primary" /> : <Wallet className="h-5 w-5 text-primary" />}
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-muted-foreground">Your savings</p>
+            <p className="truncate text-sm font-semibold text-foreground">{campaign.title}</p>
+          </div>
+          <Badge className="shrink-0 gap-1 bg-green-100 text-[10px] text-green-700 dark:bg-green-900/40 dark:text-green-300">
+            {membership.status}
+          </Badge>
+        </div>
+
+        <p className="text-3xl font-bold text-foreground">{fmt(membership.savedAmount)}</p>
+        <p className="-mt-2 text-xs text-muted-foreground">
+          Next: {fmt(campaign.contributionAmount)} on{" "}
+          {new Date(membership.nextContributionDate).toLocaleDateString("en-NG", { day: "numeric", month: "long" })}
+        </p>
+
+        <div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary transition-all" style={{ width: `${progressPct}%` }} />
+          </div>
+          <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+            <span>Started</span><span>{progressPct}% through</span><span>Ends</span>
+          </div>
+        </div>
+
+        {graceDaysLeft !== null && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-3 dark:border-amber-800 dark:bg-amber-950/40">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <div className="flex-1">
+              <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
+                Top up — {graceDaysLeft} day{graceDaysLeft === 1 ? "" : "s"} left
+              </p>
+              <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                Last contribution failed. Top up before the grace period ends.
+              </p>
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={onLeave}
+          className="self-start text-xs text-muted-foreground transition-colors hover:text-rose-600"
+        >
+          Leave campaign
+        </button>
       </div>
     </div>
   );
@@ -268,31 +339,64 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           </Breadcrumb>
         </DashboardHeader>
 
-        <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 md:p-6">
-          {isLoading ? (
-            <>
-              <Skeleton className="h-44 w-full rounded-2xl" />
-              <Skeleton className="h-64 w-full rounded-2xl" />
-            </>
-          ) : !campaign ? (
-            <div className="py-16 text-center text-sm text-muted-foreground">Campaign not found.</div>
-          ) : (
-            <>
+        {isLoading ? (
+          <div className="flex flex-1 gap-6 p-4 md:p-6 xl:p-8">
+            <div className="flex flex-1 flex-col gap-5 min-w-0">
+              <Skeleton className="h-64 w-full rounded-3xl md:h-80" />
+              <Skeleton className="h-4 w-3/4 rounded-md" />
+              <Skeleton className="h-4 w-1/2 rounded-md" />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 rounded-xl" />
+                ))}
+              </div>
+            </div>
+            <div className="hidden lg:flex w-80 xl:w-96 shrink-0 flex-col gap-4">
+              <Skeleton className="h-56 rounded-2xl" />
+              <Skeleton className="h-40 rounded-2xl" />
+            </div>
+          </div>
+        ) : !campaign ? (
+          <div className="flex flex-1 items-center justify-center py-16 text-center text-sm text-muted-foreground">
+            Campaign not found.
+          </div>
+        ) : (
+          <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 xl:p-8 lg:flex-row">
+            {/* ── Left column ─────────────────────────────────────────── */}
+            <div className="flex flex-1 flex-col gap-5 min-w-0">
               {/* Cover */}
-              <div className="relative h-44 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-primary/25 to-primary/5">
-                {campaign.coverImage && (
+              <div className="relative h-64 w-full overflow-hidden rounded-3xl bg-gradient-to-br from-primary/25 to-primary/5 md:h-80">
+                {campaign.coverImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={campaign.coverImage} alt={campaign.title} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center">
+                    {campaign.payoutType === "GOODS" ? (
+                      <Package className="h-16 w-16 text-primary/30" />
+                    ) : (
+                      <Wallet className="h-16 w-16 text-primary/30" />
+                    )}
+                  </div>
                 )}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="text-[10px]">{campaign.category}</Badge>
                     <Badge className="gap-1 border border-white/30 bg-white/20 text-[10px] text-white backdrop-blur">
                       {campaign.payoutType === "GOODS" ? <Package className="h-3 w-3" /> : <Wallet className="h-3 w-3" />}
                       {campaign.payoutType === "GOODS" ? "Goods" : "Cash"}
                     </Badge>
+                    {joined && (
+                      <Badge className="gap-1 border border-green-300/40 bg-green-500/20 text-[10px] text-green-50 backdrop-blur">
+                        <Check className="h-3 w-3" /> Joined
+                      </Badge>
+                    )}
                   </div>
-                  <h1 className="mt-1.5 text-xl font-bold text-white drop-shadow">{campaign.title}</h1>
+                  <h1 className="mt-2 text-2xl font-bold text-white drop-shadow md:text-3xl">{campaign.title}</h1>
+                  <p className="mt-1 flex items-center gap-1.5 text-xs text-white/80">
+                    <Users className="h-3.5 w-3.5" />
+                    {campaign.maxMembers != null ? `${campaign.memberCount}/${campaign.maxMembers} members` : `${campaign.memberCount} members joined`}
+                  </p>
                 </div>
               </div>
 
@@ -300,49 +404,17 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 <p className="text-sm leading-relaxed text-muted-foreground">{campaign.description}</p>
               )}
 
-              {/* Grace warning */}
-              {joined && graceDaysLeft !== null && (
-                <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950/40">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                      Top up your NestPurse — {graceDaysLeft} day{graceDaysLeft === 1 ? "" : "s"} left
-                    </p>
-                    <p className="text-xs text-amber-700 dark:text-amber-400">
-                      Your last contribution failed. Top up before the grace period ends or you&apos;ll be removed.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* My progress */}
+              {/* My progress — mobile only (desktop shows in right column) */}
               {joined && (
-                <div className="rounded-2xl border border-border bg-card p-5">
-                  <p className="text-xs text-muted-foreground">Your savings</p>
-                  <p className="mt-0.5 text-3xl font-bold text-foreground">{fmt(membership!.savedAmount)}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Next: {fmt(campaign.contributionAmount)} on{" "}
-                    {new Date(membership!.nextContributionDate).toLocaleDateString("en-NG", { day: "numeric", month: "long" })}
-                  </p>
-                  <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary transition-all" style={{ width: `${progressPct}%` }} />
-                  </div>
-                  <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
-                    <span>Started</span><span>{progressPct}% through</span><span>Ends</span>
-                  </div>
-                  <button
-                    onClick={() => setLeaveOpen(true)}
-                    className="mt-4 w-full text-center text-xs text-muted-foreground transition-colors hover:text-rose-600"
-                  >
-                    Leave campaign
-                  </button>
+                <div className="lg:hidden">
+                  <MembershipCard campaign={campaign} progressPct={progressPct} graceDaysLeft={graceDaysLeft} onLeave={() => setLeaveOpen(true)} />
                 </div>
               )}
 
               {/* Rules */}
               <div className="rounded-2xl border border-border bg-card p-5">
-                <h2 className="mb-1 text-sm font-semibold text-foreground">Campaign rules</h2>
-                <div className="divide-y divide-border">
+                <h2 className="mb-3 text-sm font-semibold text-foreground">Campaign rules</h2>
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                   <RuleRow icon={Wallet} label="Contribution" value={`${fmt(campaign.contributionAmount)} ${freqLabel[campaign.frequency]}`} />
                   <RuleRow icon={CalendarDays} label="Duration" value={`${new Date(campaign.startDate).toLocaleDateString("en-NG", { day: "numeric", month: "short" })} – ${new Date(campaign.endDate).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "2-digit" })}`} />
                   <RuleRow icon={TrendingUp} label="Interest at end" value={`${campaign.interestRate}%`} />
@@ -356,9 +428,9 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 </div>
               </div>
 
-              {/* CTA */}
+              {/* CTA — mobile only */}
               {!joined && (
-                <div className="sticky bottom-4">
+                <div className="sticky bottom-4 lg:hidden">
                   {canJoin ? (
                     <Button size="lg" className="w-full" onClick={() => setJoinOpen(true)}>Join Campaign</Button>
                   ) : full ? (
@@ -370,9 +442,50 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                   )}
                 </div>
               )}
-            </>
-          )}
-        </div>
+            </div>
+
+            {/* ── Right column — desktop only ──────────────────────────── */}
+            <div className="hidden lg:flex w-80 xl:w-96 shrink-0 flex-col gap-4">
+              {joined ? (
+                <div className="sticky top-6">
+                  <MembershipCard campaign={campaign} progressPct={progressPct} graceDaysLeft={graceDaysLeft} onLeave={() => setLeaveOpen(true)} />
+                </div>
+              ) : (
+                <div className="sticky top-6 flex flex-col gap-4">
+                  <div className="rounded-2xl border border-border bg-card p-5">
+                    <p className="text-xs text-muted-foreground">Commit to save</p>
+                    <p className="mt-0.5 text-2xl font-bold text-foreground">
+                      {fmt(campaign.contributionAmount)}
+                      <span className="text-sm font-normal text-muted-foreground"> / {freqLabel[campaign.frequency]}</span>
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Until {new Date(campaign.endDate).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })}
+                    </p>
+                    <div className="mt-4">
+                      {canJoin ? (
+                        <Button size="lg" className="w-full" onClick={() => setJoinOpen(true)}>Join Campaign</Button>
+                      ) : full ? (
+                        <Button size="lg" className="w-full" disabled>Campaign Full</Button>
+                      ) : deadlinePassed ? (
+                        <Button size="lg" className="w-full" disabled>Join Deadline Passed</Button>
+                      ) : (
+                        <Button size="lg" className="w-full" disabled>Not Available</Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-muted/30 p-5 text-sm">
+                    <p className="mb-2 font-semibold text-foreground">Why join?</p>
+                    <ul className="space-y-1.5 text-xs text-muted-foreground">
+                      <li>• Earn {campaign.interestRate}% interest when the campaign ends</li>
+                      <li>• Auto-debited from your NestPurse — no manual transfers</li>
+                      <li>• {campaign.payoutType === "GOODS" ? `Payout: ${campaign.goodsDescription ?? "Goods"}` : "Cash payout straight to your NestPurse"}</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </SidebarInset>
 
       {campaign && (
