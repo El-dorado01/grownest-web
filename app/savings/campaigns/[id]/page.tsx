@@ -223,15 +223,19 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const joined = membership && membership.status === "ACTIVE";
 
   const now = new Date();
+  // Join deadline is inclusive through the END of that calendar day.
+  const joinDeadlineEnd = campaign
+    ? (() => { const d = new Date(campaign.joinDeadline); d.setHours(23, 59, 59, 999); return d; })()
+    : null;
   const canJoin =
     campaign &&
     !joined &&
     ["DRAFT", "ACTIVE"].includes(campaign.status) &&
-    new Date(campaign.joinDeadline) >= now &&
+    joinDeadlineEnd! >= now &&
     !(campaign.maxMembers != null && campaign.memberCount >= campaign.maxMembers);
 
   const full = campaign?.maxMembers != null && campaign.memberCount >= campaign.maxMembers;
-  const deadlinePassed = campaign && new Date(campaign.joinDeadline) < now;
+  const deadlinePassed = joinDeadlineEnd != null && joinDeadlineEnd < now;
 
   // Time progress
   const progressPct = campaign
