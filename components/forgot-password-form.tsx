@@ -31,8 +31,7 @@ export function ForgotPasswordForm({
     setIsLoading(true)
 
     try {
-      // Use the frontend URL from environment or fallback to current origin
-      const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || (typeof window !== 'undefined' ? window.location.origin : '')
+      const frontendUrl = typeof window !== 'undefined' ? window.location.origin : ''
       const result = await authApi.forgotPassword({ email, frontendUrl })
 
       if (result.data) {
@@ -53,7 +52,7 @@ export function ForgotPasswordForm({
     if (countdown > 0) return
     setIsLoading(true)
     try {
-      const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || (typeof window !== 'undefined' ? window.location.origin : '')
+      const frontendUrl = typeof window !== 'undefined' ? window.location.origin : ''
       const result = await authApi.forgotPassword({ email, frontendUrl })
 
       if (result.data) {

@@ -79,7 +79,7 @@ export function LoginForm({
       const { supabase } = await import('@/lib/supabase');
       const params = new URLSearchParams(window.location.search);
       const next = params.get('redirect') || '/';
-      const origin = process.env.NEXT_PUBLIC_FRONTEND_URL || window.location.origin;
+      const origin = window.location.origin;
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
