@@ -16,10 +16,10 @@ const LINKS = {
     { label: "NestBaskets",       href: "https://grownest.africa" },
   ],
   Legal: [
-    { label: "Privacy Policy",    href: "#" },
-    { label: "Terms of Service",  href: "#" },
-    { label: "Affiliate T&Cs",    href: "#" },
-    { label: "Security",          href: "#" },
+    { label: "Privacy Policy",    href: "/privacy" },
+    { label: "Terms of Service",  href: "/terms" },
+    { label: "Affiliate T&Cs",    href: "/affiliate-terms" },
+    { label: "Cookie Policy",     href: "/cookies" },
   ],
 };
 

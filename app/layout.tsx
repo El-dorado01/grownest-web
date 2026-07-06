@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils";
 import { ConnectivityListener } from "@/components/connectivity-listener"
+import { PolicyReacceptanceGate } from "@/components/legal/PolicyReacceptanceGate"
 import { SettingsDialog } from "@/components/settings-dialog"
 import NextTopLoader from 'nextjs-toploader';
 import { GoogleOAuthProvider } from '@react-oauth/google'
@@ -104,6 +105,7 @@ export default function RootLayout({
               <TooltipProvider>
                 {children}
                 <ConnectivityListener />
+                <PolicyReacceptanceGate />
                 <Toaster position="bottom-center" richColors />
               </TooltipProvider>
                     <React.Suspense fallback={null}>

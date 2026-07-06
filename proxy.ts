@@ -30,7 +30,14 @@ export function proxy(request: NextRequest) {
     pathname.startsWith('/reset-password') ||
     pathname.startsWith('/auth/callback') ||
     pathname.startsWith('/invite') ||
-    pathname.startsWith('/affiliate-portal')
+    pathname.startsWith('/affiliate-portal') ||
+    // Legal policies must be viewable by anyone — no login required.
+    pathname.startsWith('/terms') ||
+    pathname.startsWith('/privacy') ||
+    pathname.startsWith('/cookies') ||
+    pathname.startsWith('/refund-policy') ||
+    pathname.startsWith('/affiliate-terms') ||
+    pathname.startsWith('/vendor-agreement')
 
   // If there's no auth token and path is private, redirect to login
   if (!token && !isPublicPath) {

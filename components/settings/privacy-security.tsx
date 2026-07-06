@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useAuth } from "@/context/auth-context"
 import { authApi } from "@/lib/auth-api"
 import { Button } from "@/components/ui/button"
@@ -16,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog"
-import { Loader2, AlertTriangle, CheckCircle2, Mail, SmartphoneIcon } from "lucide-react"
+import { Loader2, AlertTriangle, CheckCircle2, Mail, SmartphoneIcon, FileText, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
 import { PinInput } from "@/components/ui/pin-input"
 
@@ -391,6 +392,35 @@ export function PrivacySecurity() {
             </div>
           </form>
         )}
+      </section>
+
+      {/* Legal */}
+      <section className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="px-4 py-3.5 md:px-5 md:py-4 border-b border-border">
+          <span className="font-medium text-sm md:text-base">Legal</span>
+        </div>
+        <div className="divide-y divide-border">
+          {[
+            { label: "Terms & Conditions", href: "/terms" },
+            { label: "Privacy Policy", href: "/privacy" },
+            { label: "Cookie Policy", href: "/cookies" },
+            { label: "Refund & Cancellation Policy", href: "/refund-policy" },
+          ].map(({ label, href }) => (
+            <Link
+              key={href}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between gap-3 px-4 py-3 md:px-5 hover:bg-muted/50 transition-colors"
+            >
+              <span className="flex items-center gap-2.5 text-sm">
+                <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                {label}
+              </span>
+              <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+            </Link>
+          ))}
+        </div>
       </section>
 
       {/* Danger Zone */}

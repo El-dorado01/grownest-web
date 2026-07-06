@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/com
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { affiliateApi } from '@/lib/affiliate-api';
+import { legalApi } from '@/lib/legal-api';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { SocialPlatform } from '@/types/affiliate';
 import { AffiliateNavbar } from '@/components/affiliate/AffiliateNavbar';
@@ -529,6 +530,7 @@ export default function AffiliateApplyPage() {
       }
 
       console.log('[Affiliate Apply] Success — affiliate created:', res.data?.affiliate?.affiliateCode);
+      legalApi.accept('AFFILIATE_TERMS').catch(() => {});
       setShowSuccess(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -798,7 +800,7 @@ export default function AffiliateApplyPage() {
                 />
                 <label htmlFor="terms" className="text-sm text-foreground cursor-pointer leading-relaxed">
                   I have read and agree to the{' '}
-                  <a href="https://app.grownest.africa/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
+                  <a href="/affiliate-terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
                     GrowNest Affiliate Terms &amp; Conditions
                   </a>
                   . I confirm that the information I have provided is accurate.

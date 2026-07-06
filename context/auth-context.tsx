@@ -17,6 +17,7 @@ import {
   clearAuthTokens,
 } from "@/lib/api";
 import { authApi } from "@/lib/auth-api";
+import { legalApi } from "@/lib/legal-api";
 import { supabase } from "@/lib/supabase";
 import type { User, AuthState, LoginRequest } from "@/types/auth";
 import { toast } from "sonner";
@@ -257,8 +258,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           requires2FA: false,
           pendingUserId: null,
         });
+
+        // Record acceptance of Terms & Privacy Policy — the signup form's
+        // checkbox already required agreement before submission was allowed.
+        // Fire-and-forget: must never block or fail the registration flow.
+        legalApi.acceptBatch(["TERMS", "PRIVACY"]).catch(() => {});
       }
-      
+
       return { success: true };
     },
     []

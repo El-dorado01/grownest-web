@@ -188,12 +188,13 @@ export function SupportSettings() {
         <h3 className="text-xl font-bold tracking-tight">Terms & Privacy</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { title: "Terms of Service", icon: <FileText className="h-4 w-4 text-orange-500" />, bg: "bg-orange-500/10" },
-            { title: "Privacy Policy", icon: <ShieldCheck className="h-4 w-4 text-green-500" />, bg: "bg-green-500/10" },
-            { title: "Licences", icon: <ScrollText className="h-4 w-4 text-blue-500" />, bg: "bg-blue-500/10" }
+            { title: "Terms of Service", icon: <FileText className="h-4 w-4 text-orange-500" />, bg: "bg-orange-500/10", link: "https://dashboard.grownest.africa/terms" },
+            { title: "Privacy Policy", icon: <ShieldCheck className="h-4 w-4 text-green-500" />, bg: "bg-green-500/10", link: "https://dashboard.grownest.africa/privacy" },
+            { title: "Licences", icon: <ScrollText className="h-4 w-4 text-blue-500" />, bg: "bg-blue-500/10", link: "#" }
           ].map((item) => (
             <button
               key={item.title}
+              onClick={() => window.open(item.link, "_blank")}
               className="flex items-center gap-3 p-4 rounded-xl bg-background border border-muted/60 hover:border-primary/40 transition-all group text-left"
             >
               <div className={`h-8 w-8 rounded-lg ${item.bg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
