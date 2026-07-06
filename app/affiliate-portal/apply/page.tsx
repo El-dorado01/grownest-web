@@ -866,6 +866,18 @@ export default function AffiliateApplyPage() {
                 >
                   Close
                 </button>
+                <button
+                  onClick={async () => {
+                    setWaitlistJoining(true);
+                    await affiliateApi.leaveCampaignWaitlist();
+                    setWaitlistJoining(false);
+                    setWaitlistJoined(false);
+                  }}
+                  disabled={waitlistJoining}
+                  className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  {waitlistJoining ? 'Removing…' : "Changed your mind? Leave the waitlist"}
+                </button>
               </div>
             ) : (
               <div className="flex flex-col gap-2.5">

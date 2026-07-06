@@ -9,6 +9,11 @@ export const affiliateApi = {
 
   getEarningsSummary: () => apiFetch<EarningsSummary>('/api/affiliate/me/earnings-summary'),
 
+  getReferralsDaily: (days = 30) =>
+    apiFetch<{ series: { date: string; referrals: number }[] }>(
+      `/api/affiliate/me/referrals-daily?days=${days}`
+    ),
+
   getReferrals: (page = 1) =>
     apiFetch<{ referrals: AffiliateReferral[]; total: number }>(
       `/api/affiliate/me/referrals?page=${page}&limit=20`
@@ -55,6 +60,13 @@ export const affiliateApi = {
     apiFetch('/api/affiliate/track-signup', {
       method: 'POST',
       body: JSON.stringify({ affiliateCode, newUserId }),
+      headers: { 'Content-Type': 'application/json' },
+    }),
+
+  trackClick: (affiliateCode: string) =>
+    apiFetch('/api/affiliate/track-click', {
+      method: 'POST',
+      body: JSON.stringify({ affiliateCode }),
       headers: { 'Content-Type': 'application/json' },
     }),
 };

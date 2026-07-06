@@ -34,6 +34,7 @@ export interface NestEggCampaign {
   memberCount: number;
   totalPot: number | null;
   myMembership: CampaignMembershipSummary | null;
+  createdAt: string;
 }
 
 export interface CampaignMembership {

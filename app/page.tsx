@@ -1,6 +1,7 @@
 "use client"
 
 import { DashboardHeader } from "@/components/dashboard-header"
+import { NewCampaignAnnouncement } from "@/components/campaigns/NewCampaignAnnouncement"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import {
@@ -583,6 +584,7 @@ export default function Page() {
   return (
     <React.Suspense fallback={<div className="flex h-screen w-full items-center justify-center"><Loader2Icon className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
       <Dashboard />
+      <NewCampaignAnnouncement />
     </React.Suspense>
   )
 }

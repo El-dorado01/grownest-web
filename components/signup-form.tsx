@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { useAuth } from "@/context/auth-context"
+import { affiliateApi } from "@/lib/affiliate-api"
 import { toast } from "sonner"
 import { Loader2, Eye, EyeOff, Mail, Lock, Tag } from "lucide-react"
 
@@ -27,8 +28,18 @@ export function SignupForm({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [dataConsent, setDataConsent] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const clickTracked = useRef(false)
 
   const isLoading = isAuthLoading || isSubmitting
+
+  // Track the referral click exactly once per page load — this is the only
+  // place a shared referral link (/signup?ref=...) is guaranteed to land,
+  // on both web and the mobile app-link fallback.
+  useEffect(() => {
+    if (!refFromUrl || clickTracked.current) return
+    clickTracked.current = true
+    affiliateApi.trackClick(refFromUrl).catch(() => {})
+  }, [refFromUrl])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()

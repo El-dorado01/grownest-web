@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { FaWhatsapp, FaTwitter, FaFacebook, FaInstagram, FaTiktok, FaTelegram } from 'react-icons/fa';
 import { toast } from 'sonner';
-import { format, subDays } from 'date-fns';
+import { format } from 'date-fns';
 import { useProfile } from '@/hooks/use-profile';
 import { CampaignUpgradeDialog, CampaignSwitcherSheet } from '@/components/affiliate/CampaignSwitcher';
 import { AffiliateOnboarding } from '@/components/affiliate/AffiliateOnboarding';
@@ -43,18 +43,6 @@ const TIER_STYLE: Record<string, string> = {
   ELITE:        'border-primary/60 bg-primary/10 text-primary font-bold',
 };
 
-
-// ─── Chart data generator ─────────────────────────────────────────────────────
-function generateChartData(days: number) {
-  return Array.from({ length: days }, (_, i) => {
-    const d = subDays(new Date(), days - 1 - i);
-    return {
-      date: format(d, days <= 7 ? 'EEE' : 'MMM d'),
-      referrals: Math.floor(Math.random() * 4),
-      clicks: Math.floor(Math.random() * 18) + 2,
-    };
-  });
-}
 
 // ─── Share platforms ──────────────────────────────────────────────────────────
 const SHARE_PLATFORMS = [
@@ -204,6 +192,11 @@ export default function AffiliateDashboardPage() {
   const [chartRange,     setChartRange]     = useState<'7' | '30' | '90'>('30');
   const [showOnboarding, setShowOnboarding] = useState(false);
 
+  const { data: dailyData, isLoading: dailyLoading } = useSWR(
+    ['affiliate/referrals-daily', chartRange],
+    () => affiliateApi.getReferralsDaily(parseInt(chartRange))
+  );
+
   useEffect(() => {
     const a = meData?.data?.affiliate;
     if (!a || a.status !== 'ACTIVE') return;
@@ -243,7 +236,14 @@ export default function AffiliateDashboardPage() {
   const convRate = (summary?.totalClicks ?? 0) > 0 ? (((summary?.totalReferrals ?? 0) / (summary?.totalClicks ?? 1)) * 100) : 0;
 
   // Chart data (memoised so it doesn't re-generate on every render)
-  const chartData = useMemo(() => generateChartData(parseInt(chartRange)), [chartRange]);
+  const chartData = useMemo(() => {
+    const series = dailyData?.data?.series ?? [];
+    const days = parseInt(chartRange);
+    return series.map((s) => ({
+      date: format(new Date(s.date), days <= 7 ? 'EEE' : 'MMM d'),
+      referrals: s.referrals,
+    }));
+  }, [dailyData, chartRange]);
 
   if (meLoading) {
     return (
@@ -493,33 +493,36 @@ export default function AffiliateDashboardPage() {
                   </Tabs>
                 </CardHeader>
                 <CardContent className="px-2 pt-3 pb-4">
-                  <ResponsiveContainer width="100%" height={180}>
-                    <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="refGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%"  stopColor="oklch(0.72 0.16 84)" stopOpacity={0.4} />
-                          <stop offset="95%" stopColor="oklch(0.72 0.16 84)" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="clickGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%"  stopColor="oklch(0.63 0.12 65)" stopOpacity={0.25} />
-                          <stop offset="95%" stopColor="oklch(0.63 0.12 65)" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.9 0.01 84 / 20%)" />
-                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'oklch(0.45 0.02 84)' }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 10, fill: 'oklch(0.45 0.02 84)' }} axisLine={false} tickLine={false} />
-                      <ReTooltip
-                        contentStyle={{ background: 'oklch(0.22 0.02 84)', border: '1px solid oklch(0.9 0.01 84 / 20%)', borderRadius: '8px', fontSize: 12 }}
-                        labelStyle={{ color: 'oklch(0.98 0.01 84)', fontWeight: 600 }}
-                        itemStyle={{ color: 'oklch(0.7 0.02 84)' }}
-                      />
-                      <Area type="monotone" dataKey="clicks"   stroke="oklch(0.63 0.12 65)" strokeWidth={1.5} fill="url(#clickGrad)" name="Clicks" />
-                      <Area type="monotone" dataKey="referrals" stroke="oklch(0.72 0.16 84)" strokeWidth={2}   fill="url(#refGrad)"   name="Referrals" />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  {dailyLoading ? (
+                    <Skeleton className="h-[180px] w-full rounded-lg" />
+                  ) : chartData.every((d) => d.referrals === 0) ? (
+                    <div className="flex h-[180px] flex-col items-center justify-center gap-1 text-center">
+                      <p className="text-sm font-medium text-foreground">No referrals in this range yet</p>
+                      <p className="text-xs text-muted-foreground">Share your link to start seeing activity here</p>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={180}>
+                      <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="refGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="oklch(0.72 0.16 84)" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="oklch(0.72 0.16 84)" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.9 0.01 84 / 20%)" />
+                        <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'oklch(0.45 0.02 84)' }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 10, fill: 'oklch(0.45 0.02 84)' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <ReTooltip
+                          contentStyle={{ background: 'oklch(0.22 0.02 84)', border: '1px solid oklch(0.9 0.01 84 / 20%)', borderRadius: '8px', fontSize: 12 }}
+                          labelStyle={{ color: 'oklch(0.98 0.01 84)', fontWeight: 600 }}
+                          itemStyle={{ color: 'oklch(0.7 0.02 84)' }}
+                        />
+                        <Area type="monotone" dataKey="referrals" stroke="oklch(0.72 0.16 84)" strokeWidth={2} fill="url(#refGrad)" name="Referrals" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
                   <div className="flex items-center gap-4 justify-end mt-1 px-2">
                     <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 rounded-full bg-primary" /><span className="text-xs text-muted-foreground">Referrals</span></div>
-                    <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 rounded-full bg-secondary" /><span className="text-xs text-muted-foreground">Clicks</span></div>
                   </div>
                 </CardContent>
               </Card>
@@ -620,7 +623,7 @@ export default function AffiliateDashboardPage() {
                   {[
                     { label: 'Link Clicks',   value: (summary?.totalClicks ?? 0).toLocaleString(), icon: MousePointerClick },
                     { label: 'Conversions',   value: `${summary?.qualifiedReferrals ?? 0} / ${summary?.totalReferrals ?? 0}`, icon: TrendingUp },
-                    { label: 'Conv. Rate',    value: `${convRate.toFixed(1)}%`, icon: Target },
+                    { label: 'Click-to-Signup Rate',    value: `${convRate.toFixed(1)}%`, icon: Target },
                     { label: 'EPC',           value: fmt(epc), icon: Zap },
                   ].map(({ label, value, icon: Icon }) => (
                     <div key={label} className="flex items-center justify-between">
