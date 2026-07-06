@@ -11,6 +11,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { affiliateApi } from '@/lib/affiliate-api';
 import { legalApi } from '@/lib/legal-api';
+import { affiliatePath } from '@/lib/affiliate-portal-path';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { SocialPlatform } from '@/types/affiliate';
 import { AffiliateNavbar } from '@/components/affiliate/AffiliateNavbar';
@@ -447,11 +448,11 @@ export default function AffiliateApplyPage() {
   useEffect(() => {
     const { getAuthToken } = require('@/lib/api');
     if (!getAuthToken()) {
-      router.replace('/login?redirect=/apply');
+      router.replace(`/login?redirect=${encodeURIComponent(affiliatePath('/apply'))}`);
       return;
     }
     affiliateApi.getMe().then((res) => {
-      if (res.data?.affiliate) router.replace('/portal');
+      if (res.data?.affiliate) router.replace(affiliatePath('/portal'));
     }).catch(() => {});
   }, [router]);
 

@@ -21,6 +21,7 @@ import {
   Copy, Check, Share2, ArrowRight, ChevronRight,
   TrendingUp, Users, MousePointerClick, Wallet,
   Zap, Target, Receipt, Sparkles, ExternalLink,
+  Calendar, ShieldX, XCircle,
 } from 'lucide-react';
 import { FaWhatsapp, FaTwitter, FaFacebook, FaInstagram, FaTiktok, FaTelegram } from 'react-icons/fa';
 import { toast } from 'sonner';
@@ -28,6 +29,7 @@ import { format } from 'date-fns';
 import { useProfile } from '@/hooks/use-profile';
 import { CampaignUpgradeDialog, CampaignSwitcherSheet } from '@/components/affiliate/CampaignSwitcher';
 import { AffiliateOnboarding } from '@/components/affiliate/AffiliateOnboarding';
+import { affiliatePath } from '@/lib/affiliate-portal-path';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 const fmt = (n: number) =>
@@ -221,7 +223,18 @@ export default function AffiliateDashboardPage() {
   const summary           = summaryData?.data;
   const referrals         = referralsData?.data?.referrals ?? [];
   const availableCampaigns = campaignsData?.data?.campaigns ?? [];
-  const isPending         = affiliate?.status === 'PENDING';
+  // Only an ACTIVE affiliate gets the live dashboard (share tools, referral
+  // link, campaign switching, earnings). PENDING/REJECTED/SUSPENDED all see
+  // a status card instead — previously only PENDING was restricted, which
+  // meant a rejected or suspended affiliate still saw a fully "live"
+  // dashboard with a working share flow.
+  const isActive          = affiliate?.status === 'ACTIVE';
+  const STATUS_INFO: Record<string, { title: string; desc: string; icon: typeof Calendar; className: string }> = {
+    PENDING:   { title: 'Application under review', desc: 'Our team will notify you within 48 hours.', icon: Calendar, className: 'border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900/50 text-amber-900 dark:text-amber-400' },
+    REJECTED:  { title: 'Application not approved', desc: 'Your application was not approved this time. You can view details and re-apply from your application page.', icon: XCircle, className: 'border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900/50 text-red-900 dark:text-red-400' },
+    SUSPENDED: { title: 'Account suspended', desc: 'Your affiliate account has been suspended. Please contact support for details.', icon: ShieldX, className: 'border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900/50 text-red-900 dark:text-red-400' },
+  };
+  const statusInfo = affiliate?.status ? STATUS_INFO[affiliate.status] : undefined;
 
   const handleCampaignSwitched = () => {
     void mutateMe();
@@ -427,7 +440,7 @@ export default function AffiliateDashboardPage() {
                 <span className="font-mono font-bold text-foreground tracking-wider">{affiliate?.affiliateCode}</span>
               </p>
             </div>
-            {!isPending && (
+            {isActive && (
               <div className="flex gap-2 shrink-0">
                 <Button variant="outline" size="sm" className="gap-1.5 h-9 text-sm" onClick={() => setShareOpen(true)}>
                   <Share2 className="w-3.5 h-3.5" /> Share
@@ -438,17 +451,26 @@ export default function AffiliateDashboardPage() {
               </div>
             )}
           </div>
-          {!isPending && (
+          {isActive && (
             <TierProgress tier={summary?.tier ?? 'STARTER'} referrals={summary?.totalReferrals ?? 0} />
           )}
         </CardContent>
       </Card>
 
-      {isPending ? (
-        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900/50">
-          <CardContent className="p-5">
-            <p className="font-semibold text-amber-900 dark:text-amber-400">Application under review</p>
-            <p className="text-sm text-amber-700 dark:text-amber-500 mt-1">Our team will notify you within 48 hours.</p>
+      {!isActive && statusInfo ? (
+        <Card className={statusInfo.className}>
+          <CardContent className="p-5 flex items-start gap-3">
+            <statusInfo.icon className="w-5 h-5 mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold">{statusInfo.title}</p>
+              <p className="text-sm mt-1 opacity-90">{statusInfo.desc}</p>
+              <Link
+                href={affiliatePath('/portal/application')}
+                className="text-sm font-medium underline underline-offset-2 mt-2 inline-flex items-center gap-1"
+              >
+                View application details <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -732,7 +754,7 @@ export default function AffiliateDashboardPage() {
       </Sheet>
 
       {/* Campaign upgrade dialog — auto-shown when a better campaign is available */}
-      {affiliate && !isPending && (
+      {affiliate && isActive && (
         <CampaignUpgradeDialog
           affiliate={affiliate}
           availableCampaigns={availableCampaigns}
@@ -741,7 +763,7 @@ export default function AffiliateDashboardPage() {
       )}
 
       {/* Campaign switcher sheet — manual, triggered by "Change" in campaign card */}
-      {affiliate && !isPending && (
+      {affiliate && isActive && (
         <CampaignSwitcherSheet
           open={switcherOpen}
           onClose={() => setSwitcherOpen(false)}

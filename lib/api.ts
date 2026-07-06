@@ -136,13 +136,16 @@ export async function apiFetch<T>(
       };
     }
 
-    // 401 → session expired, clear tokens and redirect to login
+    // 401 → session expired, clear tokens and redirect to login.
+    // Carry the current location through as ?redirect= so re-login sends the
+    // user back where they were instead of always dropping them at "/".
     if (response.status === 401) {
       if (typeof window !== "undefined" && getAuthToken()) {
         clearAuthTokens();
         const currentPath = window.location.pathname;
         if (!currentPath.startsWith("/login")) {
-          window.location.href = "/login";
+          const backTo = currentPath + window.location.search;
+          window.location.href = `/login?redirect=${encodeURIComponent(backTo)}`;
         }
       }
       return {

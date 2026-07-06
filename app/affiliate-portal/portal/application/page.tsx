@@ -3,6 +3,7 @@
 import useSWR from 'swr';
 import { useState } from 'react';
 import { affiliateApi } from '@/lib/affiliate-api';
+import { affiliatePath } from '@/lib/affiliate-portal-path';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -220,6 +221,8 @@ export default function ApplicationStatusPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting,   setDeleting]   = useState(false);
   const [editOpen,   setEditOpen]   = useState(false);
+  const [reapplyOpen, setReapplyOpen] = useState(false);
+  const [reapplying,  setReapplying]  = useState(false);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -229,10 +232,25 @@ export default function ApplicationStatusPage() {
     } else {
       toast.success('Application deleted. You may re-apply at any time.');
       await mutate();
-      window.location.replace('/apply');
+      window.location.replace(affiliatePath('/apply'));
     }
     setDeleting(false);
     setDeleteOpen(false);
+  };
+
+  // Re-apply clears the old (REJECTED) record first — the apply page's own
+  // auth gate redirects straight back to /portal if any affiliate record
+  // still exists, so navigating without deleting first was a dead end.
+  const handleReapply = async () => {
+    setReapplying(true);
+    const res = await affiliateApi.deleteMe();
+    if (res.error) {
+      toast.error(typeof res.error === 'string' ? res.error : 'Failed to start a new application');
+      setReapplying(false);
+      setReapplyOpen(false);
+      return;
+    }
+    window.location.replace(affiliatePath('/apply'));
   };
 
   if (isLoading) {
@@ -302,7 +320,7 @@ export default function ApplicationStatusPage() {
         )}
         {/* REJECTED — offer to re-apply */}
         {affiliate?.status === 'REJECTED' && (
-          <Button size="sm" className="h-8 text-xs" onClick={() => window.location.replace('/apply')}>
+          <Button size="sm" className="h-8 text-xs" onClick={() => setReapplyOpen(true)}>
             Re-apply
           </Button>
         )}
@@ -430,6 +448,24 @@ export default function ApplicationStatusPage() {
             className="bg-destructive hover:bg-destructive/90 text-white"
           >
             {deleting ? 'Deleting…' : 'Delete Application'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* ── Re-apply confirmation dialog ──────────────────────────────── */}
+    <AlertDialog open={reapplyOpen} onOpenChange={setReapplyOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Start a new application?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This clears your previous rejected application so you can submit a fresh one. Your old affiliate code will be lost.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={reapplying}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleReapply} disabled={reapplying}>
+            {reapplying ? 'Preparing…' : 'Start New Application'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

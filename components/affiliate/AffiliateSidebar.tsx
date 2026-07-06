@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { NavUser } from '@/components/nav-user';
 import { useProfile } from '@/hooks/use-profile';
+import { affiliatePath } from '@/lib/affiliate-portal-path';
 
 const NAV = [
   { label: 'Dashboard',      href: '/portal',             icon: LayoutDashboard },
@@ -60,7 +61,7 @@ export function AffiliateSidebar() {
               {NAV.map(({ label, href, icon: Icon }) => (
                 <SidebarMenuItem key={href}>
                   <SidebarMenuButton asChild isActive={isActive(href)} tooltip={label}>
-                    <Link href={href} className="flex items-center justify-between">
+                    <Link href={affiliatePath(href)} className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
                         <Icon className="size-4" />
                         <span>{label}</span>
