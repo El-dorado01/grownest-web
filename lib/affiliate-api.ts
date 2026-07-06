@@ -45,8 +45,7 @@ export const affiliateApi = {
   switchCampaign: (campaignId: string) =>
     apiFetch<{ affiliate: Affiliate }>('/api/affiliate/me/switch-campaign', {
       method: 'POST',
-      body: JSON.stringify({ campaignId }),
-      headers: { 'Content-Type': 'application/json' },
+      body: { campaignId },
     }),
 
   editMe: (formData: FormData) =>
@@ -59,14 +58,12 @@ export const affiliateApi = {
   trackSignup: (affiliateCode: string, newUserId: string) =>
     apiFetch('/api/affiliate/track-signup', {
       method: 'POST',
-      body: JSON.stringify({ affiliateCode, newUserId }),
-      headers: { 'Content-Type': 'application/json' },
+      body: { affiliateCode, newUserId },
     }),
 
   trackClick: (affiliateCode: string) =>
     apiFetch('/api/affiliate/track-click', {
       method: 'POST',
-      body: JSON.stringify({ affiliateCode }),
-      headers: { 'Content-Type': 'application/json' },
+      body: { affiliateCode },
     }),
 };

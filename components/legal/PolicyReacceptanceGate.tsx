@@ -2,18 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { useAuth } from "@/context/auth-context";
 import { legalApi, type PolicyStatusResponse } from "@/lib/legal-api";
 import { Button } from "@/components/ui/button";
 import { Loader2, FileText } from "lucide-react";
 
 const POLICY_LABELS: Record<string, { label: string; href: string }> = {
-  TERMS: { label: "Terms & Conditions", href: "/terms" },
-  PRIVACY: { label: "Privacy Policy", href: "/privacy" },
-  COOKIES: { label: "Cookie Policy", href: "/cookies" },
-  REFUND_POLICY: { label: "Refund & Cancellation Policy", href: "/refund-policy" },
-  AFFILIATE_TERMS: { label: "Affiliate Programme Terms", href: "/affiliate-terms" },
-  VENDOR_AGREEMENT: { label: "Vendor & Merchant Agreement", href: "/vendor-agreement" },
+  TERMS: { label: "Terms & Conditions", href: "https://dashboard.grownest.africa/terms" },
+  PRIVACY: { label: "Privacy Policy", href: "https://dashboard.grownest.africa/privacy" },
+  COOKIES: { label: "Cookie Policy", href: "https://dashboard.grownest.africa/cookies" },
+  REFUND_POLICY: { label: "Refund & Cancellation Policy", href: "https://dashboard.grownest.africa/refund-policy" },
+  AFFILIATE_TERMS: { label: "Affiliate Programme Terms", href: "https://dashboard.grownest.africa/affiliate-terms" },
+  VENDOR_AGREEMENT: { label: "Vendor & Merchant Agreement", href: "https://dashboard.grownest.africa/vendor-agreement" },
 };
 
 /**
@@ -46,7 +47,11 @@ export function PolicyReacceptanceGate() {
     setAccepting(true);
     const res = await legalApi.acceptBatch(status.outstanding.map((o) => o.policyType));
     setAccepting(false);
-    if (!res.error) setStatus(null);
+    if (res.error) {
+      toast.error(res.error || "Couldn't save your acceptance. Please try again.");
+      return;
+    }
+    setStatus(null);
   };
 
   return (

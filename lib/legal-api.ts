@@ -14,14 +14,12 @@ export const legalApi = {
   accept: (policyType: PolicyType) =>
     apiFetch('/api/legal/accept', {
       method: 'POST',
-      body: JSON.stringify({ policyType }),
-      headers: { 'Content-Type': 'application/json' },
+      body: { policyType },
     }),
 
   acceptBatch: (policyTypes: PolicyType[]) =>
     apiFetch('/api/legal/accept-batch', {
       method: 'POST',
-      body: JSON.stringify({ policyTypes }),
-      headers: { 'Content-Type': 'application/json' },
+      body: { policyTypes },
     }),
 };
