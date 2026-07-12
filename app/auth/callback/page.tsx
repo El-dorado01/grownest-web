@@ -49,11 +49,16 @@ export default function AuthCallback() {
 
           toast.success("Successfully logged in!")
 
-          // Fire track-signup if user arrived via a referral link and used Google signup
+          // Fire track-signup if user arrived via a referral link and used Google signup.
+          // Only clear pending_ref once the call actually succeeds — the backend
+          // endpoint is idempotent (keyed on the referred user's id), and clearing
+          // on failure would silently lose the referral forever (e.g. the
+          // affiliate wasn't ACTIVE yet, or a transient network error).
           const pendingRef = sessionStorage.getItem('pending_ref');
           if (pendingRef && data.userId) {
-            sessionStorage.removeItem('pending_ref');
-            affiliateApi.trackSignup(pendingRef, data.userId).catch(() => {});
+            affiliateApi.trackSignup(pendingRef, data.userId).then((res) => {
+              if (!res.error) sessionStorage.removeItem('pending_ref');
+            }).catch(() => {});
           }
 
           // Respect the ?next= param passed through the OAuth redirectTo

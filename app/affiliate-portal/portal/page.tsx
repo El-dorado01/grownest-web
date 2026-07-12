@@ -482,12 +482,13 @@ export default function AffiliateDashboardPage() {
             <div className="lg:col-span-3 space-y-5">
 
               {/* KPI strip */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 {[
-                  { label: 'Total Earned', value: fmt(summary?.totalEarned ?? 0), icon: Wallet,           sub: 'all time' },
-                  { label: 'Available',    value: fmt(summary?.available ?? 0),   icon: Sparkles,         sub: 'next payout', highlight: true },
-                  { label: 'Pending',      value: fmt(summary?.pending ?? 0),     icon: Target,           sub: 'in hold period' },
-                  { label: 'Next Payout',  value: summary?.nextPayoutDate ? format(new Date(summary.nextPayoutDate), 'd MMM yyyy') : '—', icon: Receipt, sub: 'monthly' },
+                  { label: 'Total Earned',      value: fmt(summary?.totalEarned ?? 0), icon: Wallet,   sub: 'all time' },
+                  { label: 'Available',         value: fmt(summary?.available ?? 0),   icon: Sparkles, sub: 'next payout', highlight: true },
+                  { label: 'Pending commissions', value: fmt(summary?.pending ?? 0),     icon: Target,   sub: 'in hold period' },
+                  { label: 'Pending Referrals', value: String(Math.max((summary?.totalReferrals ?? 0) - (summary?.qualifiedReferrals ?? 0), 0)), icon: Users, sub: 'awaiting first deposit' },
+                  { label: 'Next Payout',       value: summary?.nextPayoutDate ? format(new Date(summary.nextPayoutDate), 'd MMM yyyy') : '—', icon: Receipt, sub: 'monthly' },
                 ].map(({ label, value, icon: Icon, sub, highlight }) => (
                   <Card key={label} className={`border-border ${highlight ? 'border-primary/50 bg-primary/5' : 'bg-card'}`}>
                     <CardContent className="p-4">

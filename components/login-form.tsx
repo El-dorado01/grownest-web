@@ -39,14 +39,19 @@ export function LoginForm({
       } else {
         toast.success("Login successful!")
 
-        // Fire track-signup if user registered via an affiliate referral link
+        // Fire track-signup if user registered via an affiliate referral link.
+        // Only clear pending_ref once the call actually succeeds — clearing it
+        // on failure would silently lose the referral forever (e.g. the
+        // affiliate wasn't ACTIVE yet, or a transient network error), with no
+        // way to retry since this is the only place that reads it.
         const pendingRef = localStorage.getItem('pending_ref');
         if (pendingRef) {
-          localStorage.removeItem('pending_ref');
           try {
             const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
             if (storedUser.userId) {
-              affiliateApi.trackSignup(pendingRef, storedUser.userId).catch(() => {});
+              affiliateApi.trackSignup(pendingRef, storedUser.userId).then((res) => {
+                if (!res.error) localStorage.removeItem('pending_ref');
+              }).catch(() => {});
             }
           } catch {}
         }
