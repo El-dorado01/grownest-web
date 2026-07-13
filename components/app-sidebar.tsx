@@ -19,15 +19,13 @@ import {
   SidebarGroup,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { 
-  LayoutDashboardIcon, 
-  WalletIcon, 
-  PiggyBankIcon, 
-  StoreIcon, 
-  TruckIcon, 
-  LifeBuoyIcon, 
+import {
+  LayoutDashboardIcon,
+  WalletIcon,
+  PiggyBankIcon,
+  TruckIcon,
+  LifeBuoyIcon,
   CogIcon,
-  ShoppingBagIcon,
   ShoppingBasketIcon,
   FeatherIcon,
   Users2Icon,
@@ -36,9 +34,6 @@ import {
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import Image from "next/image"
-import { SellerChatNavBadge } from "@/components/seller/seller-chat-nav-badge"
-import { ChatNavBadge } from "@/components/nestmarkets/chat-nav-badge"
-import { useMyStore } from "@/hooks/use-my-store"
 import { usePathname } from "next/navigation"
 
 interface NavSubItem {
@@ -109,34 +104,34 @@ const data = {
         },
       ],
     },
-    {
-      title: "NestMarket",
-      url: "/marketplace",
-      icon: <ShoppingBagIcon />,
-      items: [
-        {
-          title: "Explore",
-          url: "/marketplace",
-        },
-        {
-          title: "Vendors",
-          url: "/marketplace/vendors",
-        },
-        {
-          title: "My Cart",
-          url: "/marketplace/cart",
-        },
-        {
-          title: "My Orders",
-          url: "/marketplace/orders",
-        },
-        {
-          title: "Market Chat",
-          url: "/marketplace/chat",
-          badge: <ChatNavBadge />,
-        },
-      ],
-    },
+    // {
+    //   title: "NestMarket",
+    //   url: "/marketplace",
+    //   icon: <ShoppingBagIcon />,
+    //   items: [
+    //     {
+    //       title: "Explore",
+    //       url: "/marketplace",
+    //     },
+    //     {
+    //       title: "Vendors",
+    //       url: "/marketplace/vendors",
+    //     },
+    //     {
+    //       title: "My Cart",
+    //       url: "/marketplace/cart",
+    //     },
+    //     {
+    //       title: "My Orders",
+    //       url: "/marketplace/orders",
+    //     },
+    //     {
+    //       title: "Market Chat",
+    //       url: "/marketplace/chat",
+    //       badge: <ChatNavBadge />,
+    //     },
+    //   ],
+    // },
   ],
   projects: [
     {
@@ -156,28 +151,28 @@ const data = {
     },
   ],
   navSecondary: [
-    {
-      title: "Sell on NestMarket",
-      url: "/seller",
-      icon: <StoreIcon />,
-      items: [
-        {
-          title: "Dashboard",
-          url: "/seller",
-        },
-        {
-          title: "Products",
-          url: "/seller/products",
-        },
-        { title: "Orders", url: "/seller/orders" },
-        { title: "Earnings", url: "/seller/earnings" },
-        {
-          title: "Messages",
-          url: "/seller/chat",
-          badge: <SellerChatNavBadge />,
-        },
-      ],
-    },
+    // {
+    //   title: "Sell on NestMarket",
+    //   url: "/seller",
+    //   icon: <StoreIcon />,
+    //   items: [
+    //     {
+    //       title: "Dashboard",
+    //       url: "/seller",
+    //     },
+    //     {
+    //       title: "Products",
+    //       url: "/seller/products",
+    //     },
+    //     { title: "Orders", url: "/seller/orders" },
+    //     { title: "Earnings", url: "/seller/earnings" },
+    //     {
+    //       title: "Messages",
+    //       url: "/seller/chat",
+    //       badge: <SellerChatNavBadge />,
+    //     },
+    //   ],
+    // },
     {
       title: "Support",
       url: "/support",
@@ -191,19 +186,10 @@ const data = {
   ],
 }
 
-const sellerFullItems = [
-  { title: "Dashboard", url: "/seller" },
-  { title: "Products", url: "/seller/products" },
-  { title: "Orders", url: "/seller/orders" },
-  { title: "Earnings", url: "/seller/earnings" },
-  { title: "Messages", url: "/seller/chat", badge: <SellerChatNavBadge /> },
-];
-
 const navMainItems = data.navMain;
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user: authUser, isAuthenticated } = useAuth();
-  const { hasStore, isLoading: storeLoading } = useMyStore();
   const [profile, setProfile] = React.useState<UserProfile | null>(null);
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
@@ -233,39 +219,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const projectsWithBadges = data.projects;
 
-  const navSecondaryItems = React.useMemo(() => {
-    return data.navSecondary.map((group) =>
-      group.title === "Sell on NestMarket"
-        ? { ...group, items: (!storeLoading && !hasStore) ? [{ title: "Dashboard", url: "/seller" }] : sellerFullItems }
-        : group
-    );
-  }, [storeLoading, hasStore]);
+  const navSecondaryItems = data.navSecondary;
 
   React.useEffect(() => {
     const isNavigated = lastPathname.current !== pathname;
     if (isNavigated) {
       lastPathname.current = pathname;
-      const matchingGroup = navSecondaryItems.find(group => 
-        group.title === "Sell on NestMarket" &&
-        group.items?.some(subItem => 
-          pathname === subItem.url || (subItem.url !== "/" && pathname.startsWith(subItem.url))
-        )
-      );
-      if (matchingGroup && matchingGroup.items) {
-        setTimeout(() => {
-          setActiveSubmenu({
-            title: matchingGroup.title,
-            items: matchingGroup.items,
-            icon: matchingGroup.icon
-          });
-        }, 0);
-      } else {
-        setTimeout(() => {
-          setActiveSubmenu(null);
-        }, 0);
-      }
+      setTimeout(() => {
+        setActiveSubmenu(null);
+      }, 0);
     }
-  }, [pathname, navSecondaryItems]);
+  }, [pathname]);
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -312,13 +276,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 })}
               </SidebarMenu>
             </SidebarGroup>
-            <NavSecondary 
-              items={activeSubmenu?.title === "Sell on NestMarket"
-                ? navSecondaryItems.filter(item => item.title !== "Sell on NestMarket")
-                : navSecondaryItems
-              } 
+            <NavSecondary
+              items={navSecondaryItems}
               onSelectSubmenu={(title, items, icon) => setActiveSubmenu({ title, items, icon })}
-              className="mt-auto" 
+              className="mt-auto"
             />
             <div className="px-3 pb-3 pt-0">
               <Button 
