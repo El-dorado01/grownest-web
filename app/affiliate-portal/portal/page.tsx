@@ -487,7 +487,7 @@ export default function AffiliateDashboardPage() {
                   { label: 'Total Earned',      value: fmt(summary?.totalEarned ?? 0), icon: Wallet,   sub: 'all time' },
                   { label: 'Available',         value: fmt(summary?.available ?? 0),   icon: Sparkles, sub: 'next payout', highlight: true },
                   { label: 'Pending commissions', value: fmt(summary?.pending ?? 0),     icon: Target,   sub: 'in hold period' },
-                  { label: 'Pending Referrals', value: String(Math.max((summary?.totalReferrals ?? 0) - (summary?.qualifiedReferrals ?? 0), 0)), icon: Users, sub: 'awaiting first deposit' },
+                  { label: 'Pending Referrals', value: String(Math.max((summary?.totalReferrals ?? 0) - (summary?.qualifiedReferrals ?? 0), 0)), icon: Users, sub: 'awaiting deposit or NIN' },
                   { label: 'Next Payout',       value: summary?.nextPayoutDate ? format(new Date(summary.nextPayoutDate), 'd MMM yyyy') : '—', icon: Receipt, sub: 'monthly' },
                 ].map(({ label, value, icon: Icon, sub, highlight }) => (
                   <Card key={label} className={`border-border ${highlight ? 'border-primary/50 bg-primary/5' : 'bg-card'}`}>
@@ -590,8 +590,14 @@ export default function AffiliateDashboardPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-3 shrink-0">
-                            <Badge variant="outline" className={`text-xs ${r.qualified ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400' : 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400'}`}>
-                              {r.qualified ? 'Qualified' : 'Pending'}
+                            <Badge variant="outline" className={`text-xs ${
+                              r.qualification.status === 'qualified'
+                                ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
+                                : r.qualification.status === 'awaiting_nin'
+                                  ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400'
+                                  : 'border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400'
+                            }`}>
+                              {r.qualification.label}
                             </Badge>
                             <span className="text-sm font-semibold tabular-nums text-foreground w-16 text-right">
                               {r.commission ? fmt(r.commission.amount) : '—'}

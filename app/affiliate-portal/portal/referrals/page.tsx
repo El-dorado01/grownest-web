@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, TrendingUp, CheckCircle2, Clock } from 'lucide-react';
+import { Users, TrendingUp, CheckCircle2, Clock, Info } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { RefreshButton } from '@/components/affiliate/RefreshButton';
 
@@ -34,6 +34,23 @@ export default function ReferralsPage() {
         </div>
         <RefreshButton isRefreshing={isValidating && !isLoading} onRefresh={() => mutate()} />
       </div>
+
+      {/* How referrals qualify */}
+      <Card className="bg-primary/5 border-primary/20">
+        <CardContent className="p-4 flex gap-3">
+          <Info className="w-4 h-4 shrink-0 text-primary mt-0.5" />
+          <div className="text-sm text-muted-foreground space-y-1.5">
+            <p className="font-semibold text-foreground">How a referral turns into a commission</p>
+            <ol className="list-decimal list-inside space-y-0.5">
+              <li>They sign up using your referral link.</li>
+              <li>They deposit into their NestPurse — deposits add up over time, they don&apos;t need to hit the minimum in one go.</li>
+              <li>They verify their NIN (identity verification, done once in the app) — this is required before any commission fires, to prevent fraud.</li>
+              <li>Once both are done, your commission is created and enters a short hold period before it becomes available for payout.</li>
+            </ol>
+            <p className="pt-1">The <span className="font-medium text-foreground">Status</span> column below tells you exactly which of these is still missing for each person.</p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-3">
@@ -97,11 +114,13 @@ export default function ReferralsPage() {
                       </td>
                       <td className="px-5 py-3">
                         <Badge variant="outline" className={`text-xs ${
-                          r.qualified
+                          r.qualification.status === 'qualified'
                             ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
-                            : 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400'
+                            : r.qualification.status === 'awaiting_nin'
+                              ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400'
+                              : 'border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400'
                         }`}>
-                          {r.qualified ? 'Qualified' : 'Pending deposit'}
+                          {r.qualification.label}
                         </Badge>
                       </td>
                       <td className="px-5 py-3 text-right tabular-nums font-semibold text-foreground">

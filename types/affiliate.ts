@@ -41,13 +41,26 @@ export interface Affiliate {
   createdAt: string;
 }
 
+export type ReferralQualificationStatus =
+  | "qualified"
+  | "awaiting_deposit"
+  | "awaiting_nin"
+  | "awaiting_deposit_and_nin";
+
+export interface ReferralQualificationInfo {
+  status: ReferralQualificationStatus;
+  /** No amounts — the referred user's real deposit figures are never sent
+   *  to the affiliate, only which step is still missing. */
+  label: string;
+}
+
 export interface AffiliateReferral {
   id: string;
   displayName: string;
   signedUpAt: string;
   qualified: boolean;
-  firstDepositAt: string | null;
   commission: { amount: number; status: CommissionStatus } | null;
+  qualification: ReferralQualificationInfo;
 }
 
 export interface AffiliateCommission {
