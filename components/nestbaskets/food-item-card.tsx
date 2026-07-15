@@ -66,7 +66,10 @@ export function FoodItemCard({
         {qty > 0 ? (
           <div className="flex items-center gap-1 rounded-xl border bg-muted/60 p-1">
             <button
-              onClick={() => updateQuantity(item.id, qty - 1)}
+              onClick={() => {
+                const min = item.minQuantity || 1
+                updateQuantity(item.id, qty > min ? qty - 1 : 0)
+              }}
               className="rounded-lg p-1.5 transition-colors hover:bg-card active:scale-90"
             >
               <Minus className="h-3.5 w-3.5" />
@@ -83,7 +86,7 @@ export function FoodItemCard({
           </div>
         ) : (
           <Button
-            onClick={() => updateQuantity(item.id, 1)}
+            onClick={() => updateQuantity(item.id, item.minQuantity || 1)}
             size="sm"
             variant="outline"
             className="h-8 rounded-xl border-muted-foreground/30 px-3 text-xs font-bold transition-all hover:border-primary hover:bg-primary/5 hover:text-primary active:scale-95"

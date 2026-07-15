@@ -55,6 +55,12 @@ export const nestBasketsApi = {
   getFoodItems: () =>
     api.get<{ success: boolean; message: string; data: FoodItem[] }>("/api/nestbaskets/food-items"),
 
+  getMinBasketValueSetting: () =>
+    api.get<{ success: boolean; data: { enabled: boolean; value: number } }>("/api/nestbaskets/custom-plan/min-basket-value"),
+
+  confirmDeliveryReceived: (deliveryId: string) =>
+    api.post<{ success: boolean; message: string }>(`/api/nestbaskets/delivery/${deliveryId}/confirm-received`, {}),
+
   // ─── NESTBASKETS CUSTOM PLAN CRUD ───
   createCustomPlan: (data: CreateCustomPlanRequest) =>
     api.post<{ success: boolean; message: string; data: { customPlan: CustomPlan; breakdown: any[]; totalPrice: number } }>("/api/nestbaskets/custom-plan", data),

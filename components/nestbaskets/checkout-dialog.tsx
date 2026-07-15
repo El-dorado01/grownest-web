@@ -58,6 +58,8 @@ interface CheckoutDialogProps {
   isSubmitting: boolean
   onSubmit: () => void
   totalCost: number
+  minBasketValueEnabled: boolean
+  minBasketValue: number
   // SWR/Calculations States passed down for mobile review
   profiles: DeliveryProfile[]
   selectedProfileId: string
@@ -105,6 +107,8 @@ export function CheckoutDialog({
   isSubmitting,
   onSubmit,
   totalCost,
+  minBasketValueEnabled,
+  minBasketValue,
   profiles,
   selectedProfileId,
   setSelectedProfileId,
@@ -142,6 +146,7 @@ export function CheckoutDialog({
 
   const isDeliveryInvalid = deliveryOption === "delivery" && (!selectedProfileId || profiles.length === 0)
   const isPickupInvalid = deliveryOption === "pickup" && (!pickupBranchId || branches.length === 0)
+  const isBelowMinBasketValue = minBasketValueEnabled && subtotal < minBasketValue
 
   // Reset to first stage ("review") whenever dialog/drawer opens
   React.useEffect(() => {
@@ -701,6 +706,16 @@ export function CheckoutDialog({
         </span>
       </div>
 
+      {isBelowMinBasketValue && (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>
+            Your basket must total at least {formatCurrency(minBasketValue)} before you can create this plan.
+            Add {formatCurrency(minBasketValue - subtotal)} more worth of items to continue.
+          </span>
+        </div>
+      )}
+
       {/* Security PIN code validation */}
       <div className="space-y-2 border-t pt-4">
         <div className="mb-3 flex items-center justify-center gap-1 text-primary">
@@ -724,7 +739,7 @@ export function CheckoutDialog({
       {/* Submit CTA button */}
       <Button
         onClick={onSubmit}
-        disabled={isSubmitting || pinValue.length !== 4 || isDepositInvalid || isDeliveryInvalid || isPickupInvalid}
+        disabled={isSubmitting || pinValue.length !== 4 || isDepositInvalid || isDeliveryInvalid || isPickupInvalid || isBelowMinBasketValue}
         className="flex h-12 w-full items-center justify-center gap-2 rounded-xl font-black text-foreground"
       >
         {isSubmitting ? (

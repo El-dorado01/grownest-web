@@ -39,7 +39,6 @@ import {
   Settings,
   AlertCircle,
   Check,
-  User,
   AlertTriangle,
 } from "lucide-react"
 import { nestBasketsApi } from "@/lib/nestbaskets-api"
@@ -164,6 +163,7 @@ export default function FlexibleSavingsGoalPage() {
   // Security authorization state
   const [pinValue, setPinValue] = React.useState("")
   const [isActionLoading, setIsActionLoading] = React.useState(false)
+  const [isConfirmingReceipt, setIsConfirmingReceipt] = React.useState(false)
 
   // SWR for Plan Details
   const {
@@ -183,7 +183,9 @@ export default function FlexibleSavingsGoalPage() {
   const profiles = profilesRes?.data?.data ?? []
 
   const isPendingSelection = plan?.status === "pending_selection"
-  const deliveries = plan?.deliveries || []
+  const delivery = plan?.delivery ?? null
+  const deliveryIsComplete =
+    delivery?.status === "delivered" || delivery?.status === "picked_up"
 
   // Procurement states
   const [selectedQuantities, setSelectedQuantities] = React.useState<
@@ -434,6 +436,24 @@ export default function FlexibleSavingsGoalPage() {
       toast.error(err.message || "Something went wrong.")
     } finally {
       setIsActionLoading(false)
+    }
+  }
+
+  const handleConfirmReceipt = async () => {
+    if (!plan?.delivery?.id) return
+    setIsConfirmingReceipt(true)
+    try {
+      const res = await nestBasketsApi.confirmDeliveryReceived(plan.delivery.id)
+      if (res.data?.success) {
+        toast.success("Thanks for confirming — we hope you enjoy your NestBasket!")
+        mutate()
+      } else {
+        toast.error(res.data?.message || res.error || "Failed to confirm receipt")
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to confirm receipt")
+    } finally {
+      setIsConfirmingReceipt(false)
     }
   }
 
@@ -821,17 +841,17 @@ export default function FlexibleSavingsGoalPage() {
                     </div>
                   </div>
 
-                  {/* Deliveries Timeline (Only shown if plan is fully paid/delivered and has dispatches) */}
+                  {/* Delivery status (Only shown if plan is fully paid) */}
                   {plan.isPaid && (
                     <div className="space-y-4 rounded-2xl border bg-card p-5 shadow-sm">
                       <div className="flex items-center gap-2 border-b pb-3">
                         <Truck className="h-5 w-5 text-primary" />
                         <h2 className="text-base font-bold text-foreground">
-                          Delivery Timeline
+                          Delivery Status
                         </h2>
                       </div>
 
-                      {deliveries.length === 0 ? (
+                      {!delivery ? (
                         <div className="flex flex-col items-center justify-center gap-2.5 py-10 text-center">
                           <Truck className="h-8 w-8 text-muted-foreground/35" />
                           <p className="text-xs font-bold text-muted-foreground">
@@ -839,58 +859,76 @@ export default function FlexibleSavingsGoalPage() {
                           </p>
                         </div>
                       ) : (
-                        <div className="relative ml-3 space-y-6 border-l-2 border-primary/20 py-2 pl-6">
-                          {deliveries.map((delivery: any) => (
-                            <div key={delivery.id} className="relative">
-                              {/* Timeline marker */}
-                              <div
-                                className={cn(
-                                  "absolute top-1 left-[-31px] flex size-4.5 items-center justify-center rounded-full border-4 border-card shadow-md",
-                                  delivery.status === "delivered"
-                                    ? "bg-emerald-500"
-                                    : delivery.status === "failed"
-                                      ? "bg-destructive"
-                                      : "animate-pulse bg-primary"
-                                )}
-                              />
-                              <div className="flex items-start justify-between">
-                                <div className="space-y-1">
-                                  <h4 className="text-xs font-bold text-foreground">
-                                    {delivery.status === "delivered"
-                                      ? "Groceries Fulfilled"
+                        <div className="space-y-4">
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                              <h4 className="text-xs font-bold text-foreground">
+                                {delivery.status === "delivered"
+                                  ? "Groceries Fulfilled"
+                                  : delivery.status === "picked_up"
+                                    ? "Picked Up"
+                                    : delivery.status === "ready_for_pickup"
+                                      ? "Ready for Pickup"
                                       : delivery.status === "in_transit"
                                         ? "In Transit"
                                         : delivery.status === "dispatched"
                                           ? "Dispatched"
                                           : "Delivery Scheduled"}
-                                  </h4>
-                                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <Calendar className="h-3 w-3" /> Scheduled:{" "}
-                                    {formatDate(delivery.deliveryDate)}
-                                  </p>
-                                  {delivery.riderName && (
-                                    <div className="mt-1.5 flex w-fit items-center gap-1.5 rounded bg-muted/65 p-1 px-2 text-xs font-medium text-foreground">
-                                      <User className="h-3 w-3 text-primary" />
-                                      <span>
-                                        Rider: {delivery.riderName} (
-                                        {delivery.riderPhone})
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                                <span
-                                  className={cn(
-                                    "shrink-0 rounded px-2 py-0.5 text-xs font-black tracking-wider uppercase",
-                                    delivery.status === "delivered"
-                                      ? "bg-emerald-500/10 text-emerald-600"
-                                      : "bg-primary/10 text-primary"
-                                  )}
-                                >
-                                  {delivery.status}
-                                </span>
-                              </div>
+                              </h4>
+                              <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Calendar className="h-3 w-3" />{" "}
+                                {delivery.deliveryOption === "pickup"
+                                  ? "Ready by"
+                                  : "Scheduled"}
+                                : {formatDate(delivery.deliveryDate)}
+                              </p>
+                              {delivery.trackingCode && (
+                                <p className="text-xs font-mono text-muted-foreground">
+                                  Tracking code: {delivery.trackingCode}
+                                </p>
+                              )}
                             </div>
-                          ))}
+                            <span
+                              className={cn(
+                                "shrink-0 rounded px-2 py-0.5 text-xs font-black tracking-wider uppercase",
+                                delivery.status === "delivered" ||
+                                  delivery.status === "picked_up"
+                                  ? "bg-emerald-500/10 text-emerald-600"
+                                  : delivery.status === "failed"
+                                    ? "bg-destructive/10 text-destructive"
+                                    : "bg-primary/10 text-primary"
+                              )}
+                            >
+                              {delivery.status.replace(/_/g, " ")}
+                            </span>
+                          </div>
+
+                          {deliveryIsComplete && !delivery.userConfirmedAt && (
+                            <Button
+                              onClick={handleConfirmReceipt}
+                              disabled={isConfirmingReceipt}
+                              className="flex h-10 w-full items-center justify-center gap-2 rounded-xl font-bold text-foreground"
+                            >
+                              {isConfirmingReceipt ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Confirming...
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="h-4 w-4" />
+                                  I've Received My Products
+                                </>
+                              )}
+                            </Button>
+                          )}
+
+                          {delivery.userConfirmedAt && (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <Check className="h-3.5 w-3.5 text-primary" />
+                              Receipt confirmed — thank you!
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

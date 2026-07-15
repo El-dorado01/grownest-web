@@ -145,6 +145,13 @@ function CustomBasketBuilderPageContent() {
     nestBasketsApi.getDeliveryZones()
   )
 
+  // SWR for the global minimum basket value setting
+  const { data: minBasketRes } = useSWR("min-basket-value", () =>
+    nestBasketsApi.getMinBasketValueSetting()
+  )
+  const minBasketValueEnabled = minBasketRes?.data?.data?.enabled ?? false
+  const minBasketValue = minBasketRes?.data?.data?.value ?? 0
+
   const foodItems = foodRes?.data?.data ?? []
   const profiles = profilesRes?.data?.data ?? []
   const zones = zonesRes?.data?.data ?? []
@@ -394,6 +401,13 @@ function CustomBasketBuilderPageContent() {
     }
     if (selectedItemsList.length === 0) {
       toast.error("Please add at least one item to your basket")
+      return
+    }
+    if (minBasketValueEnabled && subtotal < minBasketValue) {
+      const shortfall = minBasketValue - subtotal
+      toast.error(
+        `Your basket must total at least ${formatCurrency(minBasketValue)} before you can create this plan. Add ${formatCurrency(shortfall)} more worth of items to continue.`
+      )
       return
     }
     if (deliveryOption === "delivery" && !selectedProfileId) {
@@ -744,6 +758,8 @@ function CustomBasketBuilderPageContent() {
           isSubmitting={isSubmitting}
           onSubmit={handleCheckoutSubmit}
           totalCost={totalCost}
+          minBasketValueEnabled={minBasketValueEnabled}
+          minBasketValue={minBasketValue}
           profiles={profiles}
           selectedProfileId={selectedProfileId}
           setSelectedProfileId={setSelectedProfileId}

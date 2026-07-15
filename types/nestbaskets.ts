@@ -75,6 +75,7 @@ export interface FoodItem {
   imageUrl: string | null;
   isActive: boolean;
   weightPerUnit: number;
+  minQuantity: number;
   createdAt: string;
   updatedAt: string;
 }
