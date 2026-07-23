@@ -41,11 +41,7 @@ export interface Affiliate {
   createdAt: string;
 }
 
-export type ReferralQualificationStatus =
-  | "qualified"
-  | "awaiting_deposit"
-  | "awaiting_nin"
-  | "awaiting_deposit_and_nin";
+export type ReferralQualificationStatus = "qualified" | "awaiting_deposit";
 
 export interface ReferralQualificationInfo {
   status: ReferralQualificationStatus;
