@@ -21,8 +21,8 @@ const STEPS = [
   {
     icon: UserPlus,
     step: '02',
-    title: 'Friends sign up & save',
-    description: 'When someone joins using your link and makes their first savings deposit, you unlock your commission.',
+    title: 'Friends sign up & subscribe',
+    description: 'When someone joins using your link and pays toward a NestBasket plan, you unlock your commission.',
   },
   {
     icon: Wallet,
@@ -65,7 +65,7 @@ const FAQS = [
   { q: 'Do I need a GrowNest account to apply?', a: 'Yes — you must already have a verified GrowNest account with an active NestPurse wallet. Log in with your existing GrowNest email and password.' },
   { q: 'What social media platforms qualify?', a: 'At least one active channel — Instagram, Facebook, X (Twitter), WhatsApp Channel, WhatsApp Status, YouTube, or TikTok. You\'ll upload screenshots to verify your reach.' },
   { q: 'When do I get paid?', a: 'Commissions are paid monthly into your NestPurse wallet. From there, you can withdraw to your bank account anytime.' },
-  { q: 'Is there a minimum deposit for referrals?', a: 'Yes — your referred user must make a minimum qualifying first deposit. The exact amount is shown in your dashboard once approved.' },
+  { q: 'Is there a minimum amount for referrals?', a: 'Yes — your referred user must pay a minimum qualifying amount toward a NestBasket plan. The exact amount is shown in your dashboard once approved.' },
   { q: 'How long does approval take?', a: 'Applications are typically reviewed and approved within 48 hours of submission.' },
 ];
 

@@ -374,7 +374,7 @@ export default function ApplicationStatusPage() {
               <p className="text-xs text-muted-foreground mt-0.5">
                 {affiliate.campaign.commissionType === 'FIXED'
                   ? `${fmt(affiliate.campaign.commissionValue)} per referral`
-                  : `${affiliate.campaign.commissionValue}% of first deposit`}
+                  : `${affiliate.campaign.commissionValue}% of qualifying basket payment`}
               </p>
             </CardContent>
           </Card>

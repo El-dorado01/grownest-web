@@ -43,7 +43,7 @@ export default function ReferralsPage() {
             <p className="font-semibold text-foreground">How a referral turns into a commission</p>
             <ol className="list-decimal list-inside space-y-0.5">
               <li>They sign up using your referral link.</li>
-              <li>They deposit into their NestPurse — deposits add up over time, they don&apos;t need to hit the minimum in one go.</li>
+              <li>They subscribe to or pay toward a NestBasket plan — payments add up over time, they don&apos;t need to hit the minimum in one go.</li>
               <li>Once the minimum is reached, your commission is created and enters a short hold period before it becomes available for payout.</li>
             </ol>
             <p className="pt-1">The <span className="font-medium text-foreground">Status</span> column below tells you how close each referral is to qualifying.</p>

@@ -487,7 +487,7 @@ export default function AffiliateDashboardPage() {
                   { label: 'Total Earned',      value: fmt(summary?.totalEarned ?? 0), icon: Wallet,   sub: 'all time' },
                   { label: 'Available',         value: fmt(summary?.available ?? 0),   icon: Sparkles, sub: 'next payout', highlight: true },
                   { label: 'Pending commissions', value: fmt(summary?.pending ?? 0),     icon: Target,   sub: 'in hold period' },
-                  { label: 'Pending Referrals', value: String(Math.max((summary?.totalReferrals ?? 0) - (summary?.qualifiedReferrals ?? 0), 0)), icon: Users, sub: 'awaiting deposit' },
+                  { label: 'Pending Referrals', value: String(Math.max((summary?.totalReferrals ?? 0) - (summary?.qualifiedReferrals ?? 0), 0)), icon: Users, sub: 'awaiting basket payment' },
                   { label: 'Next Payout',       value: summary?.nextPayoutDate ? format(new Date(summary.nextPayoutDate), 'd MMM yyyy') : '—', icon: Receipt, sub: 'monthly' },
                 ].map(({ label, value, icon: Icon, sub, highlight }) => (
                   <Card key={label} className={`border-border ${highlight ? 'border-primary/50 bg-primary/5' : 'bg-card'}`}>
@@ -628,7 +628,7 @@ export default function AffiliateDashboardPage() {
                   {[
                     { num: 1, text: 'Share your referral link on your social channels' },
                     { num: 2, text: 'Track signups in your referrals tab' },
-                    { num: 3, text: 'Earn commission once they deposit' },
+                    { num: 3, text: 'Earn commission once they pay toward a NestBasket' },
                   ].map(({ num, text }) => (
                     <div key={num} className="flex items-start gap-2.5">
                       <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{num}</div>
@@ -703,7 +703,7 @@ export default function AffiliateDashboardPage() {
                     <p className="text-sm font-bold text-primary">{affiliate?.campaign?.name}</p>
                     {[
                       { label: 'Your rate',   value: affiliate?.campaign?.commissionType === 'FIXED' ? fmt(affiliate?.campaign?.commissionValue) : `${affiliate?.campaign?.commissionValue}%` },
-                      { label: 'Min deposit', value: fmt(affiliate?.campaign?.minDepositAmount) },
+                      { label: 'Min basket payment', value: fmt(affiliate?.campaign?.minDepositAmount) },
                       { label: 'Hold',        value: `${affiliate?.campaign?.holdDays} days` },
                     ].map(({ label, value }) => (
                       <div key={label} className="flex justify-between text-xs">
