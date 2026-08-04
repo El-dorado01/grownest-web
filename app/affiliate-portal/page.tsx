@@ -22,7 +22,7 @@ const STEPS = [
     icon: UserPlus,
     step: '02',
     title: 'Friends sign up & subscribe',
-    description: 'When someone joins using your link and pays toward a NestBasket plan, you unlock your commission.',
+    description: 'When someone joins using your link and pays toward a NestBasket plan (not just funding their wallet), you unlock your commission.',
   },
   {
     icon: Wallet,
@@ -66,6 +66,8 @@ const FAQS = [
   { q: 'What social media platforms qualify?', a: 'At least one active channel — Instagram, Facebook, X (Twitter), WhatsApp Channel, WhatsApp Status, YouTube, or TikTok. You\'ll upload screenshots to verify your reach.' },
   { q: 'When do I get paid?', a: 'Commissions are paid monthly into your NestPurse wallet. From there, you can withdraw to your bank account anytime.' },
   { q: 'Is there a minimum amount for referrals?', a: 'Yes — your referred user must pay a minimum qualifying amount toward a NestBasket plan. The exact amount is shown in your dashboard once approved.' },
+  { q: 'Does it count if my referral just funds their wallet?', a: 'No — funding the NestPurse wallet on its own does not qualify a referral. The money has to actually go toward a NestBasket plan (subscribing, a flexible payment, or auto-pay) before your commission is created.' },
+  { q: 'What if my referral spreads payments across more than one NestBasket?', a: 'Check your dashboard for each referral’s exact status — it shows exactly how close they are to qualifying.' },
   { q: 'How long does approval take?', a: 'Applications are typically reviewed and approved within 48 hours of submission.' },
 ];
 

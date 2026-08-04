@@ -603,6 +603,25 @@ export default function AffiliateApplyPage() {
                 </div>
               </div>
 
+              {/* How commissions actually work — shown up front so there's no surprise later */}
+              <div className="rounded-xl bg-primary/5 border border-primary/20 px-4 py-3.5 text-sm text-foreground/80 leading-relaxed space-y-2">
+                <p className="font-semibold text-foreground text-xs uppercase tracking-widest">How you earn commission</p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>Someone signs up using your unique referral link.</li>
+                  <li>
+                    They subscribe to or pay toward a <strong>NestBasket</strong> plan — GrowNest's meal-basket
+                    subscription product. Simply funding their wallet does <strong>not</strong> count; the
+                    payment has to go toward an actual NestBasket plan.
+                  </li>
+                  <li>Once their qualifying NestBasket payment(s) reach the campaign's minimum amount, your commission is created.</li>
+                  <li>It sits in a short hold period, then becomes available and is paid out monthly to your NestPurse wallet.</li>
+                </ol>
+                <p className="text-xs text-muted-foreground pt-0.5">
+                  The exact minimum amount and commission rate are shown on your dashboard once your
+                  application is approved and a campaign is assigned to you.
+                </p>
+              </div>
+
               {/* Info callout */}
               <div className="rounded-xl bg-primary/5 border border-primary/20 px-4 py-3 text-sm text-foreground/80 leading-relaxed">
                 💡 This helps our team understand how you plan to introduce GrowNest to your audience.
