@@ -7,16 +7,19 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/context/auth-context"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"
 import { ConnectivityListener } from "@/components/connectivity-listener"
 import { PolicyReacceptanceGate } from "@/components/legal/PolicyReacceptanceGate"
 import { SettingsDialog } from "@/components/settings-dialog"
-import NextTopLoader from 'nextjs-toploader';
-import { GoogleOAuthProvider } from '@react-oauth/google'
+import NextTopLoader from "nextjs-toploader"
+import { GoogleOAuthProvider } from "@react-oauth/google"
 
-const spaceGroteskHeading = Space_Grotesk({ subsets: ['latin'], variable: '--font-heading' });
+const spaceGroteskHeading = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-heading",
+})
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })
 const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 
 export const metadata: Metadata = {
@@ -32,7 +35,7 @@ export const metadata: Metadata = {
     "GrowNest",
   ],
   authors: [{ name: "GrowNest Team" }],
-  metadataBase: new URL("https://grownest.africa"),
+  metadataBase: new URL("https://app.grownest.africa"),
   icons: {
     icon: "/d_icon.png",
     shortcut: "/d_icon.png",
@@ -41,17 +44,17 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://grownest.africa",
+    url: "https://app.grownest.africa",
     title: "GrowNest | Save Smart. Shop Easy. Smile Always.",
     description:
       "Start your journey to financial freedom today. Save Smart. Shop Easy. Smile Always with GrowNest.",
     siteName: "GrowNest",
     images: [
       {
-        url: "/social-preview.png",
-        width: 1200,
-        height: 630,
-        alt: "GrowNest Wealth Growth",
+        url: "/open-graph.jpeg",
+        width: 1280,
+        height: 981,
+        alt: "GrowNest | Save Smart. Shop Easy. Smile Always.",
       },
     ],
   },
@@ -60,7 +63,7 @@ export const metadata: Metadata = {
     title: "GrowNest | Save Smart. Shop Easy. Smile Always.",
     description:
       "Africa's premier platform for financial prosperity. Save Smart. Shop Easy. Smile Always.",
-    images: ["/social-preview.png"],
+    images: ["/open-graph.jpeg"],
   },
   robots: {
     index: true,
@@ -84,10 +87,16 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", geist.variable, spaceGroteskHeading.variable)}
+      className={cn(
+        "antialiased",
+        fontMono.variable,
+        "font-sans",
+        geist.variable,
+        spaceGroteskHeading.variable
+      )}
     >
       <body>
-        <NextTopLoader 
+        <NextTopLoader
           color="#cca751"
           initialPosition={0.08}
           crawlSpeed={200}
@@ -99,18 +108,19 @@ export default function RootLayout({
           shadow="0 0 10px #cca751,0 0 5px #cca751"
         />
         <ThemeProvider>
-          <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
+          <GoogleOAuthProvider
+            clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}
+          >
             <AuthProvider>
-
               <TooltipProvider>
                 {children}
                 <ConnectivityListener />
                 <PolicyReacceptanceGate />
                 <Toaster position="bottom-center" richColors />
               </TooltipProvider>
-                    <React.Suspense fallback={null}>
-                      <SettingsDialog />
-                    </React.Suspense>
+              <React.Suspense fallback={null}>
+                <SettingsDialog />
+              </React.Suspense>
             </AuthProvider>
           </GoogleOAuthProvider>
         </ThemeProvider>
