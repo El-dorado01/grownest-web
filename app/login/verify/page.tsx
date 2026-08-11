@@ -18,8 +18,15 @@ import { Loader2, ShieldCheck, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 
+// Masks a phone number: shows XXXX + last 4 characters — same convention
+// used by the mobile app's OTP screen, kept identical across platforms.
+function maskContact(contact: string): string {
+  if (contact.length <= 4) return contact
+  return `XXXX${contact.slice(-4)}`
+}
+
 export default function Verify2FAPage() {
-  const { requires2FA, pendingUserId, verify2FA, isLoading: isAuthLoading } = useAuth()
+  const { requires2FA, pendingUserId, pendingPhone, verify2FA, isLoading: isAuthLoading } = useAuth()
   const router = useRouter()
 
   const [code, setCode] = useState("")
@@ -110,7 +117,12 @@ export default function Verify2FAPage() {
             </div>
             <CardTitle className="text-xl">Two-Factor Verification</CardTitle>
             <CardDescription className="leading-relaxed">
-              A verification code has been sent to your alternate contact method. Enter it below to complete your login.
+              {pendingPhone ? (
+                <>Code has been sent to your phone number <span className="font-medium text-foreground">{maskContact(pendingPhone)}</span></>
+              ) : (
+                "A verification code has been sent to your alternate contact method."
+              )}{" "}
+              Enter it below to complete your login.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -130,7 +142,11 @@ export default function Verify2FAPage() {
                   disabled={isLoading}
                   autoComplete="one-time-code"
                 />
-                <FieldDescription>Enter the 6-digit code from your email or phone</FieldDescription>
+                <FieldDescription>
+                  {pendingPhone
+                    ? `Enter the 6-digit code sent via SMS to ${maskContact(pendingPhone)}`
+                    : "Enter the 6-digit code from your email or phone"}
+                </FieldDescription>
               </Field>
 
               <Button

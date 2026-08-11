@@ -12,6 +12,7 @@ export interface AuthState {
   isLoading: boolean;
   requires2FA: boolean;
   pendingUserId: string | null;
+  pendingPhone: string | null;
 }
 
 export interface LoginResponse {
@@ -20,6 +21,7 @@ export interface LoginResponse {
   userId: string;
   role?: string;
   requires2FA?: boolean;
+  phone?: string;
 }
 
 export interface LoginRequest {

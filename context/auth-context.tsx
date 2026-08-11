@@ -59,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading: true,
     requires2FA: false,
     pendingUserId: null,
+    pendingPhone: null,
   });
 
   // Check for existing session on mount
@@ -81,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isLoading: false,
             requires2FA: false,
             pendingUserId: null,
+            pendingPhone: null,
           });
         } catch {
           clearAuthTokens();
@@ -105,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading: false,
       requires2FA: false,
       pendingUserId: null,
+      pendingPhone: null,
     });
     toast.info("Logged out due to inactivity.");
     authApi.logout().catch(() => {});
@@ -148,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isLoading: false,
           requires2FA: true,
           pendingUserId: data.userId,
+          pendingPhone: data.phone || null,
         });
         router.push("/login/verify");
         return { success: true, requires2FA: true };
@@ -168,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isLoading: false,
           requires2FA: false,
           pendingUserId: null,
+          pendingPhone: null,
         });
 
         // Redirect is handled by the calling component
@@ -222,6 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isLoading: false,
           requires2FA: false,
           pendingUserId: null,
+          pendingPhone: null,
         });
 
         return { success: true };
@@ -257,6 +263,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isLoading: false,
           requires2FA: false,
           pendingUserId: null,
+          pendingPhone: null,
         });
 
         // Record acceptance of Terms & Privacy Policy — the signup form's
@@ -305,6 +312,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading: false,
         requires2FA: false,
         pendingUserId: null,
+        pendingPhone: null,
       });
 
       toast.success("2FA verification successful");
@@ -329,6 +337,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading: false,
         requires2FA: false,
         pendingUserId: null,
+        pendingPhone: null,
       });
       toast.dismiss(loadingToastId);
       toast.success("Logged out successfully");
