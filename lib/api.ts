@@ -136,16 +136,25 @@ export async function apiFetch<T>(
       };
     }
 
-    // 401 → session expired, clear tokens and redirect to login.
-    // Carry the current location through as ?redirect= so re-login sends the
-    // user back where they were instead of always dropping them at "/".
+    // 401 → session (or 2FA temp token) expired, clear tokens and redirect
+    // to login. Carry the current location through as ?redirect= so
+    // re-login sends the user back where they were instead of always
+    // dropping them at "/" — except during the 2FA-pending flow, where
+    // there's nothing valid to return to (the temp token that screen
+    // depends on is exactly what just died), so send those straight to a
+    // fresh /login instead of back to a now-broken /login/verify.
     if (response.status === 401) {
-      if (typeof window !== "undefined" && getAuthToken()) {
+      if (typeof window !== "undefined" && (getAuthToken() || getTempToken())) {
+        const hadTempTokenOnly = !getAuthToken() && !!getTempToken();
         clearAuthTokens();
         const currentPath = window.location.pathname;
         if (!currentPath.startsWith("/login")) {
-          const backTo = currentPath + window.location.search;
-          window.location.href = `/login?redirect=${encodeURIComponent(backTo)}`;
+          if (hadTempTokenOnly) {
+            window.location.href = "/login";
+          } else {
+            const backTo = currentPath + window.location.search;
+            window.location.href = `/login?redirect=${encodeURIComponent(backTo)}`;
+          }
         }
       }
       return {
