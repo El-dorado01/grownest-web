@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     "GrowNest",
   ],
   authors: [{ name: "GrowNest Team" }],
-  metadataBase: new URL("https://app.grownest.africa"),
+  metadataBase: new URL("https://dashboard.grownest.africa"),
   icons: {
     icon: "/d_icon.png",
     shortcut: "/d_icon.png",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://app.grownest.africa",
+    url: "https://dashboard.grownest.africa",
     title: "GrowNest | Save Smart. Shop Easy. Smile Always.",
     description:
       "Start your journey to financial freedom today. Save Smart. Shop Easy. Smile Always with GrowNest.",

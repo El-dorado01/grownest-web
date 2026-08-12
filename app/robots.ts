@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: 'https://grownest.africa/sitemap.xml',
+    sitemap: 'https://dashboard.grownest.africa/sitemap.xml',
   }
 }
