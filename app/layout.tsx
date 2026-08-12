@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import React from "react"
 import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google"
+import { GoogleAnalytics } from "@next/third-parties/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -21,6 +22,8 @@ const spaceGroteskHeading = Space_Grotesk({
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })
 const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
+
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
 export const metadata: Metadata = {
   title: "GrowNest | Save Smart. Shop Easy. Smile Always.",
@@ -125,6 +128,7 @@ export default function RootLayout({
           </GoogleOAuthProvider>
         </ThemeProvider>
       </body>
+      {GA_MEASUREMENT_ID && <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />}
     </html>
   )
 }
