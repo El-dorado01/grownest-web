@@ -548,7 +548,11 @@ export function CheckoutDialog({
               locked until fully funded.
             </p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {[1, 3, 6, 12].map((m) => (
+              {/* 12 (yearly) temporarily disabled — client no longer wants
+                  this offered as a saving duration. Backend still caps the
+                  calendar end-date picker at 6 months, so this stays
+                  commented out rather than deleted in case it's reinstated. */}
+              {[1, 3, 6/*, 12 */].map((m) => (
                 <button
                   key={m}
                   type="button"
